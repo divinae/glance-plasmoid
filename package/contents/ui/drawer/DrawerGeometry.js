@@ -36,6 +36,9 @@ function path(edge, w, h, depth, along, ear, radius) {
     if (depth < 0.5 || along <= 0) {
         return "";
     }
+    if (ear <= 0) {
+        return roundedPath(edge, w, h, depth, along, radius);
+    }
     const ee = Math.min(ear, depth / 2);
     const r = Math.max(0, Math.min(radius, depth - ee, along / 2));
     const cw = flips(edge) ? 0 : 1;
@@ -63,6 +66,9 @@ function polygon(edge, w, h, depth, along, ear, radius, steps) {
     if (depth < 0.5 || along <= 0) {
         return [];
     }
+    if (ear <= 0) {
+        return roundedPolygon(edge, w, h, depth, along, radius, steps);
+    }
     const ee = Math.min(ear, depth / 2);
     const r = Math.max(0, Math.min(radius, depth - ee, along / 2));
     const n = steps || 8;
@@ -82,5 +88,44 @@ function polygon(edge, w, h, depth, along, ear, radius, steps) {
     arc(depth - r, ear + r, r, 270, 360);            // outer corner
     arc(depth - r, ear + along - r, r, 0, 90);       // outer corner
     arc(ee, ear + along + ee, ee, 270, 180);         // ear after the body
+    return out;
+}
+
+// Without ears (the drawer floats off a floating panel): rounded on all four corners
+function cornerRadius(depth, along, radius) {
+    return Math.max(0, Math.min(radius, depth / 2, along / 2));
+}
+
+function roundedPath(edge, w, h, depth, along, radius) {
+    const r = cornerRadius(depth, along, radius);
+    const cw = flips(edge) ? 0 : 1;
+    const p = (u, v) => {
+        const q = toWindow(edge, w, h, u, v, 0, 0);
+        return q.x.toFixed(2) + " " + q.y.toFixed(2);
+    };
+    const arc = (u, v) => r > 0 ? " A " + r.toFixed(2) + " " + r.toFixed(2) + " 0 0 " + cw + " " + p(u, v) : " L " + p(u, v);
+    let d = "M " + p(r, 0);
+    d += " L " + p(depth - r, 0) + arc(depth, r);
+    d += " L " + p(depth, along - r) + arc(depth - r, along);
+    d += " L " + p(r, along) + arc(0, along - r);
+    d += " L " + p(0, r) + arc(r, 0);
+    return d + " Z";
+}
+
+function roundedPolygon(edge, w, h, depth, along, radius, steps) {
+    const r = cornerRadius(depth, along, radius);
+    const n = steps || 8;
+    const out = [];
+    const arc = (cu, cv, a0, a1) => {
+        for (let i = 0; i <= n; ++i) {
+            const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180;
+            const q = toWindow(edge, w, h, cu + r * Math.cos(a), cv + r * Math.sin(a), 0, 0);
+            out.push(q.x, q.y);
+        }
+    };
+    arc(depth - r, r, 270, 360);
+    arc(depth - r, along - r, 0, 90);
+    arc(r, along - r, 90, 180);
+    arc(r, r, 180, 270);
     return out;
 }

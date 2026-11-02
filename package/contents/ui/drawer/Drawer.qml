@@ -56,7 +56,9 @@ Window {
     readonly property bool sideways: edge === "left" || edge === "right"
 
     // ---- size -----------------------------------------------------------------
-    readonly property real ear: cfg ? cfg.drawerRadius : 20
+    // Ears where the drawer meets an edge it touches: the screen's top, or a panel that doesn't
+    // float. Off a floating panel it floats too, the panel's gap away, rounded all round.
+    readonly property real ear: (fromTop || !floatingPanel) && cfg ? cfg.drawerRadius : 0
     readonly property real radius: cfg ? cfg.drawerRadius : 20
     readonly property real bodyWidth: Kirigami.Units.gridUnit * (cfg ? cfg.drawerWidth : 30)
     readonly property real bodyHeight: Kirigami.Units.gridUnit * (cfg ? cfg.popupHeight : 20)
@@ -74,6 +76,10 @@ Window {
 
     // ---- placement: centered on the island, kept on its screen ------------------
     property real alongMargin: 0
+    // From the screen edge to where the drawer starts: the panel window's far side. A floating
+    // panel's window holds its gap on both sides, so the drawer keeps the same gap from it.
+    property real edgeMargin: 0
+    property bool floatingPanel: false
     function place() {
         const win = anchorItem ? anchorItem.Window.window : null;
         if (!win) {
@@ -90,6 +96,25 @@ Window {
             return;
         }
         const p = anchorItem.mapToGlobal(anchorItem.width / 2, anchorItem.height / 2);
+        const tl = anchorItem.mapToGlobal(0, 0);
+        const sx = scrInfo.virtualX, sy = scrInfo.virtualY;
+        switch (edge) {
+        case "left":
+            floatingPanel = tl.x - win.x > Kirigami.Units.largeSpacing;
+            edgeMargin = win.x + win.width - sx;
+            break;
+        case "right":
+            floatingPanel = win.x + win.width - (tl.x + anchorItem.width) > Kirigami.Units.largeSpacing;
+            edgeMargin = sx + scrInfo.width - win.x;
+            break;
+        case "bottom":
+            floatingPanel = win.y + win.height - (tl.y + anchorItem.height) > Kirigami.Units.largeSpacing;
+            edgeMargin = sy + scrInfo.height - win.y;
+            break;
+        default:
+            floatingPanel = tl.y - win.y > Kirigami.Units.largeSpacing;
+            edgeMargin = win.y + win.height - sy;
+        }
         const total = sideways ? scrInfo.height : scrInfo.width;
         const center = sideways ? p.y - scrInfo.virtualY : p.x - scrInfo.virtualX;
         const length = along + 2 * ear;
@@ -98,8 +123,9 @@ Window {
 
     LayerShell.Window.scope: "island-drawer"
     LayerShell.Window.layer: LayerShell.Window.LayerTop
-    // 0: beside the panels' exclusive zones, so the drawer starts where the panel ends
-    LayerShell.Window.exclusionZone: 0
+    // -1: placed from the screen edge itself, by edgeMargin (exclusive zones leave out a floating
+    // panel's gap)
+    LayerShell.Window.exclusionZone: -1
     LayerShell.Window.wantsToBeOnActiveScreen: false
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
     // Opened by hover it leaves the keyboard where it is; a click hands it over (Esc closes)
@@ -120,21 +146,39 @@ Window {
     }
     // A map, not QMargins (QML has no margins type): layer-shell-qt converts it at runtime
     LayerShell.Window.margins: ({
-        left: !sideways && !fromTop ? alongMargin : 0,
-        top: sideways ? alongMargin : 0,
-        right: 0,
-        bottom: 0,
+        left: edge === "left" ? edgeMargin : (!sideways && !fromTop ? alongMargin : 0),
+        top: edge === "top" && !fromTop ? edgeMargin : (sideways ? alongMargin : 0),
+        right: edge === "right" ? edgeMargin : 0,
+        bottom: edge === "bottom" ? edgeMargin : 0,
     })
 
     // ---- opening and closing ------------------------------------------------------
     property real reveal: 0
     readonly property bool shown: ready && island !== null && island.open
 
+    // The animation starts on the first frame the window actually drew: started together with
+    // the show, the first open after plasmashell's start could leave an empty surface
+    property bool waitingForFrame: false
     function show() {
-        place();
         closeAnim.stop();
-        visible = true;
-        openAnim.start();
+        if (visible) {
+            openAnim.start();
+            return;
+        }
+        place();
+        waitingForFrame = true;
+        Qt.callLater(() => {
+            if (drawer.shown) {
+                drawer.visible = true;
+                drawer.requestUpdate();
+            }
+        });
+    }
+    onFrameSwapped: {
+        if (waitingForFrame) {
+            waitingForFrame = false;
+            openAnim.start();
+        }
     }
     function hide() {
         openAnim.stop();

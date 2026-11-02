@@ -36,6 +36,9 @@ Item {
     }
 
     function alphaAt(y: real): real {
+        if (!(height > 0)) {
+            return 1;
+        }
         return fadeTopAlpha + (1 - fadeTopAlpha) * Math.max(0, Math.min(1, y / height));
     }
 
