@@ -56,8 +56,8 @@ MouseArea {
 
     // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
-    readonly property int dndIconSize: Math.round(pillThickness * 0.62)
-    readonly property int dndCapsuleLength: dndIconSize + 2 * Kirigami.Units.smallSpacing
+    readonly property int dndIconSize: Math.round(pillThickness * 0.8)
+    readonly property int dndCapsuleLength: dndIconSize + 3 * Kirigami.Units.smallSpacing
     readonly property int trailLength: dndShown ? dndCapsuleLength + Kirigami.Units.smallSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
@@ -357,12 +357,12 @@ MouseArea {
             Rectangle {
                 id: dndCapsule
                 width: compact.dndCapsuleLength
-                height: Math.round(compact.pillThickness * 0.82)
+                height: compact.pillThickness
                 radius: height / 2
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 visible: compact.dndShown
-                color: Qt.alpha(compact.foreground, 0.12)
+                color: Qt.alpha(compact.foreground, 0.16)
                 Kirigami.Icon {
                     anchors.centerIn: parent
                     width: compact.dndIconSize
