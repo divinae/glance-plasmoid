@@ -16,7 +16,7 @@ import com.dv.island.private as Island
 
 // One notification: who sent it and when, its text, the files it carries (images as thumbnails),
 // a file transfer's progress with pause, resume and cancel, its actions, and a reply field.
-// Shared by the history (NotificationsTab) and, later, the popups.
+// The history's (NotificationsTab).
 Item {
     id: item
 
@@ -27,18 +27,19 @@ Item {
 
     // In a group, the app name and icon are in the group's header
     property bool inGroup: false
+    property bool showClose: true
 
-    readonly property bool isJob: data.type === NotificationManager.Notifications.JobType
-    readonly property bool critical: data.urgency === NotificationManager.Notifications.CriticalUrgency
-    readonly property var actionNames: data.actionNames || []
-    readonly property var actionLabels: data.actionLabels || []
-    readonly property var urls: data.urls || []
-    readonly property var job: data.jobDetails || null
-    readonly property int jobState: data.jobState !== undefined ? data.jobState : -1
+    readonly property bool isJob: notif.type === NotificationManager.Notifications.JobType
+    readonly property bool critical: notif.urgency === NotificationManager.Notifications.CriticalUrgency
+    readonly property var actionNames: notif.actionNames || []
+    readonly property var actionLabels: notif.actionLabels || []
+    readonly property var urls: notif.urls || []
+    readonly property var job: notif.jobDetails || null
+    readonly property int jobState: notif.jobState !== undefined ? notif.jobState : -1
     readonly property bool jobRunning: isJob && jobState === NotificationManager.Notifications.JobStateRunning
     readonly property bool jobSuspended: isJob && jobState === NotificationManager.Notifications.JobStateSuspended
     readonly property bool jobDone: isJob && jobState === NotificationManager.Notifications.JobStateStopped
-    readonly property bool jobFailed: jobDone && (data.jobError || 0) !== 0
+    readonly property bool jobFailed: jobDone && (notif.jobError || 0) !== 0
 
     implicitHeight: row_.implicitHeight
 
@@ -354,7 +355,7 @@ Item {
         PlasmaComponents.ToolButton {
             Layout.alignment: Qt.AlignTop
             icon.name: "window-close"
-            visible: item.notif.closable !== false && !(item.isJob && !item.jobDone)
+            visible: item.showClose && item.notif.closable !== false && !(item.isJob && !item.jobDone)
             display: PlasmaComponents.AbstractButton.IconOnly
             text: i18n("Close")
             onClicked: item.notifications.close(item.idx())

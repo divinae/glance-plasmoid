@@ -20,6 +20,8 @@ Item {
     property var ignoredApps: []
 
     readonly property alias model: historyModel
+    // Plasma's notification settings (timeouts, blacklists, Do Not Disturb's), for the popups
+    readonly property alias settings: settings
     // The same history, grouped by application, for the Notifications tab
     readonly property alias groupedModel: groupedModel
     readonly property int count: historyModel.count

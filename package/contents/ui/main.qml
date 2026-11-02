@@ -305,6 +305,7 @@ PlasmoidItem {
         id: privacyMonitor
     }
 
+
     SystemMonitor {
         id: systemMonitor
         active: root.open && root.cfg.showSystem

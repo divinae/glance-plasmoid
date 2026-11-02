@@ -32,8 +32,11 @@ void DrawerEffects::apply(QObject *object, bool enabled, const QVariantList &poi
     }
     // An empty region would mean "the whole window": switch the effect off instead
     const bool on = enabled && polygon.size() >= 3;
-    const QRegion region = on ? QRegion(polygon) : QRegion();
+    applyRegion(window, on, on ? QRegion(polygon) : QRegion());
+}
 
+void DrawerEffects::applyRegion(QWindow *window, bool on, const QRegion &region)
+{
     KWindowEffects::enableBlurBehind(window, on, region);
 
     static Plasma::Theme theme;
