@@ -54,8 +54,12 @@ MouseArea {
     readonly property bool hasLeadIcon: barsMini || (leadIcon !== null && leadIcon !== undefined)
     readonly property int iconLength: hasLeadIcon ? leadIconItem.width + Kirigami.Units.smallSpacing : 0
 
+    // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
+    readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
+    readonly property int dndIconSize: Math.round(pillThickness * 0.62)
+    readonly property int trailLength: dndShown ? dndIconSize + 2 * Kirigami.Units.smallSpacing + 1 : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
-        + 2 * margin + 2 * inset)
+        + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
     Behavior on animatedLength {
         NumberAnimation {
@@ -271,9 +275,9 @@ MouseArea {
                 id: textBox
                 readonly property int leadLength: compact.barsLength + compact.dotLength + compact.iconLength
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength)
+                width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength - compact.trailLength)
                 height: textA.implicitHeight
-                x: leadLength + Math.max(0, (parent.width - leadLength - width) / 2)
+                x: leadLength + Math.max(0, (parent.width - leadLength - compact.trailLength - width) / 2)
 
                 property bool showA: true
                 property string current: compact.island.stripText
@@ -347,15 +351,25 @@ MouseArea {
                     }
                 }
             }
-            // Do Not Disturb: a small crossed-out bell at the end of the strip, upright
+            // Do Not Disturb: a crossed-out bell at the end of the strip, upright, past a thin divider
+            Rectangle {
+                id: dndDivider
+                width: 1
+                height: Math.round(compact.pillThickness * 0.55)
+                anchors.right: dndIcon.left
+                anchors.rightMargin: Kirigami.Units.smallSpacing
+                anchors.verticalCenter: parent.verticalCenter
+                visible: compact.dndShown
+                color: Qt.alpha(compact.foreground, 0.3)
+            }
             Kirigami.Icon {
-                width: Math.round(compact.pillThickness * 0.62)
+                id: dndIcon
+                width: compact.dndIconSize
                 height: width
                 anchors.right: parent.right
-                anchors.rightMargin: -compact.margin / 2 - width / 2
                 anchors.verticalCenter: parent.verticalCenter
                 rotation: -content.rotation
-                visible: compact.island.cfg.showNotifications && compact.notifications.doNotDisturb
+                visible: compact.dndShown
                 source: "notifications-disabled"
                 color: compact.foreground
                 isMask: true
