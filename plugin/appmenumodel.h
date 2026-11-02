@@ -119,4 +119,8 @@ private:
     QPointer<QMenu> m_currentMenu;
     QPointer<QMenu> m_sourceMenu;
     QPointer<QQuickItem> m_buttonGrid;
+    // The button the shown menu belongs to, and where it opened: to open or resize it once the
+    // application sends its contents
+    QPointer<QQuickItem> m_menuCtx;
+    QPoint m_menuPos;
 };

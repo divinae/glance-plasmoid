@@ -333,6 +333,19 @@ void AppMenuModel::updateApplicationMenu()
         Q_EMIT modelNeedsUpdate();
     });
 
+    // Contents for the shown menu: fit it to them, or open it if it was waiting for them
+    connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
+        if (!m_currentMenu || menu != m_currentMenu || m_currentIndex < 0 || !m_menuCtx || !m_menuCtx->window()) {
+            return;
+        }
+        if (m_currentMenu->isVisible()) {
+            m_currentMenu->adjustSize();
+        } else if (!m_currentMenu->actions().isEmpty()) {
+            anchorToItem(m_currentMenu->windowHandle(), m_menuCtx);
+            m_currentMenu->popup(m_menuPos);
+        }
+    });
+
     connect(m_importer.get(), &DBusMenuImporter::actionActivationRequested, this, [this](QAction *action) {
         if (!m_menuAvailable || !m_menu) {
             return;
@@ -387,7 +400,9 @@ void AppMenuModel::closeMenu()
 
 void AppMenuModel::trigger(QQuickItem *ctx, int idx)
 {
-    if (m_currentIndex == idx) {
+    // The same menu already on show: nothing to do (one still waiting for its contents may be
+    // asked again)
+    if (m_currentIndex == idx && m_currentMenu && m_currentMenu->isVisible()) {
         return;
     }
     if (!ctx || !ctx->window() || !ctx->window()->screen()) {
@@ -438,6 +453,13 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
     }
     m_sourceMenu->menuAction()->setMenu(m_currentMenu);
 
+    // Ask the application for this menu's current contents, as showing its own menu would
+    // (aboutToShow): menus are sent lazily, and one never asked for opened empty, i.e. not at
+    // all. The answer lands in the shown menu, which now stands in for it (menuUpdated below).
+    if (m_importer) {
+        m_importer->updateMenu(actionMenu);
+    }
+
     QTimer::singleShot(0, ctx, ungrabMouseHack);
 
     const QRect geo = ctx->window()->screen()->availableVirtualGeometry();
@@ -462,11 +484,14 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
         m_currentMenu->windowHandle()->setTransientParent(ctx->window());
     }
     anchorToItem(m_currentMenu->windowHandle(), ctx);
+    m_menuCtx = ctx;
+    m_menuPos = pos;
     if (m_currentMenu->isVisible()) {
         m_currentMenu->move(pos);
-    } else {
+    } else if (!m_currentMenu->actions().isEmpty()) {
         m_currentMenu->popup(pos);
     }
+    // Empty: it opens when the contents arrive (menuUpdated)
 
     setCurrentIndex(idx);
 }
