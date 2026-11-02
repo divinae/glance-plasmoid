@@ -155,6 +155,44 @@ Item {
             privacy: content.privacy
         }
 
+        // ---- the active window's menu bar, as macOS's: its icon and name, its menus, and the
+        // window buttons on the right; on every tab ----------------------------------------
+        RowLayout {
+            id: menuStrip
+            Layout.fillWidth: true
+            visible: content.island.cfg.showDashboard && content.task !== null
+                && (content.island.cfg.showAppMenu || content.island.cfg.showWindowButtons)
+            spacing: Kirigami.Units.smallSpacing
+
+            Kirigami.Icon {
+                Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
+                source: content.task && content.task.icon ? content.task.icon : "preferences-desktop"
+            }
+            PlasmaComponents.Label {
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 10
+                text: content.task ? content.task.appName : ""
+                textFormat: Text.PlainText
+                font.weight: Font.Bold
+                elide: Text.ElideRight
+            }
+            AppMenuBar {
+                id: stripMenu
+                Layout.fillWidth: true
+                appMenu: content.appMenu
+                visible: content.island.cfg.showAppMenu && content.appMenu.menuAvailable && count > 0
+            }
+            Item {
+                Layout.fillWidth: true
+                visible: !stripMenu.visible
+            }
+            WindowButtons {
+                visible: content.island.cfg.showWindowButtons
+                island: content.island
+                tasks: content.tasks
+            }
+        }
+
         // ---- tabs: drawer style on top, before the header ------------------
         TabStrip {
             Layout.fillWidth: true

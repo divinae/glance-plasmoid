@@ -15,7 +15,7 @@ import "../tiles"
 //
 //   clock | today's events     | CPU·RAM·disk | media
 //   notifications             | shelf
-//   window (all across)
+// (the window's menus and buttons are in the menu bar along the top of the drawer)
 GridLayout {
     id: tab
 
@@ -95,12 +95,4 @@ GridLayout {
         onClicked: tab.openTab("shelf")
     }
 
-    // ---- the window ------------------------------------------------------------------------
-    WindowTile {
-        Layout.fillWidth: true
-        Layout.columnSpan: 4
-        island: tab.island
-        tasks: tab.tasks
-        appMenu: tab.appMenu
-    }
 }
