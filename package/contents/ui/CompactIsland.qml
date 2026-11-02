@@ -44,8 +44,7 @@ MouseArea {
     readonly property int pillThickness: thickness - 2 * inset
     readonly property var leadIcon: {
         switch (mode) {
-        case "media": return island.player && island.player.artUrl ? island.player.artUrl.toString()
-            : (island.player && island.player.iconName ? island.player.iconName : "media-default-album");
+        case "media": return null; // no cover in the panel: the track's text (and its bars) say it
         case "notice": return "notifications";
         case "window": return island.cfg.showAppIcon && island.activeTask && island.activeTask.icon ? island.activeTask.icon : null;
         default: return null;
