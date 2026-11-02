@@ -24,6 +24,12 @@ MouseArea {
     readonly property bool vertical: island.isVertical
     readonly property string mode: island.stripMode
     readonly property bool barsShown: island.showMediaInPanel && island.cfg.cavaInPanel && cava.available && cava.running
+    // Text and equalizer: the accent color under the pointer and while the drawer is open
+    readonly property bool lit: containsMouse || island.open
+    property color foreground: lit && !island.cfg.showCapsule ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+    Behavior on foreground {
+        ColorAnimation { duration: Kirigami.Units.longDuration }
+    }
     readonly property int barsStyle: island.cfg.cavaStyle
     readonly property bool barsBehind: barsStyle === 0
     readonly property bool barsBeside: barsStyle === 1
@@ -146,11 +152,11 @@ MouseArea {
             anchors.margins: compact.inset
             radius: height / 2
             readonly property bool lit: compact.containsMouse || compact.island.open
-            // No capsule by default: the text on the panel, a faint highlight only under the
-            // pointer or while open (as Plasma's own widgets)
+            // No capsule by default: under the pointer or while open the text takes the accent
+            // color instead (see `foreground`), the drawer itself being the feedback
             color: compact.island.cfg.showCapsule
                 ? Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.24 : 0.12)
-                : Qt.alpha(Kirigami.Theme.textColor, lit ? 0.1 : 0)
+                : "transparent"
             Behavior on color {
                 ColorAnimation { duration: Kirigami.Units.shortDuration }
             }
@@ -212,12 +218,12 @@ MouseArea {
                     cava: compact.cava
                     bands: 4
                     stretch: true
-                    spacing: Math.max(1, Math.round(width / 10))
+                    spacing: Math.max(1, Math.round(leadIconItem.width / 10))
                     centered: true
                     boost: true
                     rounded: true
-                    minimumBarHeight: Math.max(2, Math.round(width / 6))
-                    color: Kirigami.Theme.textColor
+                    minimumBarHeight: Math.max(2, Math.round(leadIconItem.width / 6))
+                    color: compact.foreground
                 }
                 Rectangle {
                     id: eventDot
@@ -259,6 +265,7 @@ MouseArea {
                     horizontalAlignment: Text.AlignHCenter
                     font.bold: compact.island.cfg.boldFont
                     font.capitalization: compact.island.cfg.capitalFont ? Font.Capitalize : Font.MixedCase
+                    color: compact.foreground
                     visible: opacity > 0
                     Behavior on opacity {
                         NumberAnimation { duration: Kirigami.Units.longDuration }
