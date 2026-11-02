@@ -143,8 +143,6 @@ MouseArea {
             radius: height / 2
             readonly property bool lit: compact.containsMouse || compact.island.open
             color: Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.24 : 0.12)
-            border.width: 1
-            border.color: Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.45 : 0.25)
             Behavior on color {
                 ColorAnimation { duration: Kirigami.Units.shortDuration }
             }
