@@ -16,6 +16,7 @@ KCM.SimpleKCM {
     property alias cfg_placeholder: placeholder.text
     property alias cfg_maxTitleLength: maxTitleLength.value
     property alias cfg_showCapsule: showCapsule.checked
+    property alias cfg_showAppIcon: showAppIcon.checked
     property alias cfg_boldFont: boldFont.checked
     property alias cfg_capitalFont: capitalFont.checked
     property alias cfg_lengthMargin: lengthMargin.value
@@ -47,6 +48,11 @@ KCM.SimpleKCM {
             id: showCapsule
             Kirigami.FormData.label: i18n("Background:")
             text: i18n("Capsule behind the text")
+        }
+        QQC2.CheckBox {
+            id: showAppIcon
+            Kirigami.FormData.label: i18n("Icon:")
+            text: i18n("Show the application's icon")
         }
         QQC2.CheckBox {
             id: boldFont

@@ -47,7 +47,7 @@ MouseArea {
         case "media": return island.player && island.player.artUrl ? island.player.artUrl.toString()
             : (island.player && island.player.iconName ? island.player.iconName : "media-default-album");
         case "notice": return "notifications";
-        case "window": return island.activeTask && island.activeTask.icon ? island.activeTask.icon : null;
+        case "window": return island.cfg.showAppIcon && island.activeTask && island.activeTask.icon ? island.activeTask.icon : null;
         default: return null;
         }
     }
