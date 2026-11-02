@@ -25,12 +25,17 @@ Item {
         asynchronous: true
         visible: false
     }
+    // The mask at twice the size and smoothed, read with a soft threshold: a hard-edged mask
+    // left the round covers' edge jagged
     Rectangle {
         id: mask
         anchors.fill: parent
         radius: root.radius
+        antialiasing: true
         visible: false
         layer.enabled: true
+        layer.smooth: true
+        layer.textureSize: Qt.size(width * 2, height * 2)
     }
     MultiEffect {
         anchors.fill: parent
@@ -38,5 +43,7 @@ Item {
         visible: image.status === Image.Ready
         maskEnabled: true
         maskSource: mask
+        maskThresholdMin: 0.5
+        maskSpreadAtMin: 1.0
     }
 }

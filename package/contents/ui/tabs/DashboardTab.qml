@@ -13,7 +13,7 @@ import "../tiles"
 
 // The first tab, after Caelestia's dashboard:
 //
-//   clock | calendar          | CPU·RAM·disk | media
+//   clock | today's events     | CPU·RAM·disk | media
 //   notifications             | shelf
 //   window (all across)
 GridLayout {
@@ -31,8 +31,7 @@ GridLayout {
     signal openTab(string key)
 
     readonly property bool showMedia: island.cfg.showMedia
-    // The month needs no events; with Event Calendar's they get dots
-    readonly property bool showAgenda: true
+    readonly property bool showAgenda: island.cfg.calendarEnabled && calendar.available
     readonly property bool showNotifications: island.cfg.showNotifications
     readonly property bool showShelf: island.cfg.showShelf
     readonly property bool showSystem: island.cfg.showSystem
@@ -49,12 +48,14 @@ GridLayout {
         Layout.columnSpan: tab.showAgenda ? 1 : 2
         Layout.fillWidth: !tab.showAgenda
     }
-    CalendarTile {
+    // What's next today, from Event Calendar (the month itself is Event Calendar's)
+    AgendaTile {
         visible: tab.showAgenda
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 14
+        Layout.preferredWidth: Kirigami.Units.gridUnit * 12
         calendar: tab.calendar
+        maxEvents: 5
         onClicked: tab.openTab("agenda")
     }
     ResourcesTile {

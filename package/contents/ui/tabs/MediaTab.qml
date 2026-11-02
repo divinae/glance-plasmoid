@@ -5,7 +5,6 @@
 */
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Window
 
@@ -16,9 +15,9 @@ import org.kde.plasma.private.mpris as Mpris
 
 import ".."
 
-// Now playing, on a card like the dashboard's: the cover large on the left (tap: raise the
-// player, swipe: next or previous), the player, track, artist, album, a spectrum and the seek bar
-// beside it, and the controls across the bottom with the volume.
+// Now playing, after Caelestia's media tab: a round cover inside the spectrum's rays on the left
+// (tap: raise the player, swipe: next or previous), and centred on the right the track, album and
+// artist, the controls, the seek bar, and a row with the player, shuffle, repeat and volume.
 Item {
     id: tab
 
@@ -36,7 +35,6 @@ Item {
     implicitHeight: Kirigami.Units.gridUnit * 14
 
     Rectangle {
-        id: card
         anchors.fill: parent
         radius: Kirigami.Units.cornerRadius * 2.5
         color: Qt.alpha(Kirigami.Theme.textColor, 0.06)
@@ -60,115 +58,234 @@ Item {
         }
     }
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
-        anchors.margins: Kirigami.Units.largeSpacing * 1.5
-        spacing: Kirigami.Units.largeSpacing
+        anchors.margins: Kirigami.Units.largeSpacing
+        spacing: Kirigami.Units.largeSpacing * 2
         visible: tab.hasPlayer
 
-        RowLayout {
-            id: topRow
+        // ---- the cover in its rays ---------------------------------------------------
+        Item {
+            id: artBox
+            readonly property real side: Math.min(height, tab.width * 0.45)
+            Layout.fillHeight: true
+            Layout.preferredWidth: side
+
+            RadialCava {
+                anchors.centerIn: parent
+                width: artBox.side
+                height: width
+                cava: tab.cava
+                visible: tab.cava.available && tab.isPlaying
+                innerRadius: cover.width / 2 + Kirigami.Units.smallSpacing
+                maxLength: artBox.side / 2 - innerRadius
+                rayWidth: Math.max(2, Math.round(artBox.side / 70))
+            }
+
+            Item {
+                id: cover
+                anchors.centerIn: parent
+                width: artBox.side * 0.62
+                height: width
+                x: dragHandler.active ? dragHandler.translation.x : 0
+                scale: artTap.pressed ? 0.97 : 1
+                Behavior on scale {
+                    NumberAnimation { duration: Kirigami.Units.shortDuration }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
+                    visible: art.status !== Image.Ready
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        width: parent.width * 0.45
+                        height: width
+                        source: tab.hasPlayer && tab.player.iconName ? tab.player.iconName : "media-default-album"
+                        opacity: 0.6
+                    }
+                }
+                RoundedImage {
+                    id: art
+                    anchors.fill: parent
+                    radius: width / 2
+                    source: tab.hasPlayer ? tab.player.artUrl : ""
+                    sourceSize.width: cover.width * Screen.devicePixelRatio
+                    sourceSize.height: cover.height * Screen.devicePixelRatio
+                }
+                RotationAnimator on rotation {
+                    from: 0
+                    to: 360
+                    duration: 30000
+                    loops: Animation.Infinite
+                    running: tab.isPlaying && tab.visible
+                }
+            }
+            DragHandler {
+                id: dragHandler
+                target: null
+                xAxis.enabled: true
+                yAxis.enabled: false
+                onActiveChanged: {
+                    if (active || !tab.hasPlayer) {
+                        return;
+                    }
+                    const dx = translation.x;
+                    if (dx < -Kirigami.Units.gridUnit * 2 && tab.player.canGoNext) {
+                        tab.player.Next();
+                    } else if (dx > Kirigami.Units.gridUnit * 2 && tab.player.canGoPrevious) {
+                        tab.player.Previous();
+                    }
+                }
+            }
+            TapHandler {
+                id: artTap
+                enabled: tab.hasPlayer && tab.player.canRaise
+                onTapped: tab.player.Raise()
+            }
+        }
+
+        // ---- track, controls, seek ---------------------------------------------------
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: Kirigami.Units.largeSpacing * 1.5
+            spacing: Kirigami.Units.smallSpacing
 
-            // ---- cover ----------------------------------------------------------
             Item {
-                id: artBox
-                readonly property real side: Math.min(Kirigami.Units.gridUnit * 10, topRow.height)
-                Layout.preferredWidth: side
-                Layout.preferredHeight: side
-                Layout.alignment: Qt.AlignVCenter
+                Layout.fillHeight: true
+            }
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                text: tab.hasPlayer ? (tab.player.track || tab.player.identity || "") : ""
+                textFormat: Text.PlainText
+                color: Kirigami.Theme.highlightColor
+                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.3
+                font.weight: Font.DemiBold
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+            }
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                visible: text !== "" && text !== (tab.hasPlayer ? tab.player.track : "")
+                text: tab.hasPlayer ? (tab.player.album || "") : ""
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                opacity: 0.6
+            }
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                visible: text !== ""
+                text: tab.hasPlayer ? (tab.player.artist || "") : ""
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                opacity: 0.85
+            }
 
-                Item {
-                    id: artSlide
-                    width: parent.width
-                    height: parent.height
-                    x: dragHandler.active ? dragHandler.translation.x : 0
-                    Behavior on x {
-                        enabled: !dragHandler.active
-                        NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+            // previous · play/pause · next
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                spacing: Kirigami.Units.largeSpacing
+                PlasmaComponents.ToolButton {
+                    icon.name: "media-skip-backward"
+                    icon.width: Kirigami.Units.iconSizes.smallMedium
+                    icon.height: Kirigami.Units.iconSizes.smallMedium
+                    enabled: tab.hasPlayer && tab.player.canGoPrevious
+                    onClicked: tab.player.Previous()
+                }
+                Rectangle {
+                    id: playButton
+                    readonly property bool canToggle: tab.hasPlayer && (tab.isPlaying ? tab.player.canPause : tab.player.canPlay)
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                    Layout.preferredHeight: Kirigami.Units.gridUnit * 3
+                    radius: width / 2
+                    color: playTap.pressed ? Qt.darker(Kirigami.Theme.highlightColor, 1.15)
+                        : playHover.hovered ? Qt.lighter(Kirigami.Theme.highlightColor, 1.1) : Kirigami.Theme.highlightColor
+                    opacity: canToggle ? 1 : 0.4
+                    Behavior on color {
+                        ColorAnimation { duration: Kirigami.Units.shortDuration }
                     }
-                    opacity: 1 - Math.min(0.6, Math.abs(x) / width)
-                    scale: artTap.pressed ? 0.97 : 1
-                    Behavior on scale {
-                        NumberAnimation { duration: Kirigami.Units.shortDuration }
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        width: Kirigami.Units.iconSizes.medium
+                        height: width
+                        source: tab.isPlaying ? "media-playback-pause" : "media-playback-start"
+                        isMask: true
+                        color: Kirigami.Theme.highlightedTextColor
                     }
-
-                    RectangularShadow {
-                        anchors.fill: parent
-                        radius: Kirigami.Units.cornerRadius * 2
-                        blur: Kirigami.Units.gridUnit
-                        offset.y: Kirigami.Units.smallSpacing
-                        color: Qt.rgba(0, 0, 0, 0.3)
-                        visible: art.status === Image.Ready
+                    HoverHandler {
+                        id: playHover
+                        cursorShape: Qt.PointingHandCursor
                     }
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Kirigami.Units.cornerRadius * 2
-                        color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
-                        visible: art.status !== Image.Ready
-                        Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: parent.width * 0.45
-                            height: width
-                            source: tab.hasPlayer && tab.player.iconName ? tab.player.iconName : "media-default-album"
-                            opacity: 0.6
-                        }
-                    }
-                    RoundedImage {
-                        id: art
-                        anchors.fill: parent
-                        radius: Kirigami.Units.cornerRadius * 2
-                        source: tab.hasPlayer ? tab.player.artUrl : ""
-                        sourceSize.width: artBox.side * Screen.devicePixelRatio
-                        sourceSize.height: artBox.side * Screen.devicePixelRatio
+                    TapHandler {
+                        id: playTap
+                        enabled: playButton.canToggle
+                        onTapped: tab.player.PlayPause()
                     }
                 }
-                DragHandler {
-                    id: dragHandler
-                    target: null
-                    xAxis.enabled: true
-                    yAxis.enabled: false
-                    onActiveChanged: {
-                        if (active || !tab.hasPlayer) {
-                            return;
-                        }
-                        const dx = translation.x;
-                        if (dx < -Kirigami.Units.gridUnit * 2 && tab.player.canGoNext) {
-                            tab.player.Next();
-                        } else if (dx > Kirigami.Units.gridUnit * 2 && tab.player.canGoPrevious) {
-                            tab.player.Previous();
-                        }
-                    }
-                }
-                TapHandler {
-                    id: artTap
-                    enabled: tab.hasPlayer && tab.player.canRaise
-                    onTapped: tab.player.Raise()
-                }
-                HoverHandler {
-                    cursorShape: tab.hasPlayer && tab.player.canRaise ? Qt.PointingHandCursor : Qt.ArrowCursor
+                PlasmaComponents.ToolButton {
+                    icon.name: "media-skip-forward"
+                    icon.width: Kirigami.Units.iconSizes.smallMedium
+                    icon.height: Kirigami.Units.iconSizes.smallMedium
+                    enabled: tab.hasPlayer && tab.player.canGoNext
+                    onClicked: tab.player.Next()
                 }
             }
 
-            // ---- player, track, spectrum, seek ----------------------------------
-            ColumnLayout {
+            SeekBar {
+                id: seek
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: Kirigami.Units.smallSpacing / 2
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                visible: tab.mediaState.canSeek
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                visible: tab.mediaState.canSeek
+                PlasmaComponents.Label {
+                    text: tab.formatTime(seek.dragging ? seek.previewValue : tab.mediaState.position)
+                    font: Kirigami.Theme.smallFont
+                    opacity: 0.7
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                PlasmaComponents.Label {
+                    text: tab.formatTime(tab.mediaState.length)
+                    font: Kirigami.Theme.smallFont
+                    opacity: 0.7
+                }
+            }
 
-                // The player: a chip, a menu of the others when there are several
+            // shuffle · the player · repeat · volume
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Kirigami.Units.smallSpacing
+                PlasmaComponents.ToolButton {
+                    icon.name: "media-playlist-shuffle"
+                    checkable: true
+                    visible: tab.hasPlayer && tab.player.shuffle !== undefined && tab.player.canControl
+                    checked: tab.hasPlayer && tab.player.shuffle === true
+                    opacity: checked ? 1 : 0.6
+                    onClicked: tab.player.shuffle = !tab.player.shuffle
+                    PlasmaComponents.ToolTip.text: i18n("Shuffle")
+                    PlasmaComponents.ToolTip.visible: hovered
+                }
                 PlasmaComponents.ToolButton {
                     id: playerChip
-                    Layout.maximumWidth: parent.width
                     icon.name: tab.hasPlayer && tab.player.iconName ? tab.player.iconName : "multimedia-player"
                     text: tab.hasPlayer ? tab.player.identity : ""
-                    font: Kirigami.Theme.smallFont
                     display: PlasmaComponents.AbstractButton.TextBesideIcon
                     enabled: tab.mpris.count > 1
-                    opacity: 0.8
                     onClicked: players.popup(playerChip, 0, playerChip.height)
+                    background: Rectangle {
+                        radius: height / 2
+                        color: Qt.alpha(Kirigami.Theme.highlightColor, playerChip.hovered ? 0.3 : 0.18)
+                    }
                     PlasmaComponents.Menu {
                         id: players
                         Repeater {
@@ -185,206 +302,54 @@ Item {
                         }
                     }
                 }
-                PlasmaComponents.Label {
-                    Layout.fillWidth: true
-                    text: tab.hasPlayer ? (tab.player.track || tab.player.identity || "") : ""
-                    textFormat: Text.PlainText
-                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.35
-                    font.weight: Font.Bold
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                }
-                PlasmaComponents.Label {
-                    Layout.fillWidth: true
-                    visible: text !== ""
-                    text: tab.hasPlayer ? (tab.player.artist || "") : ""
-                    textFormat: Text.PlainText
-                    elide: Text.ElideRight
-                    color: Kirigami.Theme.highlightColor
-                    font.weight: Font.DemiBold
-                }
-                PlasmaComponents.Label {
-                    Layout.fillWidth: true
-                    visible: text !== "" && text !== (tab.hasPlayer ? tab.player.track : "")
-                    text: tab.hasPlayer ? (tab.player.album || "") : ""
-                    textFormat: Text.PlainText
-                    elide: Text.ElideRight
-                    opacity: 0.6
-                    font: Kirigami.Theme.smallFont
-                }
-
-                // The spectrum fills what's left above the seek bar
-                CavaBars {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.minimumHeight: Kirigami.Units.gridUnit
-                    cava: tab.cava
-                    visible: tab.cava.available
-                    opacity: tab.isPlaying ? 0.7 : 0
-                    Behavior on opacity {
-                        NumberAnimation { duration: Kirigami.Units.longDuration }
+                PlasmaComponents.ToolButton {
+                    readonly property int loop: tab.hasPlayer ? tab.player.loopStatus : Mpris.LoopStatus.Unknown
+                    icon.name: loop === Mpris.LoopStatus.Track ? "media-repeat-single" : "media-repeat-all"
+                    checkable: true
+                    visible: tab.hasPlayer && loop !== Mpris.LoopStatus.Unknown && tab.player.canControl
+                    checked: loop === Mpris.LoopStatus.Playlist || loop === Mpris.LoopStatus.Track
+                    opacity: checked ? 1 : 0.6
+                    onClicked: {
+                        // None -> Playlist -> Track -> None
+                        if (loop === Mpris.LoopStatus.None) {
+                            tab.player.loopStatus = Mpris.LoopStatus.Playlist;
+                        } else if (loop === Mpris.LoopStatus.Playlist) {
+                            tab.player.loopStatus = Mpris.LoopStatus.Track;
+                        } else {
+                            tab.player.loopStatus = Mpris.LoopStatus.None;
+                        }
                     }
-                    style: tab.island.cfg.cavaPopupStyle
-                    rounded: tab.island.cfg.cavaRounded
-                    stretch: true
-                    spacing: 2
-                    fadeUp: true
-                    boost: true
+                    PlasmaComponents.ToolTip.text: i18n("Repeat")
+                    PlasmaComponents.ToolTip.visible: hovered
                 }
-                Item {
-                    Layout.fillHeight: true
-                    visible: !tab.cava.available
+                PlasmaComponents.ToolButton {
+                    visible: tab.hasVolume
+                    icon.name: !tab.hasPlayer || tab.player.volume <= 0 ? "audio-volume-muted"
+                        : tab.player.volume < 0.34 ? "audio-volume-low"
+                        : tab.player.volume < 0.67 ? "audio-volume-medium" : "audio-volume-high"
+                    onClicked: {
+                        if (tab.player.volume > 0) {
+                            tab.volumeBeforeMute = tab.player.volume;
+                            tab.player.volume = 0;
+                        } else {
+                            tab.player.volume = tab.volumeBeforeMute > 0 ? tab.volumeBeforeMute : 0.5;
+                        }
+                    }
+                    PlasmaComponents.ToolTip.text: tab.hasPlayer && tab.player.volume <= 0 ? i18n("Unmute") : i18n("Mute")
+                    PlasmaComponents.ToolTip.visible: hovered
                 }
-
-                SeekBar {
-                    id: seek
-                    Layout.fillWidth: true
-                    visible: tab.mediaState.canSeek
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    visible: tab.mediaState.canSeek
-                    PlasmaComponents.Label {
-                        text: tab.formatTime(seek.dragging ? seek.previewValue : tab.mediaState.position)
-                        font: Kirigami.Theme.smallFont
-                        opacity: 0.7
-                    }
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                    PlasmaComponents.Label {
-                        text: "-" + tab.formatTime(tab.mediaState.length - (seek.dragging ? seek.previewValue : tab.mediaState.position))
-                        font: Kirigami.Theme.smallFont
-                        opacity: 0.7
-                    }
+                PlasmaComponents.Slider {
+                    visible: tab.hasVolume
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 4
+                    from: 0
+                    to: 1
+                    stepSize: 0.02
+                    value: tab.hasPlayer ? tab.player.volume : 0
+                    onMoved: tab.player.volume = value
                 }
             }
-        }
-
-        // ---- controls across the bottom: shuffle | previous, play, next | repeat, volume.
-        // The two sides share the rest equally, so the middle stays in the middle.
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Kirigami.Units.smallSpacing
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.alignment: Qt.AlignLeft
-                    PlasmaComponents.ToolButton {
-                        icon.name: "media-playlist-shuffle"
-                        checkable: true
-                        visible: tab.hasPlayer && tab.player.shuffle !== undefined && tab.player.canControl
-                        checked: tab.hasPlayer && tab.player.shuffle === true
-                        opacity: checked ? 1 : 0.6
-                        onClicked: tab.player.shuffle = !tab.player.shuffle
-                        PlasmaComponents.ToolTip.text: i18n("Shuffle")
-                        PlasmaComponents.ToolTip.visible: hovered
-                    }
-                Item {
-                    Layout.fillWidth: true
-                }
-            }
-            RowLayout {
-                spacing: Kirigami.Units.smallSpacing
-                    PlasmaComponents.ToolButton {
-                        icon.name: "media-skip-backward"
-                        icon.width: Kirigami.Units.iconSizes.smallMedium
-                        icon.height: Kirigami.Units.iconSizes.smallMedium
-                        enabled: tab.hasPlayer && tab.player.canGoPrevious
-                        onClicked: tab.player.Previous()
-                    }
-                    // Play/pause: an accent pill
-                    Rectangle {
-                        id: playButton
-                        readonly property bool canToggle: tab.hasPlayer && (tab.isPlaying ? tab.player.canPause : tab.player.canPlay)
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
-                        Layout.preferredHeight: Kirigami.Units.gridUnit * 2.2
-                        radius: height / 2
-                        color: playTap.pressed ? Qt.darker(Kirigami.Theme.highlightColor, 1.15)
-                            : playHover.hovered ? Qt.lighter(Kirigami.Theme.highlightColor, 1.1) : Kirigami.Theme.highlightColor
-                        opacity: canToggle ? 1 : 0.4
-                        Behavior on color {
-                            ColorAnimation { duration: Kirigami.Units.shortDuration }
-                        }
-                        Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: Kirigami.Units.iconSizes.smallMedium
-                            height: width
-                            source: tab.isPlaying ? "media-playback-pause" : "media-playback-start"
-                            isMask: true
-                            color: Kirigami.Theme.highlightedTextColor
-                        }
-                        HoverHandler {
-                            id: playHover
-                            cursorShape: Qt.PointingHandCursor
-                        }
-                        TapHandler {
-                            id: playTap
-                            enabled: playButton.canToggle
-                            onTapped: tab.player.PlayPause()
-                        }
-                    }
-                    PlasmaComponents.ToolButton {
-                        icon.name: "media-skip-forward"
-                        icon.width: Kirigami.Units.iconSizes.smallMedium
-                        icon.height: Kirigami.Units.iconSizes.smallMedium
-                        enabled: tab.hasPlayer && tab.player.canGoNext
-                        onClicked: tab.player.Next()
-                    }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Item {
-                    Layout.fillWidth: true
-                }
-                    PlasmaComponents.ToolButton {
-                        readonly property int loop: tab.hasPlayer ? tab.player.loopStatus : Mpris.LoopStatus.Unknown
-                        icon.name: loop === Mpris.LoopStatus.Track ? "media-repeat-single" : "media-repeat-all"
-                        checkable: true
-                        visible: tab.hasPlayer && loop !== Mpris.LoopStatus.Unknown && tab.player.canControl
-                        checked: loop === Mpris.LoopStatus.Playlist || loop === Mpris.LoopStatus.Track
-                        opacity: checked ? 1 : 0.6
-                        onClicked: {
-                            // None -> Playlist -> Track -> None
-                            if (loop === Mpris.LoopStatus.None) {
-                                tab.player.loopStatus = Mpris.LoopStatus.Playlist;
-                            } else if (loop === Mpris.LoopStatus.Playlist) {
-                                tab.player.loopStatus = Mpris.LoopStatus.Track;
-                            } else {
-                                tab.player.loopStatus = Mpris.LoopStatus.None;
-                            }
-                        }
-                        PlasmaComponents.ToolTip.text: i18n("Repeat")
-                        PlasmaComponents.ToolTip.visible: hovered
-                    }
-                    PlasmaComponents.ToolButton {
-                        visible: tab.hasVolume
-                        icon.name: !tab.hasPlayer || tab.player.volume <= 0 ? "audio-volume-muted"
-                            : tab.player.volume < 0.34 ? "audio-volume-low"
-                            : tab.player.volume < 0.67 ? "audio-volume-medium" : "audio-volume-high"
-                        onClicked: {
-                            if (tab.player.volume > 0) {
-                                tab.volumeBeforeMute = tab.player.volume;
-                                tab.player.volume = 0;
-                            } else {
-                                tab.player.volume = tab.volumeBeforeMute > 0 ? tab.volumeBeforeMute : 0.5;
-                            }
-                        }
-                        PlasmaComponents.ToolTip.text: tab.hasPlayer && tab.player.volume <= 0 ? i18n("Unmute") : i18n("Mute")
-                        PlasmaComponents.ToolTip.visible: hovered
-                    }
-                    PlasmaComponents.Slider {
-                        visible: tab.hasVolume
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 5
-                        from: 0
-                        to: 1
-                        stepSize: 0.02
-                        value: tab.hasPlayer ? tab.player.volume : 0
-                        onMoved: tab.player.volume = value
-                    }
+            Item {
+                Layout.fillHeight: true
             }
         }
     }
@@ -449,6 +414,7 @@ Item {
             onReleased: tab.mediaState.seek(bar.previewValue)
         }
     }
+
 
 
     function formatTime(us: real): string {
