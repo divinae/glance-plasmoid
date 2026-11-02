@@ -146,11 +146,11 @@ Item {
             onActivated: key => content.currentKey = key
         }
 
-        // ---- window header + buttons (the dashboard has its own window tile) --
+        // ---- window header + buttons: only on the Window tab (the dashboard has a window tile) --
         RowLayout {
             id: header
             Layout.fillWidth: true
-            visible: content.currentKey !== "dashboard"
+            visible: content.currentKey === "window"
             spacing: Kirigami.Units.smallSpacing
 
             Kirigami.Icon {
