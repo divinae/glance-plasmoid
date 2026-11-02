@@ -57,7 +57,8 @@ MouseArea {
     // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
     readonly property int dndIconSize: Math.round(pillThickness * 0.62)
-    readonly property int trailLength: dndShown ? dndIconSize + 2 * Kirigami.Units.smallSpacing + 1 : 0
+    readonly property int dndCapsuleLength: dndIconSize + 2 * Kirigami.Units.smallSpacing
+    readonly property int trailLength: dndShown ? dndCapsuleLength + Kirigami.Units.smallSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
@@ -351,28 +352,25 @@ MouseArea {
                     }
                 }
             }
-            // Do Not Disturb: a crossed-out bell at the end of the strip, upright, past a thin divider
+            // Do Not Disturb: a crossed-out bell in a little capsule of its own at the end of the
+            // strip, turned with the panel as the text is
             Rectangle {
-                id: dndDivider
-                width: 1
-                height: Math.round(compact.pillThickness * 0.55)
-                anchors.right: dndIcon.left
-                anchors.rightMargin: Kirigami.Units.smallSpacing
-                anchors.verticalCenter: parent.verticalCenter
-                visible: compact.dndShown
-                color: Qt.alpha(compact.foreground, 0.3)
-            }
-            Kirigami.Icon {
-                id: dndIcon
-                width: compact.dndIconSize
-                height: width
+                id: dndCapsule
+                width: compact.dndCapsuleLength
+                height: Math.round(compact.pillThickness * 0.82)
+                radius: height / 2
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                rotation: -content.rotation
                 visible: compact.dndShown
-                source: "notifications-disabled"
-                color: compact.foreground
-                isMask: true
+                color: Qt.alpha(compact.foreground, 0.12)
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: compact.dndIconSize
+                    height: width
+                    source: "notifications-disabled"
+                    color: compact.foreground
+                    isMask: true
+                }
             }
         }
 
