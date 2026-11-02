@@ -1,0 +1,19 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "lipinski.j@pm.me",
+                "Name": "Jakub Lipiński"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Active window name, global menu, window buttons and media in one island",
+        "Icon": "window",
+        "Id": "com.dv.island",
+        "License": "GPL-2.0-or-later",
+        "Name": "Island",
+        "Version": "0.2.0"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
