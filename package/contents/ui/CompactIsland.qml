@@ -142,7 +142,11 @@ MouseArea {
             anchors.margins: compact.inset
             radius: height / 2
             readonly property bool lit: compact.containsMouse || compact.island.open
-            color: Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.24 : 0.12)
+            // No capsule by default: the text on the panel, a faint highlight only under the
+            // pointer or while open (as Plasma's own widgets)
+            color: compact.island.cfg.showCapsule
+                ? Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.24 : 0.12)
+                : Qt.alpha(Kirigami.Theme.textColor, lit ? 0.1 : 0)
             Behavior on color {
                 ColorAnimation { duration: Kirigami.Units.shortDuration }
             }

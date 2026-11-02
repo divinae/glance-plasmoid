@@ -15,6 +15,7 @@ KCM.SimpleKCM {
     property alias cfg_compactStyle: compactStyle.currentIndex
     property alias cfg_placeholder: placeholder.text
     property alias cfg_maxTitleLength: maxTitleLength.value
+    property alias cfg_showCapsule: showCapsule.checked
     property alias cfg_boldFont: boldFont.checked
     property alias cfg_capitalFont: capitalFont.checked
     property alias cfg_lengthMargin: lengthMargin.value
@@ -41,6 +42,11 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Margins:")
             from: 0
             to: 64
+        }
+        QQC2.CheckBox {
+            id: showCapsule
+            Kirigami.FormData.label: i18n("Background:")
+            text: i18n("Capsule behind the text")
         }
         QQC2.CheckBox {
             id: boldFont
