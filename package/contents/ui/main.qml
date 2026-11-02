@@ -168,13 +168,19 @@ PlasmoidItem {
 
     // Another window became active (a click into an app or on the desktop): close, as a popup
     // does on losing focus. The drawer opened by hover never has the focus to lose.
+    // Only another application counts: the drawer taking the focus leaves no active task.
+    property Item taskWhenOpened: null
     onActiveTaskChanged: {
-        if (open && !flyoutHovered && !compactHovered && !menuModel.menuOpen) {
+        if (open && activeTask !== null && activeTask !== taskWhenOpened
+                && !flyoutHovered && !compactHovered && !menuModel.menuOpen) {
             setOpen(false);
         }
     }
 
     onOpenChanged: {
+        if (root.open) {
+            taskWhenOpened = activeTask;
+        }
         if (!root.open) {
             pinnedByClick = false;
             closeTimer.stop();

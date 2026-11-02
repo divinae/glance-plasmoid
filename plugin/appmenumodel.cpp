@@ -505,7 +505,11 @@ bool AppMenuModel::eventFilter(QObject *watched, QEvent *event)
             Q_EMIT requestActivateIndex(m_currentIndex + 1);
             return true;
         }
-    } else if (event->type() == QEvent::MouseMove) {
+    } else if (event->type() == QEvent::MouseMove && !QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+        // X11 only: there the open menu grabs the pointer, so hovering along the bar arrives here.
+        // On Wayland the bar's buttons get the hover themselves, and global coordinates don't
+        // match between the popup and a layer-shell window: the button found here was a wrong
+        // one, and a plain action under it closed the menu.
         auto *e = static_cast<QMouseEvent *>(event);
         if (!m_buttonGrid || !m_buttonGrid->window()) {
             return false;

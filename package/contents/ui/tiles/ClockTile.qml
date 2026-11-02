@@ -17,6 +17,42 @@ Tile {
     property Item monitor: null
 
     property date now: new Date()
+
+    component MiniMeter: RowLayout {
+        id: meter
+        property string label
+        property real value: 0
+        Layout.fillWidth: true
+        spacing: Kirigami.Units.smallSpacing
+        PlasmaComponents.Label {
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 1.8
+            text: meter.label
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+        }
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 4
+            radius: 2
+            color: Qt.alpha(Kirigami.Theme.textColor, 0.12)
+            Rectangle {
+                width: parent.width * Math.max(0, Math.min(1, meter.value / 100))
+                height: parent.height
+                radius: parent.radius
+                color: Kirigami.Theme.highlightColor
+                Behavior on width {
+                    NumberAnimation { duration: Kirigami.Units.longDuration }
+                }
+            }
+        }
+        PlasmaComponents.Label {
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 1.8
+            horizontalAlignment: Text.AlignRight
+            text: Math.round(meter.value) + "%"
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+        }
+    }
     Timer {
         interval: 1000
         repeat: true
@@ -60,45 +96,17 @@ Tile {
             Layout.fillHeight: true
         }
 
-        // CPU and memory at a glance
-        Repeater {
-            model: tile.monitor ? [
-                {label: i18nc("processor, short", "CPU"), value: tile.monitor.number(tile.monitor.cpu)},
-                {label: i18nc("memory, short", "RAM"), value: tile.monitor.number(tile.monitor.memPercent)},
-            ] : []
-            delegate: RowLayout {
-                required property var modelData
-                Layout.fillWidth: true
-                spacing: Kirigami.Units.smallSpacing
-                PlasmaComponents.Label {
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 1.8
-                    text: modelData.label
-                    font: Kirigami.Theme.smallFont
-                    opacity: 0.7
-                }
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 4
-                    radius: 2
-                    color: Qt.alpha(Kirigami.Theme.textColor, 0.12)
-                    Rectangle {
-                        width: parent.width * Math.max(0, Math.min(1, modelData.value / 100))
-                        height: parent.height
-                        radius: parent.radius
-                        color: Kirigami.Theme.highlightColor
-                        Behavior on width {
-                            NumberAnimation { duration: Kirigami.Units.longDuration }
-                        }
-                    }
-                }
-                PlasmaComponents.Label {
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 1.8
-                    horizontalAlignment: Text.AlignRight
-                    text: Math.round(modelData.value) + "%"
-                    font: Kirigami.Theme.smallFont
-                    opacity: 0.7
-                }
-            }
+        // CPU and memory at a glance (two fixed rows: a model rebuilt every second recreated
+        // the bars, their animation starting from zero each time)
+        MiniMeter {
+            visible: tile.monitor !== null
+            label: i18nc("processor, short", "CPU")
+            value: tile.monitor ? tile.monitor.number(tile.monitor.cpu) : 0
+        }
+        MiniMeter {
+            visible: tile.monitor !== null
+            label: i18nc("memory, short", "RAM")
+            value: tile.monitor ? tile.monitor.number(tile.monitor.memPercent) : 0
         }
     }
 }
