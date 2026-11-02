@@ -33,6 +33,8 @@ Item {
     property var cpuHistory: []
     property var downHistory: []
     property var upHistory: []
+    property var diskReadHistory: []
+    property var diskWriteHistory: []
 
     function ready(sensor): bool {
         return sensor.status === Sensors.Sensor.Ready;
@@ -72,6 +74,8 @@ Item {
             monitor.cpuHistory = monitor.push(monitor.cpuHistory, monitor.number(cpuSensor));
             monitor.downHistory = monitor.push(monitor.downHistory, monitor.number(downSensor));
             monitor.upHistory = monitor.push(monitor.upHistory, monitor.number(upSensor));
+            monitor.diskReadHistory = monitor.push(monitor.diskReadHistory, monitor.number(diskReadSensor));
+            monitor.diskWriteHistory = monitor.push(monitor.diskWriteHistory, monitor.number(diskWriteSensor));
         }
     }
 }

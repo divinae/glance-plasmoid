@@ -33,28 +33,37 @@ Tile {
         onDrop: event => tile.island.acceptFiles(event)
     }
 
-    RowLayout {
+    // Side by side when there's room, the icon over the text when narrow
+    GridLayout {
         anchors.fill: parent
-        spacing: Kirigami.Units.largeSpacing
+        columns: tile.width > Kirigami.Units.gridUnit * 9 ? 2 : 1
+        rowSpacing: Kirigami.Units.smallSpacing
+        columnSpacing: Kirigami.Units.largeSpacing
         Kirigami.Icon {
+            Layout.alignment: Qt.AlignCenter
             implicitWidth: Kirigami.Units.iconSizes.medium
             implicitHeight: implicitWidth
             source: "folder-download"
         }
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
             spacing: 0
             PlasmaComponents.Label {
                 Layout.fillWidth: true
+                horizontalAlignment: parent.parent.columns === 1 ? Text.AlignHCenter : Text.AlignLeft
                 text: i18n("Shelf")
                 font.weight: Font.DemiBold
             }
             PlasmaComponents.Label {
                 Layout.fillWidth: true
+                horizontalAlignment: parent.parent.columns === 1 ? Text.AlignHCenter : Text.AlignLeft
                 text: tile.items.length > 0
                     ? i18np("%1 file", "%1 files", tile.items.length)
                     : i18n("Drop files here")
                 opacity: 0.7
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
                 elide: Text.ElideRight
                 font: Kirigami.Theme.smallFont
             }

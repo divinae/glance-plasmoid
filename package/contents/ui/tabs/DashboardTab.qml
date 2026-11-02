@@ -14,7 +14,7 @@ import "../tiles"
 // The first tab, after Caelestia's dashboard:
 //
 //   clock | today's events     | CPU·RAM·disk | media
-//   user and system           | notifications | shelf
+//   user and system | notifications            | shelf
 // (the window's menus and buttons are in the menu bar along the top of the drawer)
 GridLayout {
     id: tab
@@ -80,24 +80,33 @@ GridLayout {
     // ---- who and what, notifications, shelf ---------------------------------------------
     InfoTile {
         Layout.fillWidth: true
+        Layout.fillHeight: true
         Layout.preferredHeight: Kirigami.Units.gridUnit * 7
-        Layout.columnSpan: 2
     }
-    NotificationsTile {
-        visible: tab.showNotifications
+    // Notifications get most of the room, the shelf what it needs
+    RowLayout {
+        visible: tab.showNotifications || tab.showShelf
         Layout.fillWidth: true
         Layout.preferredHeight: Kirigami.Units.gridUnit * 7
-        Layout.columnSpan: tab.showShelf ? 1 : 2
-        watcher: tab.notifications
-        onClicked: tab.openTab("notifications")
-    }
-    ShelfTile {
-        visible: tab.showShelf
-        Layout.fillWidth: true
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 7
-        Layout.columnSpan: tab.showNotifications ? 1 : 2
-        island: tab.island
-        onClicked: tab.openTab("shelf")
+        Layout.columnSpan: 3
+        spacing: Kirigami.Units.largeSpacing
+
+        NotificationsTile {
+            visible: tab.showNotifications
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 3
+            watcher: tab.notifications
+            onClicked: tab.openTab("notifications")
+        }
+        ShelfTile {
+            visible: tab.showShelf
+            Layout.fillWidth: !tab.showNotifications
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 6
+            island: tab.island
+            onClicked: tab.openTab("shelf")
+        }
     }
 
 }

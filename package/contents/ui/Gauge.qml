@@ -16,6 +16,9 @@ Item {
     id: gauge
 
     property real fraction: 0
+    // An optional second ring inside (e.g. the temperature around a usage): -1 none
+    property real innerFraction: -1
+    property color innerColor: Kirigami.Theme.neutralTextColor
     property string value
     property string label
     property string detail
@@ -27,6 +30,11 @@ Item {
     readonly property real r: side / 2 - thickness / 2
     property real shown: fraction
     Behavior on shown {
+        NumberAnimation { duration: Kirigami.Units.longDuration * 2; easing.type: Easing.OutCubic }
+    }
+    readonly property real innerR: r - thickness * 1.6
+    property real innerShown: Math.max(0, innerFraction)
+    Behavior on innerShown {
         NumberAnimation { duration: Kirigami.Units.longDuration * 2; easing.type: Easing.OutCubic }
     }
 
@@ -62,6 +70,34 @@ Item {
                 radiusY: gauge.r
                 startAngle: 135
                 sweepAngle: Math.max(0.5, 270 * Math.max(0, Math.min(1, gauge.shown)))
+            }
+        }
+        ShapePath {
+            strokeColor: gauge.innerFraction >= 0 ? Qt.alpha(gauge.innerColor, 0.15) : "transparent"
+            strokeWidth: gauge.thickness * 0.6
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            PathAngleArc {
+                centerX: gauge.side / 2
+                centerY: gauge.side / 2
+                radiusX: gauge.innerR
+                radiusY: gauge.innerR
+                startAngle: 135
+                sweepAngle: 270
+            }
+        }
+        ShapePath {
+            strokeColor: gauge.innerFraction >= 0 ? gauge.innerColor : "transparent"
+            strokeWidth: gauge.thickness * 0.6
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            PathAngleArc {
+                centerX: gauge.side / 2
+                centerY: gauge.side / 2
+                radiusX: gauge.innerR
+                radiusY: gauge.innerR
+                startAngle: 135
+                sweepAngle: Math.max(0.5, 270 * Math.min(1, gauge.innerShown))
             }
         }
     }

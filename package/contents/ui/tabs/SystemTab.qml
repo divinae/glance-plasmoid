@@ -13,9 +13,9 @@ import org.kde.plasma.components as PlasmaComponents
 import ".."
 import "../tiles"
 
-// A simple system monitor after Caelestia's Performance tab: round gauges for the processor (its
-// temperature below), the graphics card when known, memory and disk; the network along the
-// bottom with a minute of history.
+// The system after Caelestia's Performance tab: the processor large in the middle (its usage
+// around, its temperature inside), the graphics card and memory smaller either side; the disk
+// and the network below, each with a minute of history.
 ColumnLayout {
     id: tab
 
@@ -36,12 +36,21 @@ ColumnLayout {
         return (i === 0 ? Math.round(b) : b.toFixed(b < 10 ? 1 : 0)) + " " + units[i];
     }
     readonly property real cpu: monitor.number(monitor.cpu)
+    readonly property bool hasTemp: monitor.ready(monitor.cpuTemp)
+    readonly property real temp: monitor.number(monitor.cpuTemp)
+    readonly property bool hasGpu: monitor.ready(monitor.gpu)
+    readonly property real gpu: monitor.number(monitor.gpu)
     readonly property real mem: monitor.number(monitor.memPercent)
     readonly property real disk: monitor.number(monitor.disk)
+    readonly property color readColor: Kirigami.Theme.highlightColor
+    readonly property color writeColor: Kirigami.Theme.positiveTextColor
+    readonly property color accentText: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
 
+    // ---- gauges: small, large, small ---------------------------------------------------
     Tile {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
 
         RowLayout {
             anchors.fill: parent
@@ -49,89 +58,159 @@ ColumnLayout {
 
             Gauge {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                fraction: tab.cpu / 100
-                value: Math.round(tab.cpu) + "%"
-                label: i18n("Processor")
-                detail: tab.monitor.ready(tab.monitor.cpuTemp)
-                    ? i18nc("temperature", "%1 °C", Math.round(tab.monitor.number(tab.monitor.cpuTemp))) : ""
-            }
-            Gauge {
-                visible: tab.monitor.ready(tab.monitor.gpu)
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                fraction: tab.monitor.number(tab.monitor.gpu) / 100
-                value: Math.round(tab.monitor.number(tab.monitor.gpu)) + "%"
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: parent.height * 0.7
+                Layout.alignment: Qt.AlignVCenter
+                visible: tab.hasGpu
+                fraction: tab.gpu / 100
+                value: Math.round(tab.gpu) + "%"
                 label: i18n("Graphics")
             }
             Gauge {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.preferredWidth: 1.5
+                fraction: tab.cpu / 100
+                innerFraction: tab.hasTemp ? Math.min(1, tab.temp / 100) : -1
+                innerColor: tab.temp > 85 ? Kirigami.Theme.negativeTextColor
+                    : tab.temp > 70 ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.positiveTextColor
+                value: tab.hasTemp ? Math.round(tab.temp) + " °C" : Math.round(tab.cpu) + "%"
+                label: i18n("Processor")
+                detail: tab.hasTemp ? i18nc("processor usage", "%1% used", Math.round(tab.cpu)) : ""
+            }
+            Gauge {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: parent.height * 0.7
+                Layout.alignment: Qt.AlignVCenter
                 fraction: tab.mem / 100
                 value: tab.bytes(tab.monitor.number(tab.monitor.memUsed))
                 label: i18n("Memory")
                 detail: i18nc("of total memory", "of %1", tab.bytes(tab.monitor.number(tab.monitor.memTotal)))
             }
-            Gauge {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                fraction: tab.disk / 100
-                value: Math.round(tab.disk) + "%"
-                label: i18n("Disk")
-                detail: i18nc("disk read and write speed", "↓ %1/s ↑ %2/s",
-                    tab.bytes(tab.monitor.number(tab.monitor.diskRead)), tab.bytes(tab.monitor.number(tab.monitor.diskWrite)))
-            }
         }
     }
 
-    // The network: speeds and a minute of history
-    Tile {
+    // ---- disk and network ---------------------------------------------------------------
+    // Its height fixed: a nested layout takes "fill" from its cards and took all of it
+    RowLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 4
+        Layout.fillHeight: false
+        Layout.preferredHeight: Kirigami.Units.gridUnit * 5
+        Layout.maximumHeight: Kirigami.Units.gridUnit * 5
+        spacing: Kirigami.Units.largeSpacing
 
-        RowLayout {
-            anchors.fill: parent
-            spacing: Kirigami.Units.largeSpacing
+        // A card: icon, title and a figure on top, two speeds, and their history behind
+        component Activity: Tile {
+            id: card
+            property string icon
+            property string title
+            property string figure
+            property string firstLabel
+            property string secondLabel
+            property var firstHistory: []
+            property var secondHistory: []
+            property real fraction: -1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 1
+
+            Item {
+                id: chart
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: parent.height * 0.55
+                readonly property real peak: Math.max(1, ...card.firstHistory, ...card.secondHistory)
+                Sparkline {
+                    anchors.fill: parent
+                    values: card.firstHistory
+                    capacity: tab.monitor.historyLength
+                    maximum: chart.peak
+                    color: tab.readColor
+                }
+                Sparkline {
+                    anchors.fill: parent
+                    values: card.secondHistory
+                    capacity: tab.monitor.historyLength
+                    maximum: chart.peak
+                    color: tab.writeColor
+                }
+            }
+
             ColumnLayout {
-                spacing: 0
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                spacing: Kirigami.Units.smallSpacing / 2
                 RowLayout {
+                    Layout.fillWidth: true
                     Kirigami.Icon {
                         implicitWidth: Kirigami.Units.iconSizes.small
                         implicitHeight: implicitWidth
-                        source: "network-wired"
+                        source: card.icon
                     }
                     PlasmaComponents.Label {
-                        text: i18n("Network")
+                        Layout.fillWidth: true
+                        text: card.title
                         font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+                    PlasmaComponents.Label {
+                        visible: text !== ""
+                        text: card.figure
+                        font.weight: Font.Bold
                     }
                 }
-                PlasmaComponents.Label {
-                    text: "↓ " + tab.bytes(tab.monitor.number(tab.monitor.down)) + "/s"
-                    color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
+                // How full, for the disk
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 4
+                    visible: card.fraction >= 0
+                    radius: 2
+                    color: Qt.alpha(Kirigami.Theme.textColor, 0.12)
+                    Rectangle {
+                        width: parent.width * Math.max(0, Math.min(1, card.fraction))
+                        height: parent.height
+                        radius: parent.radius
+                        color: card.fraction > 0.9 ? Kirigami.Theme.negativeTextColor
+                            : card.fraction > 0.75 ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.highlightColor
+                    }
                 }
-                PlasmaComponents.Label {
-                    text: "↑ " + tab.bytes(tab.monitor.number(tab.monitor.up)) + "/s"
-                    color: Kirigami.Theme.positiveTextColor
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.largeSpacing
+                    PlasmaComponents.Label {
+                        text: card.firstLabel
+                        color: tab.accentText
+                        font: Kirigami.Theme.smallFont
+                    }
+                    PlasmaComponents.Label {
+                        text: card.secondLabel
+                        color: Kirigami.ColorUtils.linearInterpolation(tab.writeColor, Kirigami.Theme.textColor, 0.4)
+                        font: Kirigami.Theme.smallFont
+                    }
                 }
             }
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                readonly property real peak: Math.max(1, ...tab.monitor.downHistory, ...tab.monitor.upHistory)
-                Sparkline {
-                    anchors.fill: parent
-                    values: tab.monitor.downHistory
-                    capacity: tab.monitor.historyLength
-                    maximum: parent.peak
-                }
-                Sparkline {
-                    anchors.fill: parent
-                    values: tab.monitor.upHistory
-                    capacity: tab.monitor.historyLength
-                    maximum: parent.peak
-                    color: Kirigami.Theme.positiveTextColor
-                }
-            }
+        }
+
+        Activity {
+            icon: "drive-harddisk"
+            title: i18n("Disk")
+            figure: Math.round(tab.disk) + "%"
+            fraction: tab.disk / 100
+            firstLabel: i18nc("disk read speed", "read %1/s", tab.bytes(tab.monitor.number(tab.monitor.diskRead)))
+            secondLabel: i18nc("disk write speed", "write %1/s", tab.bytes(tab.monitor.number(tab.monitor.diskWrite)))
+            firstHistory: tab.monitor.diskReadHistory
+            secondHistory: tab.monitor.diskWriteHistory
+        }
+        Activity {
+            icon: "network-wired"
+            title: i18n("Network")
+            firstLabel: "↓ " + tab.bytes(tab.monitor.number(tab.monitor.down)) + "/s"
+            secondLabel: "↑ " + tab.bytes(tab.monitor.number(tab.monitor.up)) + "/s"
+            firstHistory: tab.monitor.downHistory
+            secondHistory: tab.monitor.upHistory
         }
     }
 }

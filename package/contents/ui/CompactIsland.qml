@@ -374,17 +374,23 @@ MouseArea {
             opacity: compact.island.cfg.cavaPanelOpacity / 100
             anchors.leftMargin: pill.radius
             anchors.rightMargin: pill.radius
-            height: Math.max(3, compact.inset + 2)
+            // The margin beside the text, all of it: from the panel's edge up to the letters
+            height: Math.max(4, Math.min(8, Math.floor((compact.thickness - textBox.height) / 2) - 1))
             visible: compact.barsShown && compact.barsEdge
             cava: compact.cava
+            // Fewer, wider bands (one per ~5 px) with rounded ends: a bar for every one of cava's
+            // read as a dotted line
+            bands: Math.max(8, Math.floor((pill.width - 2 * pill.radius) / 5))
             stretch: true
-            spacing: 1
+            spacing: 2
             boost: true
-            rounded: compact.island.cfg.cavaRounded
+            rounded: true
             style: compact.island.cfg.cavaPanelStyle
-            minimumBarHeight: 0
+            minimumBarHeight: 1
+            // Solid at the edge, fading toward the text
+            fadeUp: true
+            fadeTopAlpha: 0.25
             color: Kirigami.Theme.highlightColor
-            // Grow from the edge inwards
             // Grow from the edge inwards: flipped at the outer edge (this frame's top)
             transform: Scale {
                 origin.y: edgeBars.height / 2
