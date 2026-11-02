@@ -24,10 +24,14 @@ MouseArea {
     readonly property bool vertical: island.isVertical
     readonly property string mode: island.stripMode
     readonly property bool barsShown: island.showMediaInPanel && island.cfg.cavaInPanel && cava.available && cava.running
-    readonly property bool barsBehind: island.cfg.cavaStyle === 0
+    readonly property int barsStyle: island.cfg.cavaStyle
+    readonly property bool barsBehind: barsStyle === 0
+    readonly property bool barsBeside: barsStyle === 1
+    readonly property bool barsMini: barsShown && barsStyle === 2 && mode === "media"
+    readonly property bool barsEdge: barsStyle === 3
     readonly property int thickness: vertical ? width : height
     readonly property int margin: island.cfg.lengthMargin
-    readonly property int barsLength: barsShown && !barsBehind ? bars.implicitWidth + Kirigami.Units.smallSpacing : 0
+    readonly property int barsLength: barsShown && barsBeside ? bars.implicitWidth + Kirigami.Units.smallSpacing : 0
     readonly property int dotLength: mode === "event" ? eventDot.width + Kirigami.Units.smallSpacing : 0
     // capsule inset from the panel edges; its rounded ends add to the margins
     readonly property int inset: Math.max(2, Math.round(thickness * 0.12))
@@ -41,7 +45,7 @@ MouseArea {
         default: return null;
         }
     }
-    readonly property bool hasLeadIcon: leadIcon !== null && leadIcon !== undefined
+    readonly property bool hasLeadIcon: barsMini || (leadIcon !== null && leadIcon !== undefined)
     readonly property int iconLength: hasLeadIcon ? leadIconItem.width + Kirigami.Units.smallSpacing : 0
 
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
@@ -181,7 +185,7 @@ MouseArea {
                 style: compact.island.cfg.cavaPanelStyle
                 rounded: compact.island.cfg.cavaRounded
                 cava: compact.cava
-                visible: compact.barsShown
+                visible: compact.barsShown && (compact.barsBehind || compact.barsBeside)
                 opacity: compact.barsBehind ? compact.island.cfg.cavaBackgroundOpacity / 100 : 1
             }
 
@@ -196,8 +200,24 @@ MouseArea {
                     width: Math.round(compact.pillThickness * 0.7)
                     height: width
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: compact.hasLeadIcon
+                    visible: compact.hasLeadIcon && !compact.barsMini
                     source: compact.leadIcon
+                }
+                // While music plays: a little equalizer where the icon was, the text left alone
+                CavaBars {
+                    width: leadIconItem.width
+                    height: leadIconItem.height
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: compact.barsMini
+                    cava: compact.cava
+                    bands: 4
+                    stretch: true
+                    spacing: Math.max(1, Math.round(width / 10))
+                    centered: true
+                    boost: true
+                    rounded: true
+                    minimumBarHeight: Math.max(2, Math.round(width / 6))
+                    color: Kirigami.Theme.textColor
                 }
                 Rectangle {
                     id: eventDot
@@ -267,6 +287,32 @@ MouseArea {
                 visible: compact.island.cfg.showNotifications && compact.island.cfg.unreadDot
                     && compact.notifications.unreadCount > 0
                 color: Kirigami.Theme.highlightColor
+            }
+        }
+
+        // The spectrum as a thin strip along the panel's outer edge (top of this frame), beside the
+        // text rather than behind it
+        CavaBars {
+            id: edgeBars
+            anchors.left: pill.left
+            anchors.right: pill.right
+            anchors.top: parent.top
+            anchors.leftMargin: pill.radius
+            anchors.rightMargin: pill.radius
+            height: Math.max(3, compact.inset + 2)
+            visible: compact.barsShown && compact.barsEdge
+            cava: compact.cava
+            stretch: true
+            spacing: 1
+            boost: true
+            rounded: compact.island.cfg.cavaRounded
+            style: compact.island.cfg.cavaPanelStyle
+            minimumBarHeight: 0
+            color: Kirigami.Theme.highlightColor
+            // Grow from the edge inwards
+            transform: Scale {
+                origin.y: edgeBars.height / 2
+                yScale: -1
             }
         }
 

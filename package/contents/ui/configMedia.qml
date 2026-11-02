@@ -65,7 +65,7 @@ KCM.SimpleKCM {
             id: cavaStyle
             Kirigami.FormData.label: i18n("Placement:")
             enabled: cavaInPanel.enabled && cavaInPanel.checked
-            model: [i18n("Behind the text"), i18n("Beside the text")]
+            model: [i18n("Behind the text"), i18n("Beside the text"), i18n("Small equalizer instead of the icon"), i18n("Along the panel's edge")]
         }
         QQC2.ComboBox {
             id: cavaPanelStyle

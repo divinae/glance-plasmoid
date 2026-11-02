@@ -116,13 +116,16 @@
     <entry name="cavaInPanel" type="Bool">
       <default>true</default>
     </entry>
-    <!-- Panel audio bars: 0 behind the text, 1 beside the text -->
+    <!-- Panel audio bars: 0 behind the text, 1 beside the text, 2 a small equalizer in place of
+         the icon, 3 a thin strip along the panel's outer edge -->
     <entry name="cavaStyle" type="Enum">
       <choices>
         <choice name="Background"/>
         <choice name="Beside"/>
+        <choice name="Mini"/>
+        <choice name="Edge"/>
       </choices>
-      <default>0</default>
+      <default>2</default>
     </entry>
     <entry name="cavaBackgroundOpacity" type="Int">
       <default>50</default>

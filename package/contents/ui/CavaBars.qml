@@ -39,7 +39,27 @@ Item {
         return fadeTopAlpha + (1 - fadeTopAlpha) * Math.max(0, Math.min(1, y / height));
     }
 
-    readonly property var values: cava.values
+    // Fewer, wider bands (0: all of cava's): each the average of a group of bars, from the low
+    // end, where music has most of its energy
+    property int bands: 0
+    readonly property var values: {
+        const all = cava.values;
+        if (bands <= 0 || all.length <= bands) {
+            return all;
+        }
+        const used = Math.max(bands, Math.round(all.length * 0.75)); // the top quarter is mostly empty
+        const out = [];
+        for (let b = 0; b < bands; ++b) {
+            const from = Math.floor(b * used / bands);
+            const to = Math.max(from + 1, Math.floor((b + 1) * used / bands));
+            let sum = 0;
+            for (let i = from; i < to; ++i) {
+                sum += all[i] ?? 0;
+            }
+            out.push(sum / (to - from));
+        }
+        return out;
+    }
     readonly property int count: values.length
     readonly property int effectiveBarWidth: stretch && count > 0
         ? Math.max(1, Math.floor((width - (count - 1) * spacing) / count))
