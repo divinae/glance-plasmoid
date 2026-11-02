@@ -277,7 +277,85 @@ Window {
         HoverHandler {
             onHoveredChanged: {
                 if (drawer.island) {
-                    drawer.island.flyoutHovered = hovered;
+                    drawer.island.flyoutHovered = hovered || gripHover.hovered || gripDrag.active;
+                }
+            }
+        }
+
+        // ---- resize grip, in the drawer's far corner ----------------------------------
+        Item {
+            id: grip
+            readonly property real size: Kirigami.Units.gridUnit * 1.2
+            // The corner away from the edge it comes out of, at the end of the body
+            readonly property var r: Geometry.toWindow(drawer.edge, drawer.width, drawer.height,
+                drawer.currentDepth - size, drawer.ear + drawer.along - size, size, size)
+            x: r.x
+            y: r.y
+            width: size
+            height: size
+            visible: drawer.reveal > 0.95
+            opacity: gripHover.hovered || gripDrag.active ? 0.9 : 0.35
+            Behavior on opacity {
+                NumberAnimation { duration: Kirigami.Units.shortDuration }
+            }
+
+            // Three dots in a triangle, in the very corner (mirrored for right and bottom panels)
+            Repeater {
+                model: [[0, 0], [1, 0], [0, 1]]
+                Rectangle {
+                    required property var modelData
+                    readonly property bool flipX: drawer.edge === "right"
+                    readonly property bool flipY: drawer.edge === "bottom"
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: Kirigami.Theme.textColor
+                    x: flipX ? 4 + modelData[0] * 5 : grip.width - 7 - modelData[0] * 5
+                    y: flipY ? 4 + modelData[1] * 5 : grip.height - 7 - modelData[1] * 5
+                }
+            }
+
+            // Over the grip, or dragging it, counts as over the drawer: it closed when the pointer
+            // went onto the grip
+            HoverHandler {
+                id: gripHover
+                cursorShape: drawer.edge === "right" || drawer.edge === "bottom" ? Qt.SizeBDiagCursor : Qt.SizeFDiagCursor
+                onHoveredChanged: if (hovered && drawer.island) drawer.island.flyoutHovered = true
+            }
+            DragHandler {
+                id: gripDrag
+                target: null
+                property real startW: 0
+                property real startH: 0
+                onActiveChanged: {
+                    if (drawer.island) {
+                        drawer.island.flyoutHovered = true;
+                    }
+                    if (active) {
+                        startW = drawer.bodyWidth;
+                        startH = drawer.bodyHeight;
+                        drawer.liveWidth = startW;
+                        drawer.liveHeight = startH;
+                        return;
+                    }
+                    const gu = Kirigami.Units.gridUnit;
+                    drawer.cfg.drawerWidth = Math.max(20, Math.min(50, Math.round(drawer.liveWidth / gu)));
+                    drawer.cfg.popupHeight = Math.max(10, Math.min(40, Math.round(drawer.liveHeight / gu)));
+                    drawer.liveWidth = -1;
+                    drawer.liveHeight = -1;
+                    drawer.place();
+                }
+                onTranslationChanged: {
+                    if (!active) {
+                        return;
+                    }
+                    const gu = Kirigami.Units.gridUnit;
+                    const t = translation;
+                    // Growth away from the edge, and along it towards the far end
+                    const dw = drawer.edge === "right" ? -t.x : t.x;
+                    const dh = drawer.edge === "bottom" ? -t.y : t.y;
+                    drawer.liveWidth = Math.max(20 * gu, Math.min(50 * gu, startW + dw));
+                    drawer.liveHeight = Math.max(10 * gu, Math.min(40 * gu, startH + dh));
                 }
             }
         }
@@ -334,78 +412,6 @@ Window {
                         privacy: drawer.privacy
                     }
                 }
-            }
-        }
-    }
-
-    // ---- resize grip, in the drawer's far corner ----------------------------------
-    Item {
-        id: grip
-        readonly property real size: Kirigami.Units.gridUnit * 1.2
-        // The corner away from the edge it comes out of, at the end of the body
-        readonly property var r: Geometry.toWindow(drawer.edge, drawer.width, drawer.height,
-            drawer.currentDepth - size, drawer.ear + drawer.along - size, size, size)
-        x: r.x
-        y: r.y
-        width: size
-        height: size
-        visible: drawer.reveal > 0.95
-        opacity: gripHover.hovered || gripDrag.active ? 0.9 : 0.35
-        Behavior on opacity {
-            NumberAnimation { duration: Kirigami.Units.shortDuration }
-        }
-
-        // Three dots in a triangle, in the very corner (mirrored for right and bottom panels)
-        Repeater {
-            model: [[0, 0], [1, 0], [0, 1]]
-            Rectangle {
-                required property var modelData
-                readonly property bool flipX: drawer.edge === "right"
-                readonly property bool flipY: drawer.edge === "bottom"
-                width: 3
-                height: 3
-                radius: 1.5
-                color: Kirigami.Theme.textColor
-                x: flipX ? 4 + modelData[0] * 5 : grip.width - 7 - modelData[0] * 5
-                y: flipY ? 4 + modelData[1] * 5 : grip.height - 7 - modelData[1] * 5
-            }
-        }
-
-        HoverHandler {
-            id: gripHover
-            cursorShape: drawer.edge === "right" || drawer.edge === "bottom" ? Qt.SizeBDiagCursor : Qt.SizeFDiagCursor
-        }
-        DragHandler {
-            id: gripDrag
-            target: null
-            property real startW: 0
-            property real startH: 0
-            onActiveChanged: {
-                if (active) {
-                    startW = drawer.bodyWidth;
-                    startH = drawer.bodyHeight;
-                    drawer.liveWidth = startW;
-                    drawer.liveHeight = startH;
-                    return;
-                }
-                const gu = Kirigami.Units.gridUnit;
-                drawer.cfg.drawerWidth = Math.max(20, Math.min(50, Math.round(drawer.liveWidth / gu)));
-                drawer.cfg.popupHeight = Math.max(10, Math.min(40, Math.round(drawer.liveHeight / gu)));
-                drawer.liveWidth = -1;
-                drawer.liveHeight = -1;
-                drawer.place();
-            }
-            onTranslationChanged: {
-                if (!active) {
-                    return;
-                }
-                const gu = Kirigami.Units.gridUnit;
-                const t = translation;
-                // Growth away from the edge, and along it towards the far end
-                const dw = drawer.edge === "right" ? -t.x : t.x;
-                const dh = drawer.edge === "bottom" ? -t.y : t.y;
-                drawer.liveWidth = Math.max(20 * gu, Math.min(50 * gu, startW + dw));
-                drawer.liveHeight = Math.max(10 * gu, Math.min(40 * gu, startH + dh));
             }
         }
     }
