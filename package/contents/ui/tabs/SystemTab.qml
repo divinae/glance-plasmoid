@@ -72,11 +72,13 @@ ColumnLayout {
                 Layout.preferredWidth: 1.5
                 fraction: tab.cpu / 100
                 innerFraction: tab.hasTemp ? Math.min(1, tab.temp / 100) : -1
-                innerColor: tab.temp > 85 ? Kirigami.Theme.negativeTextColor
-                    : tab.temp > 70 ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.positiveTextColor
-                value: tab.hasTemp ? Math.round(tab.temp) + " °C" : Math.round(tab.cpu) + "%"
+                // Usage the figure and the outer ring, as on the others; the temperature the inner
+                // ring, in a warm colour, red when hot, named below by a dot of its colour
+                innerColor: tab.temp > 85 ? Kirigami.Theme.negativeTextColor : "#ff9f0a"
+                value: Math.round(tab.cpu) + "%"
                 label: i18n("Processor")
-                detail: tab.hasTemp ? i18nc("processor usage", "%1% used", Math.round(tab.cpu)) : ""
+                detail: tab.hasTemp ? i18nc("temperature", "%1 °C", Math.round(tab.temp)) : ""
+                detailDot: tab.hasTemp
             }
             Gauge {
                 Layout.fillWidth: true

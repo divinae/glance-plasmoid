@@ -22,7 +22,10 @@ Item {
     property string value
     property string label
     property string detail
-    property real thickness: Math.max(6, Math.round(Math.min(width, height) / 14))
+    // Not too thick on a large gauge: a small value then read as a blob
+    property real thickness: Math.max(5, Math.min(12, Math.round(Math.min(width, height) / 18)))
+    // A dot before the detail, in the inner ring's colour, says which ring it is
+    property bool detailDot: false
     property color color: fraction > 0.9 ? Kirigami.Theme.negativeTextColor
         : fraction > 0.75 ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.highlightColor
 
@@ -117,12 +120,23 @@ Item {
             opacity: 0.7
         }
     }
-    PlasmaComponents.Label {
+    Row {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Math.max(0, (parent.height - gauge.side) / 2)
-        text: gauge.detail
-        font: Kirigami.Theme.smallFont
-        opacity: 0.7
+        spacing: Kirigami.Units.smallSpacing
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: gauge.detailDot
+            width: 8
+            height: 8
+            radius: 4
+            color: gauge.innerColor
+        }
+        PlasmaComponents.Label {
+            text: gauge.detail
+            font: Kirigami.Theme.smallFont
+            opacity: 0.8
+        }
     }
 }
