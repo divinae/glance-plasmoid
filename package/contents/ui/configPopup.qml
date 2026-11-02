@@ -30,6 +30,7 @@ KCM.SimpleKCM {
     property alias cfg_showNotifications: showNotifications.checked
     property alias cfg_calendarEnabled: calendarEnabled.checked
     property alias cfg_showShelf: showShelf.checked
+    property alias cfg_showSystem: showSystem.checked
 
     Kirigami.FormLayout {
         QQC2.ComboBox {
@@ -160,6 +161,10 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: showShelf
             text: i18n("Shelf tab")
+        }
+        QQC2.CheckBox {
+            id: showSystem
+            text: i18n("System monitor (tab, and CPU and memory under the clock)")
         }
     }
 }

@@ -27,6 +27,7 @@ GridLayout {
     required property Item mediaState
     required property Item notifications
     required property Item calendar
+    required property Item monitor
 
     signal openTab(string key)
 
@@ -40,6 +41,9 @@ GridLayout {
     columnSpacing: Kirigami.Units.largeSpacing
 
     ClockTile {
+        monitor: tab.island.cfg.showSystem ? tab.monitor : null
+        clickable: tab.island.cfg.showSystem
+        onClicked: tab.openTab("system")
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.columnSpan: tab.showMedia ? 1 : 2

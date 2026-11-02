@@ -166,6 +166,14 @@ PlasmoidItem {
     // a click-pinned popup behaves like a normal applet popup.
     hideOnWindowDeactivate: pinnedByClick && !menuModel.menuOpen
 
+    // Another window became active (a click into an app or on the desktop): close, as a popup
+    // does on losing focus. The drawer opened by hover never has the focus to lose.
+    onActiveTaskChanged: {
+        if (open && !flyoutHovered && !compactHovered && !menuModel.menuOpen) {
+            setOpen(false);
+        }
+    }
+
     onOpenChanged: {
         if (!root.open) {
             pinnedByClick = false;
@@ -264,6 +272,11 @@ PlasmoidItem {
         onTriggered: root.noticeText = ""
     }
 
+    SystemMonitor {
+        id: systemMonitor
+        active: root.open && root.cfg.showSystem
+    }
+
     CalendarSource {
         id: calendarSource
         active: root.cfg.calendarEnabled
@@ -323,6 +336,7 @@ PlasmoidItem {
             mediaState: mediaStateItem
             notifications: notificationWatcher
             calendar: calendarSource
+            monitor: systemMonitor
         }
     }
 
@@ -347,6 +361,7 @@ PlasmoidItem {
             item.mediaState = mediaStateItem;
             item.notifications = notificationWatcher;
             item.calendar = calendarSource;
+            item.monitor = systemMonitor;
             item.ready = true;
         }
         Connections {

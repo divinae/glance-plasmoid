@@ -444,17 +444,26 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
     pos = QPoint(qBound(geo.x(), pos.x(), geo.x() + geo.width() - m_currentMenu->width()),
                  qBound(geo.y(), pos.y(), geo.y() + geo.height() - m_currentMenu->height()));
 
-    // Switching to another menu while one is open: close it and open it again under the new
-    // button. Moving a shown popup (Wayland: repositioning it) could leave it unmapped when
-    // done quickly, open as far as Qt knew but invisible.
-    if (m_currentMenu->isVisible()) {
+    // Switching to another menu while one is open (hovering along the bar) moves the open one:
+    // QtWayland repositions the popup (xdg_popup.reposition) from the new anchor. Closing it and
+    // opening another instead needs a new grab, which the compositor refuses without a fresh
+    // click: the menu then vanished when moving along the bar quickly.
+    const bool sameParent = m_currentMenu->isVisible() && m_currentMenu->windowHandle()
+        && m_currentMenu->windowHandle()->transientParent() == ctx->window();
+    if (m_currentMenu->isVisible() && !sameParent) {
         m_currentMenu->hide();
     }
-    m_currentMenu->installEventFilter(this);
-    m_currentMenu->winId(); // create window handle
-    m_currentMenu->windowHandle()->setTransientParent(ctx->window());
+    if (!m_currentMenu->isVisible()) {
+        m_currentMenu->installEventFilter(this);
+        m_currentMenu->winId(); // create window handle
+        m_currentMenu->windowHandle()->setTransientParent(ctx->window());
+    }
     anchorToItem(m_currentMenu->windowHandle(), ctx);
-    m_currentMenu->popup(pos);
+    if (m_currentMenu->isVisible()) {
+        m_currentMenu->move(pos);
+    } else {
+        m_currentMenu->popup(pos);
+    }
 
     setCurrentIndex(idx);
 }

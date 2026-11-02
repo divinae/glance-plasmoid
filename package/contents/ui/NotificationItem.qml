@@ -131,7 +131,7 @@ Item {
             Layout.preferredWidth: Kirigami.Units.iconSizes.medium
             Layout.preferredHeight: Kirigami.Units.iconSizes.medium
             Layout.alignment: Qt.AlignTop
-            visible: !item.inGroup || item.notif.image
+            visible: !item.inGroup || !!item.notif.image
             source: item.notif.image ? item.notif.image
                 : (item.notif.iconName || item.notif.applicationIconName || "preferences-desktop-notification")
         }

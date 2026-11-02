@@ -29,6 +29,7 @@ Item {
     required property Item mediaState
     required property Item notifications
     required property Item calendar
+    required property Item monitor
     // The drawer's look: icon tabs with a sliding indicator instead of Plasma's TabBar
     property bool drawerStyle: false
 
@@ -55,6 +56,9 @@ Item {
         }
         if (island.cfg.showShelf) {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
+        }
+        if (island.cfg.showSystem) {
+            t.push({key: "system", label: i18n("System"), icon: "utilities-system-monitor"});
         }
         return t;
     }
@@ -290,6 +294,7 @@ Item {
                     mediaState: content.mediaState
                     notifications: content.notifications
                     calendar: content.calendar
+                    monitor: content.monitor
                     onOpenTab: key => {
                         if (content.hasTab(key)) {
                             content.currentKey = key;
@@ -323,6 +328,12 @@ Item {
                 key: "agenda"
                 sourceComponent: AgendaTab {
                     calendar: content.calendar
+                }
+            }
+            Page {
+                key: "system"
+                sourceComponent: SystemTab {
+                    monitor: content.monitor
                 }
             }
             Page {
