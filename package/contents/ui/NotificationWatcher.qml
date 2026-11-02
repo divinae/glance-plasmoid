@@ -20,13 +20,75 @@ Item {
     property var ignoredApps: []
 
     readonly property alias model: historyModel
+    // The same history, grouped by application, for the Notifications tab
+    readonly property alias groupedModel: groupedModel
     readonly property int count: historyModel.count
     readonly property int unreadCount: historyModel.unreadNotificationsCount
-    readonly property bool doNotDisturb: {
+    // Ticks while Do Not Disturb runs, so a timed one ends on time in the UI too
+    property date now: new Date()
+    Timer {
+        interval: 30000
+        repeat: true
+        running: watcher.doNotDisturb
+        onTriggered: watcher.now = new Date()
+    }
+
+    readonly property var dndUntil: {
         const until = settings.notificationsInhibitedUntil;
-        return NotificationManager.Server.inhibited
-            || (until !== undefined && !isNaN(until) && until > new Date())
-            || settings.notificationsInhibitedByApplication;
+        return until !== undefined && until !== null && !isNaN(until) && until > now ? until : null;
+    }
+    readonly property bool dndByApplication: settings.notificationsInhibitedByApplication
+    readonly property bool doNotDisturb: NotificationManager.Server.inhibited || dndUntil !== null || dndByApplication
+
+    // "Until 14:00", "Until tomorrow, 8:00", "Until turned off", "Requested by an application"
+    readonly property string dndText: {
+        if (!doNotDisturb) {
+            return "";
+        }
+        if (dndUntil) {
+            const u = new Date(dndUntil);
+            if (u.getFullYear() > now.getFullYear()) {
+                return i18n("Until turned off");
+            }
+            const time = Qt.formatTime(u, Qt.locale().timeFormat(Locale.ShortFormat));
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const day = Math.round((new Date(u.getFullYear(), u.getMonth(), u.getDate()) - today) / 86400000);
+            if (day === 0) {
+                return i18nc("do not disturb until a time today", "Until %1", time);
+            }
+            if (day === 1) {
+                return i18nc("do not disturb until a time tomorrow", "Until tomorrow, %1", time);
+            }
+            return i18nc("do not disturb until a day and time", "Until %1, %2",
+                u.toLocaleDateString(Qt.locale(), "dddd"), time);
+        }
+        if (dndByApplication) {
+            return i18n("Requested by an application");
+        }
+        return i18n("On");
+    }
+
+    // The durations offered when turning it on, as the stock applet does
+    function dndChoices() {
+        const n = new Date();
+        const out = [
+            {label: i18n("For 1 hour"), until: new Date(n.getTime() + 3600000)},
+            {label: i18n("For 4 hours"), until: new Date(n.getTime() + 4 * 3600000)},
+        ];
+        if (n.getHours() < 17) {
+            out.push({label: i18n("Until this evening"), until: new Date(n.getFullYear(), n.getMonth(), n.getDate(), 18)});
+        }
+        out.push({label: i18n("Until tomorrow morning"), until: new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 8)});
+        const forever = new Date(n);
+        forever.setFullYear(forever.getFullYear() + 1); // "until turned off", as the stock applet stores it
+        out.push({label: i18n("Until turned off"), until: forever});
+        return out;
+    }
+
+    function setDoNotDisturbUntil(until) {
+        settings.notificationsInhibitedUntil = until;
+        settings.save();
+        now = new Date();
     }
 
     signal pulse(color color, string summary)
@@ -40,12 +102,12 @@ Item {
         if (doNotDisturb) {
             settings.notificationsInhibitedUntil = undefined;
             settings.revokeApplicationInhibitions();
+            settings.save();
+            now = new Date();
         } else {
-            const d = new Date();
-            d.setFullYear(d.getFullYear() + 1); // "until turned off", as the stock applet does
-            settings.notificationsInhibitedUntil = d;
+            const choices = dndChoices();
+            setDoNotDisturbUntil(choices[choices.length - 1].until);
         }
-        settings.save();
     }
 
     function clearHistory() {
@@ -61,6 +123,11 @@ Item {
         id: historyModel
         showExpired: true
         showDismissed: true
+        // Neither is on by default: no notifications at all without the first, none from while
+        // Do Not Disturb was on without the second
+        showNotifications: true
+        showAddedDuringInhibition: true
+        ignoreBlacklistDuringInhibition: true
         showJobs: settings.jobsInNotifications
         sortMode: NotificationManager.Notifications.SortByDate
         sortOrder: Qt.DescendingOrder
@@ -77,6 +144,26 @@ Item {
         }
 
         onRowsInserted: (parent, first, last) => watcher.handleInserted(first, last)
+    }
+
+    NotificationManager.Notifications {
+        id: groupedModel
+        showExpired: true
+        showDismissed: true
+        // Neither is on by default: no notifications at all without the first, none from while
+        // Do Not Disturb was on without the second
+        showNotifications: true
+        showAddedDuringInhibition: true
+        ignoreBlacklistDuringInhibition: true
+        showJobs: settings.jobsInNotifications
+        sortMode: NotificationManager.Notifications.SortByDate
+        sortOrder: Qt.DescendingOrder
+        groupMode: NotificationManager.Notifications.GroupApplicationsFlat
+        groupLimit: 2
+        expandUnread: true
+        blacklistedDesktopEntries: settings.historyBlacklistedApplications
+        blacklistedNotifyRcNames: settings.historyBlacklistedServices
+        urgencies: historyModel.urgencies
     }
 
     // The model fills with history at startup; only rows added later are "new"

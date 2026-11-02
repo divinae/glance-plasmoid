@@ -3,33 +3,33 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 
-    Compact notification history. Uses the same model setup as the stock
-    Notifications applet's history (see NotificationWatcher.qml).
+    Notification history, grouped by application, as the stock Notifications applet's (see
+    NotificationWatcher.qml for the models).
 */
 
 import QtQuick
 import QtQuick.Layouts
 
 import org.kde.kirigami as Kirigami
-import org.kde.notificationmanager as NotificationManager
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.extras as PlasmaExtras
+
+import ".."
 
 ColumnLayout {
     id: tab
 
     required property Item watcher
-    readonly property var model: watcher.model
+    readonly property var model: watcher.groupedModel
 
     spacing: Kirigami.Units.smallSpacing
 
     RowLayout {
         Layout.fillWidth: true
 
-        PlasmaComponents.Switch {
-            text: i18n("Do not disturb")
-            checked: tab.watcher.doNotDisturb
-            onToggled: tab.watcher.toggleDoNotDisturb()
+        DndButton {
+            watcher: tab.watcher
+            showText: true
         }
         Item {
             Layout.fillWidth: true
@@ -60,13 +60,16 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.margins: Kirigami.Units.largeSpacing
         visible: tab.watcher.count === 0
-        iconName: "checkmark"
-        text: i18n("No unread notifications")
+        iconName: tab.watcher.doNotDisturb ? "notifications-disabled" : "checkmark"
+        text: i18n("No notifications")
+        explanation: tab.watcher.doNotDisturb ? i18n("Do not disturb: %1", tab.watcher.dndText) : ""
     }
 
     PlasmaComponents.ScrollView {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // It scrolls itself: don't let the page grow (and scroll the header away) with it
+        Layout.preferredHeight: 0
         visible: tab.watcher.count > 0
 
         ListView {
@@ -75,137 +78,77 @@ ColumnLayout {
             spacing: Kirigami.Units.smallSpacing
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            reuseItems: true
 
-            delegate: PlasmaComponents.ItemDelegate {
-                id: item
-
+            delegate: Loader {
+                id: row
                 required property int index
                 required property var model
-
-                readonly property bool isJob: model.type === NotificationManager.Notifications.JobType
-                readonly property bool critical: model.urgency === NotificationManager.Notifications.CriticalUrgency
-                readonly property var actionNames: model.actionNames || []
-                readonly property var actionLabels: model.actionLabels || []
-
-                function modelIndex() {
-                    return tab.model.index(index, 0);
-                }
-
                 width: ListView.view.width
-                onClicked: {
-                    if (model.hasDefaultAction) {
-                        tab.model.invokeDefaultAction(modelIndex());
-                    }
-                }
+                sourceComponent: model.isGroup ? groupHeader : notification
 
-                contentItem: RowLayout {
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Rectangle {
-                        Layout.preferredWidth: 3
-                        Layout.fillHeight: true
-                        radius: 1.5
-                        visible: item.critical
-                        color: Kirigami.Theme.negativeTextColor
-                    }
-
-                    Kirigami.Icon {
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                        Layout.alignment: Qt.AlignTop
-                        source: item.model.image ? item.model.image
-                            : (item.model.iconName || item.model.applicationIconName || "preferences-desktop-notification")
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        RowLayout {
-                            Layout.fillWidth: true
+                Component {
+                    id: groupHeader
+                    // The application: icon, name, how many, expand or collapse, clear the group
+                    PlasmaComponents.ItemDelegate {
+                        readonly property int hidden: row.model.groupChildrenCount - row.model.expandedGroupChildrenCount
+                        onClicked: row.model.isGroupExpanded = !row.model.isGroupExpanded
+                        contentItem: RowLayout {
+                            spacing: Kirigami.Units.smallSpacing
+                            Kirigami.Icon {
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                source: row.model.applicationIconName || "preferences-desktop-notification"
+                            }
                             PlasmaComponents.Label {
                                 Layout.fillWidth: true
-                                text: item.model.applicationName || ""
-                                elide: Text.ElideRight
+                                text: row.model.applicationName || ""
                                 textFormat: Text.PlainText
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+                            PlasmaComponents.Label {
+                                text: row.model.isGroupExpanded || parent.parent.hidden <= 0
+                                    ? i18np("%1 notification", "%1 notifications", row.model.groupChildrenCount)
+                                    : i18np("+%1 more", "+%1 more", parent.parent.hidden)
                                 font: Kirigami.Theme.smallFont
                                 opacity: 0.7
                             }
-                            PlasmaComponents.Label {
-                                text: tab.ago(item.model.updated || item.model.created)
-                                font: Kirigami.Theme.smallFont
-                                opacity: 0.6
+                            Kirigami.Icon {
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                visible: row.model.groupChildrenCount > 2
+                                source: row.model.isGroupExpanded ? "arrow-up" : "arrow-down"
                             }
-                        }
-                        PlasmaComponents.Label {
-                            Layout.fillWidth: true
-                            text: item.model.summary || ""
-                            font.bold: !item.model.read
-                            elide: Text.ElideRight
-                            textFormat: Text.PlainText
-                            visible: text !== ""
-                        }
-                        PlasmaComponents.Label {
-                            Layout.fillWidth: true
-                            text: item.model.body || ""
-                            textFormat: Text.StyledText
-                            wrapMode: Text.Wrap
-                            maximumLineCount: 3
-                            elide: Text.ElideRight
-                            visible: text !== ""
-                            opacity: 0.85
-                            onLinkActivated: link => Qt.openUrlExternally(link)
-                        }
-                        PlasmaComponents.ProgressBar {
-                            Layout.fillWidth: true
-                            visible: item.isJob && item.model.jobState !== NotificationManager.Notifications.JobStateStopped
-                            from: 0
-                            to: 100
-                            value: item.model.percentage || 0
-                        }
-                        Flow {
-                            Layout.fillWidth: true
-                            visible: item.actionNames.length > 0
-                            spacing: Kirigami.Units.smallSpacing
-                            Repeater {
-                                model: item.actionNames.length
-                                PlasmaComponents.Button {
-                                    required property int index
-                                    text: item.actionLabels[index] || item.actionNames[index]
-                                    onClicked: tab.model.invokeAction(item.modelIndex(), item.actionNames[index])
-                                }
+                            PlasmaComponents.ToolButton {
+                                icon.name: "window-close"
+                                display: PlasmaComponents.AbstractButton.IconOnly
+                                text: i18n("Clear Group")
+                                onClicked: tab.model.close(tab.model.index(row.index, 0))
+                                PlasmaComponents.ToolTip.text: text
+                                PlasmaComponents.ToolTip.visible: hovered
                             }
                         }
                     }
+                }
 
-                    PlasmaComponents.ToolButton {
-                        Layout.alignment: Qt.AlignTop
-                        icon.name: "window-close"
-                        visible: item.model.closable !== false
-                        display: PlasmaComponents.AbstractButton.IconOnly
-                        text: i18n("Close")
-                        onClicked: tab.model.close(item.modelIndex())
+                Component {
+                    id: notification
+                    PlasmaComponents.ItemDelegate {
+                        leftPadding: row.model.isInGroup ? Kirigami.Units.gridUnit : Kirigami.Units.smallSpacing
+                        onClicked: {
+                            if (row.model.hasDefaultAction) {
+                                tab.model.invokeDefaultAction(tab.model.index(row.index, 0), 1 /* Close */);
+                            }
+                        }
+                        contentItem: NotificationItem {
+                            notifications: tab.model
+                            rowIndex: row.index
+                            notif: row.model
+                            inGroup: row.model.isInGroup === true
+                        }
                     }
                 }
             }
         }
-    }
-
-    function ago(d) {
-        if (!d) {
-            return "";
-        }
-        const secs = Math.max(0, (Date.now() - new Date(d).getTime()) / 1000);
-        if (secs < 60) {
-            return i18nc("notification time", "now");
-        }
-        if (secs < 3600) {
-            return i18nc("notification time, minutes", "%1 min", Math.floor(secs / 60));
-        }
-        if (secs < 86400) {
-            return i18nc("notification time, hours", "%1 h", Math.floor(secs / 3600));
-        }
-        return Qt.formatDate(new Date(d), Qt.locale().dateFormat(Locale.ShortFormat));
     }
 }

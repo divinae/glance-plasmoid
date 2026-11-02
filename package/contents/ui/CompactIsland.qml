@@ -299,8 +299,21 @@ MouseArea {
                 anchors.rightMargin: -compact.margin / 2 - width / 2
                 anchors.verticalCenter: parent.verticalCenter
                 visible: compact.island.cfg.showNotifications && compact.island.cfg.unreadDot
-                    && compact.notifications.unreadCount > 0
+                    && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
                 color: Kirigami.Theme.highlightColor
+            }
+            // Do Not Disturb: a small crossed-out bell at the end of the strip, upright
+            Kirigami.Icon {
+                width: Math.round(compact.pillThickness * 0.62)
+                height: width
+                anchors.right: parent.right
+                anchors.rightMargin: -compact.margin / 2 - width / 2
+                anchors.verticalCenter: parent.verticalCenter
+                rotation: -content.rotation
+                visible: compact.island.cfg.showNotifications && compact.notifications.doNotDisturb
+                source: "notifications-disabled"
+                color: compact.foreground
+                isMask: true
             }
         }
 

@@ -11,6 +11,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.notificationmanager as NotificationManager
 import org.kde.plasma.components as PlasmaComponents
 
+import ".."
+
 // Unread count, the latest two notifications, and Do Not Disturb. A click opens the tab.
 Tile {
     id: tile
@@ -52,17 +54,19 @@ Tile {
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
-            PlasmaComponents.ToolButton {
-                icon.name: tile.watcher.doNotDisturb ? "notifications-disabled" : "notifications"
-                checkable: true
-                checked: tile.watcher.doNotDisturb
-                display: PlasmaComponents.AbstractButton.IconOnly
-                text: i18n("Do not disturb")
-                onClicked: tile.watcher.toggleDoNotDisturb()
-                PlasmaComponents.ToolTip.text: text
-                PlasmaComponents.ToolTip.visible: hovered
-                PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
+            DndButton {
+                watcher: tile.watcher
             }
+        }
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            visible: tile.watcher.doNotDisturb
+            text: i18n("Do not disturb: %1", tile.watcher.dndText)
+            textFormat: Text.PlainText
+            elide: Text.ElideRight
+            color: Kirigami.Theme.neutralTextColor
+            font: Kirigami.Theme.smallFont
         }
 
         Repeater {
