@@ -74,7 +74,7 @@ MouseArea {
     onContainsMouseChanged: island.compactHovered = containsMouse
 
     property bool wasExpanded: false
-    onPressed: wasExpanded = island.expanded
+    onPressed: wasExpanded = island.open
     onClicked: mouse => {
         if (mouse.button === Qt.MiddleButton) {
             if (island.hasPlayer) {
@@ -85,12 +85,12 @@ MouseArea {
         if (wasExpanded && !island.pinnedByClick) {
             // opened by hover: a click pins it
             island.pinnedByClick = true;
-            island.expanded = true;
+            island.setOpen(true);
         } else if (wasExpanded) {
-            island.expanded = false;
+            island.setOpen(false);
         } else {
             island.pinnedByClick = true;
-            island.expanded = true;
+            island.setOpen(true);
         }
     }
     onWheel: wheel => {
@@ -141,7 +141,7 @@ MouseArea {
             anchors.fill: parent
             anchors.margins: compact.inset
             radius: height / 2
-            readonly property bool lit: compact.containsMouse || compact.island.expanded
+            readonly property bool lit: compact.containsMouse || compact.island.open
             color: Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.24 : 0.12)
             border.width: 1
             border.color: Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.45 : 0.25)

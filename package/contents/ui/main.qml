@@ -18,6 +18,7 @@ PlasmoidItem {
     id: root
 
     readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+    readonly property int panelLocation: Plasmoid.location
     readonly property var cfg: Plasmoid.configuration
 
     // ---- active window -------------------------------------------------------
@@ -81,6 +82,38 @@ PlasmoidItem {
     // Tab to show next time the popup opens (e.g. "shelf" after a drag onto the strip)
     property string requestedTab: ""
 
+    // ---- popup or drawer --------------------------------------------------------
+    // The drawer is a layer-shell window of its own (drawer/Drawer.qml); Plasma's popup is the
+    // fallback when it is turned off or org.kde.layershell is missing. `open` is the one state
+    // both follow: Plasma's `expanded` for the popup, `drawerOpen` for the drawer.
+    property var moduleProbes: ({})
+    function moduleAvailable(probeFile: string): bool {
+        if (!(probeFile in moduleProbes)) {
+            const probe = Qt.createComponent(Qt.resolvedUrl(probeFile), Component.PreferSynchronous);
+            moduleProbes[probeFile] = probe.status === Component.Ready;
+            if (probe.status === Component.Error) {
+                console.warn("Island:", probe.errorString());
+            }
+            probe.destroy();
+        }
+        return moduleProbes[probeFile];
+    }
+    readonly property bool useDrawer: cfg.popupStyle === 0 && moduleAvailable("LayerShellProbe.qml")
+    property bool drawerOpen: false
+    readonly property bool open: useDrawer ? drawerOpen : expanded
+
+    function setOpen(value: bool) {
+        if (useDrawer) {
+            drawerOpen = value;
+        } else {
+            expanded = value;
+        }
+    }
+    onUseDrawerChanged: {
+        drawerOpen = false;
+        expanded = false;
+    }
+
     function truncate(text: string): string {
         const max = cfg.maxTitleLength;
         return text.length > max ? text.slice(0, max - 1) + "…" : text;
@@ -91,7 +124,7 @@ PlasmoidItem {
         if (pin) {
             pinnedByClick = true;
         }
-        expanded = true;
+        setOpen(true);
     }
 
     toolTipMainText: ""
@@ -103,11 +136,19 @@ PlasmoidItem {
     // a click-pinned popup behaves like a normal applet popup.
     hideOnWindowDeactivate: pinnedByClick && !menuModel.menuOpen
 
-    onExpandedChanged: {
-        if (!root.expanded) {
+    onOpenChanged: {
+        if (!root.open) {
             pinnedByClick = false;
             closeTimer.stop();
             menuModel.closeMenu();
+        }
+    }
+    // With the drawer, Plasma's own expansion (the widget's shortcut) toggles the drawer instead
+    onExpandedChanged: {
+        if (useDrawer && expanded) {
+            expanded = false;
+            pinnedByClick = !drawerOpen;
+            drawerOpen = !drawerOpen;
         }
     }
 
@@ -116,7 +157,7 @@ PlasmoidItem {
         interval: root.cfg.hoverDelay
         onTriggered: {
             if (root.compactHovered) {
-                root.expanded = true;
+                root.setOpen(true);
             }
         }
     }
@@ -126,7 +167,7 @@ PlasmoidItem {
         interval: root.cfg.closeDelay
         onTriggered: {
             if (!root.pinnedByClick && !root.compactHovered && !root.flyoutHovered && !menuModel.menuOpen) {
-                root.expanded = false;
+                root.setOpen(false);
             }
         }
     }
@@ -134,12 +175,12 @@ PlasmoidItem {
     onCompactHoveredChanged: {
         if (compactHovered) {
             closeTimer.stop();
-            if (cfg.openOnHover && !expanded) {
+            if (cfg.openOnHover && !open) {
                 openTimer.restart();
             }
         } else {
             openTimer.stop();
-            if (expanded) {
+            if (open) {
                 closeTimer.restart();
             }
         }
@@ -148,7 +189,7 @@ PlasmoidItem {
     onFlyoutHoveredChanged: {
         if (flyoutHovered) {
             closeTimer.stop();
-        } else if (expanded) {
+        } else if (open) {
             closeTimer.restart();
         }
     }
@@ -206,7 +247,7 @@ PlasmoidItem {
         objectPath: root.activeTask ? root.activeTask.menuPath : ""
 
         onMenuOpenChanged: {
-            if (!menuOpen && root.expanded) {
+            if (!menuOpen && root.open) {
                 closeTimer.restart();
             }
         }
@@ -220,7 +261,7 @@ PlasmoidItem {
         noiseReduction: root.cfg.cavaNoiseReduction
         running: root.playing && root.cfg.showMedia
             && !(root.cfg.pauseOnFullscreen && root.fullScreen)
-            && (root.expanded || (root.cfg.cavaInPanel && root.cfg.mediaInPanel))
+            && (root.open || (root.cfg.cavaInPanel && root.cfg.mediaInPanel))
     }
 
     compactRepresentation: CompactIsland {
@@ -231,14 +272,52 @@ PlasmoidItem {
         calendar: calendarSource
     }
 
-    fullRepresentation: Flyout {
-        island: root
-        tasks: windowTasks
-        appMenu: menuModel
-        cava: cavaSource
-        mpris: mprisModel
-        mediaState: mediaStateItem
-        notifications: notificationWatcher
-        calendar: calendarSource
+    fullRepresentation: useDrawer ? null : flyoutComponent
+
+    Component {
+        id: flyoutComponent
+        Flyout {
+            island: root
+            tasks: windowTasks
+            appMenu: menuModel
+            cava: cavaSource
+            mpris: mprisModel
+            mediaState: mediaStateItem
+            notifications: notificationWatcher
+            calendar: calendarSource
+        }
+    }
+
+    // The drawer exists only while open or closing: no window made at plasmashell's start.
+    property bool drawerLoaded: false
+    onDrawerOpenChanged: {
+        if (drawerOpen) {
+            drawerLoaded = true;
+        }
+    }
+    Loader {
+        id: drawerLoader
+        active: root.useDrawer && root.drawerLoaded && root.compactRepresentationItem !== null
+        source: Qt.resolvedUrl("drawer/Drawer.qml")
+        onLoaded: {
+            item.island = root;
+            item.anchorItem = Qt.binding(() => root.compactRepresentationItem);
+            item.tasks = windowTasks;
+            item.appMenu = menuModel;
+            item.cava = cavaSource;
+            item.mpris = mprisModel;
+            item.mediaState = mediaStateItem;
+            item.notifications = notificationWatcher;
+            item.calendar = calendarSource;
+            item.ready = true;
+        }
+        Connections {
+            target: drawerLoader.item
+            function onFullyClosed() {
+                if (!root.drawerOpen) {
+                    root.drawerLoaded = false;
+                }
+            }
+        }
     }
 }

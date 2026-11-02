@@ -7,7 +7,7 @@ QMLLINT ?= /usr/lib/qt6/bin/qmllint
 QMLLINT_FLAGS = --unqualified disable --missing-property disable \
 	-I $(BUILD_DIR)/bin -I $(PREFIX)/lib/qml
 
-QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml)
+QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml)
 
 .PHONY: all configure build install uninstall lint restart run package clean
 

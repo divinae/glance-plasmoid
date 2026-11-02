@@ -56,6 +56,35 @@
       <min>10</min>
       <max>40</max>
     </entry>
+    <!-- 0 drawer out of the screen edge (layer-shell), 1 Plasma's popup -->
+    <entry name="popupStyle" type="Enum">
+      <choices>
+        <choice name="Drawer"/>
+        <choice name="Popup"/>
+      </choices>
+      <default>0</default>
+    </entry>
+    <!-- 0 out of the panel's edge beside the island, 1 centered under the top of the screen -->
+    <entry name="drawerEdge" type="Enum">
+      <choices>
+        <choice name="Panel"/>
+        <choice name="Top"/>
+      </choices>
+      <default>0</default>
+    </entry>
+    <entry name="drawerRadius" type="Int">
+      <default>20</default>
+      <min>0</min>
+      <max>48</max>
+    </entry>
+    <entry name="drawerWidth" type="Int">
+      <default>30</default>
+      <min>20</min>
+      <max>50</max>
+    </entry>
+    <entry name="showDashboard" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="switchTabOnHover" type="Bool">
       <default>true</default>
     </entry>

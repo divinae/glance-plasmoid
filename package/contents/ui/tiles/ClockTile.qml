@@ -1,0 +1,61 @@
+/*
+    SPDX-FileCopyrightText: 2026 Jakub Lipiński <lipinski.j@pm.me>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
+
+import QtQuick
+import QtQuick.Layouts
+
+import org.kde.kirigami as Kirigami
+import org.kde.plasma.components as PlasmaComponents
+
+// The time, large, and the date.
+Tile {
+    id: tile
+
+    property date now: new Date()
+    Timer {
+        interval: 1000
+        repeat: true
+        running: tile.visible
+        triggeredOnStart: true
+        onTriggered: tile.now = new Date()
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        Item {
+            Layout.fillHeight: true
+        }
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: Qt.formatTime(tile.now, Qt.locale().timeFormat(Locale.ShortFormat))
+            textFormat: Text.PlainText
+            font.pointSize: Kirigami.Theme.defaultFont.pointSize * 2.8
+            font.weight: Font.Bold
+            fontSizeMode: Text.HorizontalFit
+            minimumPointSize: Kirigami.Theme.defaultFont.pointSize
+        }
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: tile.now.toLocaleDateString(Qt.locale(), "dddd")
+            textFormat: Text.PlainText
+            font.weight: Font.DemiBold
+            color: Kirigami.Theme.highlightColor
+            elide: Text.ElideRight
+        }
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: tile.now.toLocaleDateString(Qt.locale(), "d MMMM yyyy")
+            textFormat: Text.PlainText
+            opacity: 0.7
+            elide: Text.ElideRight
+        }
+        Item {
+            Layout.fillHeight: true
+        }
+    }
+}

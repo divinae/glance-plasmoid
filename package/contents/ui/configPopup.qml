@@ -12,6 +12,11 @@ import org.kde.kcmutils as KCM
 import org.kde.kirigami as Kirigami
 
 KCM.SimpleKCM {
+    property alias cfg_popupStyle: popupStyle.currentIndex
+    property alias cfg_drawerEdge: drawerEdge.currentIndex
+    property alias cfg_drawerRadius: drawerRadius.value
+    property alias cfg_drawerWidth: drawerWidth.value
+    property alias cfg_showDashboard: showDashboard.checked
     property alias cfg_openOnHover: openOnHover.checked
     property alias cfg_hoverDelay: hoverDelay.value
     property alias cfg_closeDelay: closeDelay.value
@@ -25,6 +30,44 @@ KCM.SimpleKCM {
     property alias cfg_showShelf: showShelf.checked
 
     Kirigami.FormLayout {
+        QQC2.ComboBox {
+            id: popupStyle
+            Kirigami.FormData.label: i18n("Style:")
+            model: [i18n("Drawer from the screen edge"), i18n("Plasma popup")]
+        }
+        QQC2.Label {
+            Layout.fillWidth: true
+            visible: popupStyle.currentIndex === 0
+            text: i18n("The drawer needs layer-shell-qt; without it the Plasma popup is used.")
+            wrapMode: Text.Wrap
+            opacity: 0.7
+            font: Kirigami.Theme.smallFont
+        }
+        QQC2.ComboBox {
+            id: drawerEdge
+            Kirigami.FormData.label: i18n("Drawer opens:")
+            enabled: popupStyle.currentIndex === 0
+            model: [i18n("From the panel, beside the island"), i18n("From the top of the screen")]
+        }
+        QQC2.SpinBox {
+            id: drawerWidth
+            Kirigami.FormData.label: i18n("Drawer width (grid units):")
+            enabled: popupStyle.currentIndex === 0
+            from: 20
+            to: 50
+        }
+        QQC2.SpinBox {
+            id: drawerRadius
+            Kirigami.FormData.label: i18n("Corner radius (px):")
+            enabled: popupStyle.currentIndex === 0
+            from: 0
+            to: 48
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+        }
+
         QQC2.CheckBox {
             id: openOnHover
             Kirigami.FormData.label: i18n("Open:")
@@ -62,8 +105,12 @@ KCM.SimpleKCM {
         }
 
         QQC2.CheckBox {
-            id: showWindowButtons
+            id: showDashboard
             Kirigami.FormData.label: i18n("Show:")
+            text: i18n("Dashboard tab")
+        }
+        QQC2.CheckBox {
+            id: showWindowButtons
             text: i18n("Window buttons")
         }
         QQC2.CheckBox {

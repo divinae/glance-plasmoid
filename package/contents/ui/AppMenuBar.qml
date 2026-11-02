@@ -17,7 +17,9 @@ Flow {
     readonly property int count: repeater.count
 
     spacing: 0
-    Component.onCompleted: appMenu.buttonGrid = bar
+    // The dashboard tile and the Window tab each have a bar: the one on show gets the menus
+    Component.onCompleted: if (visible) appMenu.buttonGrid = bar
+    onVisibleChanged: if (visible) appMenu.buttonGrid = bar
     Component.onDestruction: {
         if (appMenu.buttonGrid === bar) {
             appMenu.buttonGrid = null;

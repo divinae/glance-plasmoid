@@ -31,17 +31,17 @@ Item {
                 list.push(s);
             }
         }
-        Plasmoid.configuration.shelfItems = list;
+        tab.island.cfg.shelfItems = list;
     }
     function remove(url) {
-        Plasmoid.configuration.shelfItems = items.filter(u => u !== url);
+        tab.island.cfg.shelfItems = items.filter(u => u !== url);
     }
 
     Component.onCompleted: {
         // drop entries whose files were deleted meanwhile
         const alive = items.filter(u => Island.ShelfHelper.exists(u));
         if (alive.length !== items.length) {
-            Plasmoid.configuration.shelfItems = alive;
+            tab.island.cfg.shelfItems = alive;
         }
     }
 
@@ -146,7 +146,7 @@ Item {
             PlasmaComponents.ToolButton {
                 text: i18n("Clear Shelf")
                 icon.name: "edit-clear-all"
-                onClicked: Plasmoid.configuration.shelfItems = []
+                onClicked: tab.island.cfg.shelfItems = []
             }
         }
     }
