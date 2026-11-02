@@ -9,6 +9,8 @@ find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED
     Widgets
     DBus
 )
+find_package(KF6WindowSystem ${KF6_MIN_VERSION} REQUIRED)
+find_package(Plasma REQUIRED)
 
 # Vendored libdbusmenuqt (static inside plasma-workspace, not installed)
 set(dbusmenu_SRCS
@@ -44,6 +46,8 @@ target_sources(islandplugin PRIVATE
     appmenumodel.h
     cavasource.cpp
     cavasource.h
+    drawereffects.cpp
+    drawereffects.h
     shelfhelper.cpp
     shelfhelper.h
 )
@@ -55,6 +59,8 @@ target_link_libraries(islandplugin PRIVATE
     Qt::Quick
     Qt::Widgets
     Qt::DBus
+    KF6::WindowSystem
+    Plasma::Plasma
     islanddbusmenuqt
 )
 

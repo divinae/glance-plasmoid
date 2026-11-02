@@ -82,6 +82,15 @@
       <min>20</min>
       <max>50</max>
     </entry>
+    <entry name="drawerBlur" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Opacity of the drawer's surface over the blur, percent -->
+    <entry name="drawerOpacity" type="Int">
+      <default>70</default>
+      <min>20</min>
+      <max>100</max>
+    </entry>
     <entry name="showDashboard" type="Bool">
       <default>true</default>
     </entry>

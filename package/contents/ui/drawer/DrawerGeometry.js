@@ -56,3 +56,31 @@ function path(edge, w, h, depth, along, ear, radius) {
     d += " Z";
     return d;
 }
+
+// The same outline as a polygon (x0, y0, x1, y1, ... in window coordinates), for the blur region.
+// Arcs are sampled in `steps` segments.
+function polygon(edge, w, h, depth, along, ear, radius, steps) {
+    if (depth < 0.5 || along <= 0) {
+        return [];
+    }
+    const ee = Math.min(ear, depth / 2);
+    const r = Math.max(0, Math.min(radius, depth - ee, along / 2));
+    const n = steps || 8;
+    const out = [];
+    const add = (u, v) => {
+        const q = toWindow(edge, w, h, u, v, 0, 0);
+        out.push(q.x, q.y);
+    };
+    // Arc around (cu, cv) from angle a0 to a1 (degrees, v pointing down)
+    const arc = (cu, cv, rad, a0, a1) => {
+        for (let i = 0; i <= n; ++i) {
+            const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180;
+            add(cu + rad * Math.cos(a), cv + rad * Math.sin(a));
+        }
+    };
+    arc(ee, ear - ee, ee, 180, 90);                  // ear before the body
+    arc(depth - r, ear + r, r, 270, 360);            // outer corner
+    arc(depth - r, ear + along - r, r, 0, 90);       // outer corner
+    arc(ee, ear + along + ee, ee, 270, 180);         // ear after the body
+    return out;
+}

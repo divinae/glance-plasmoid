@@ -17,6 +17,8 @@ KCM.SimpleKCM {
     property alias cfg_drawerRadius: drawerRadius.value
     property alias cfg_drawerWidth: drawerWidth.value
     property alias cfg_showDashboard: showDashboard.checked
+    property alias cfg_drawerBlur: drawerBlur.checked
+    property alias cfg_drawerOpacity: drawerOpacity.value
     property alias cfg_openOnHover: openOnHover.checked
     property alias cfg_hoverDelay: hoverDelay.value
     property alias cfg_closeDelay: closeDelay.value
@@ -55,6 +57,25 @@ KCM.SimpleKCM {
             enabled: popupStyle.currentIndex === 0
             from: 20
             to: 50
+        }
+        QQC2.CheckBox {
+            id: drawerBlur
+            Kirigami.FormData.label: i18n("Background:")
+            enabled: popupStyle.currentIndex === 0
+            text: i18n("Translucent with blur, like the panel")
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18n("Opacity:")
+            enabled: popupStyle.currentIndex === 0 && drawerBlur.checked
+            QQC2.Slider {
+                id: drawerOpacity
+                from: 20
+                to: 100
+                stepSize: 5
+            }
+            QQC2.Label {
+                text: i18nc("percent", "%1%", drawerOpacity.value)
+            }
         }
         QQC2.SpinBox {
             id: drawerRadius

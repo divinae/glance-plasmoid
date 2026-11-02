@@ -11,6 +11,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.layershell as LayerShell
 import org.kde.plasma.core as PlasmaCore
 
+import com.dv.island.private as Island
+
 import ".."
 import "DrawerGeometry.js" as Geometry
 
@@ -179,6 +181,22 @@ Window {
     // ---- surface ---------------------------------------------------------------------
     readonly property real currentDepth: Math.max(0, Math.min(depth + slack, depth * reveal))
 
+    // Blur behind the surface (KWin), its region following the shape as it slides
+    readonly property bool blur: cfg ? cfg.drawerBlur : true
+    readonly property real surfaceOpacity: cfg ? cfg.drawerOpacity / 100 : 0.7
+    function updateEffects() {
+        if (!visible) {
+            return;
+        }
+        Island.DrawerEffects.apply(drawer, blur,
+            blur ? Geometry.polygon(edge, width, height, currentDepth, along, ear, radius, 8) : []);
+    }
+    onCurrentDepthChanged: updateEffects()
+    onBlurChanged: updateEffects()
+    onVisibleChanged: updateEffects()
+    onWidthChanged: updateEffects()
+    onHeightChanged: updateEffects()
+
     Item {
         id: root
         anchors.fill: parent
@@ -200,7 +218,8 @@ Window {
             along: drawer.along
             ear: drawer.ear
             radius: drawer.radius
-            color: Kirigami.Theme.backgroundColor
+            // Translucent over the blurred desktop, like the panel
+            color: Qt.alpha(Kirigami.Theme.backgroundColor, drawer.blur ? drawer.surfaceOpacity : 1)
         }
 
         // The body as far as it is out, clipping the content that slides out with it
