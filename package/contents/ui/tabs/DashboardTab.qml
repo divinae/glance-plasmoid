@@ -14,7 +14,7 @@ import "../tiles"
 // The first tab, after Caelestia's dashboard:
 //
 //   clock | today's events     | CPU·RAM·disk | media
-//   notifications             | shelf
+//   user and system           | notifications | shelf
 // (the window's menus and buttons are in the menu bar along the top of the drawer)
 GridLayout {
     id: tab
@@ -43,10 +43,9 @@ GridLayout {
     // ---- top row ------------------------------------------------------------------
     ClockTile {
         Layout.fillHeight: true
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 5
+        Layout.preferredWidth: Kirigami.Units.gridUnit * 8
         Layout.minimumHeight: Kirigami.Units.gridUnit * 9
-        Layout.columnSpan: tab.showAgenda ? 1 : 2
-        Layout.fillWidth: !tab.showAgenda
+        Layout.fillWidth: true
     }
     // What's next today, from Event Calendar (the month itself is Event Calendar's)
     AgendaTile {
@@ -70,27 +69,33 @@ GridLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: Kirigami.Units.gridUnit * 9
-        Layout.columnSpan: tab.showSystem ? 1 : 2
+        // Takes the places of what's hidden in this row, so it never leaves a gap
+        Layout.columnSpan: 1 + (tab.showAgenda ? 0 : 1) + (tab.showSystem ? 0 : 1)
         island: tab.island
         cava: tab.cava
         mediaState: tab.mediaState
         onOpenMedia: tab.openTab("media")
     }
 
-    // ---- notifications and shelf ------------------------------------------------------
+    // ---- who and what, notifications, shelf ---------------------------------------------
+    InfoTile {
+        Layout.fillWidth: true
+        Layout.preferredHeight: Kirigami.Units.gridUnit * 7
+        Layout.columnSpan: 2
+    }
     NotificationsTile {
         visible: tab.showNotifications
         Layout.fillWidth: true
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 5
-        Layout.columnSpan: tab.showShelf ? 2 : 4
+        Layout.preferredHeight: Kirigami.Units.gridUnit * 7
+        Layout.columnSpan: tab.showShelf ? 1 : 2
         watcher: tab.notifications
         onClicked: tab.openTab("notifications")
     }
     ShelfTile {
         visible: tab.showShelf
         Layout.fillWidth: true
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 5
-        Layout.columnSpan: tab.showNotifications ? 2 : 4
+        Layout.preferredHeight: Kirigami.Units.gridUnit * 7
+        Layout.columnSpan: tab.showNotifications ? 1 : 2
         island: tab.island
         onClicked: tab.openTab("shelf")
     }

@@ -10,7 +10,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
-// The time stacked, hours over minutes with three dots between (Caelestia's), and the date.
+// The time, large, the weekday in the accent colour and the date.
 Tile {
     id: tile
 
@@ -23,46 +23,39 @@ Tile {
         onTriggered: tile.now = new Date()
     }
 
-    readonly property real digitSize: Kirigami.Theme.defaultFont.pointSize * 2.6
-
     ColumnLayout {
-        anchors.centerIn: parent
+        anchors.fill: parent
         spacing: 0
 
-        PlasmaComponents.Label {
-            Layout.alignment: Qt.AlignHCenter
-            text: Qt.formatTime(tile.now, "hh")
-            font.pointSize: tile.digitSize
-            font.weight: Font.Bold
-        }
-        Row {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: -Kirigami.Units.smallSpacing
-            Layout.bottomMargin: -Kirigami.Units.smallSpacing
-            spacing: 3
-            Repeater {
-                model: 3
-                Rectangle {
-                    width: 6
-                    height: 6
-                    radius: 3
-                    color: Kirigami.Theme.highlightColor
-                }
-            }
+        Item {
+            Layout.fillHeight: true
         }
         PlasmaComponents.Label {
-            Layout.alignment: Qt.AlignHCenter
-            text: Qt.formatTime(tile.now, "mm")
-            font.pointSize: tile.digitSize
-            font.weight: Font.Bold
-        }
-        PlasmaComponents.Label {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: Kirigami.Units.smallSpacing
-            text: tile.now.toLocaleDateString(Qt.locale(), "ddd, d")
+            Layout.fillWidth: true
+            text: Qt.formatTime(tile.now, Qt.locale().timeFormat(Locale.ShortFormat))
             textFormat: Text.PlainText
-            color: Kirigami.Theme.highlightColor
+            font.pointSize: Kirigami.Theme.defaultFont.pointSize * 2.8
+            font.weight: Font.Bold
+            fontSizeMode: Text.HorizontalFit
+            minimumPointSize: Kirigami.Theme.defaultFont.pointSize
+        }
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: tile.now.toLocaleDateString(Qt.locale(), "dddd")
+            textFormat: Text.PlainText
             font.weight: Font.DemiBold
+            color: Kirigami.Theme.highlightColor
+            elide: Text.ElideRight
+        }
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: tile.now.toLocaleDateString(Qt.locale(), "d MMMM yyyy")
+            textFormat: Text.PlainText
+            opacity: 0.7
+            elide: Text.ElideRight
+        }
+        Item {
+            Layout.fillHeight: true
         }
     }
 }

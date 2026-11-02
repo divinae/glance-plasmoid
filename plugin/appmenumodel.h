@@ -15,6 +15,7 @@
 
 #include <QAbstractListModel>
 #include <QPointer>
+#include <QTimer>
 #include <QQuickItem>
 #include <qqmlregistration.h>
 
@@ -76,6 +77,7 @@ public:
 
     bool eventFilter(QObject *watched, QEvent *event) override;
     static void anchorToItem(QWindow *popup, QQuickItem *item);
+    int buttonAt(const QPointF &globalPos) const;
 
 Q_SIGNALS:
     void enabledChanged();
@@ -117,10 +119,13 @@ private:
     QPointer<QMenu> m_menu;
 
     QPointer<QMenu> m_currentMenu;
-    QPointer<QMenu> m_sourceMenu;
     QPointer<QQuickItem> m_buttonGrid;
-    // The button the shown menu belongs to, and where it opened: to open or resize it once the
-    // application sends its contents
-    QPointer<QQuickItem> m_menuCtx;
-    QPoint m_menuPos;
+    // Closing one menu to open another: its aboutToHide isn't the menus closing
+    bool m_switching = false;
+    // Menus taken from their parent widget to show (see trigger()): deleted with the importer
+    QList<QPointer<QMenu>> m_detachedMenus;
+    void deleteDetachedMenus();
+    // Switching menus by pointing waits a moment on the button (eventFilter)
+    QTimer m_hoverTimer;
+    int m_hoverIndex = -1;
 };

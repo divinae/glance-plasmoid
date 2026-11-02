@@ -200,7 +200,7 @@ MouseArea {
                 rounded: compact.island.cfg.cavaRounded
                 cava: compact.cava
                 visible: compact.barsShown && (compact.barsBehind || compact.barsBeside)
-                opacity: compact.barsBehind ? compact.island.cfg.cavaBackgroundOpacity / 100 : 1
+                opacity: compact.barsBehind ? compact.island.cfg.cavaBackgroundOpacity / 100 : compact.island.cfg.cavaPanelOpacity / 100
             }
 
             Row {
@@ -232,6 +232,7 @@ MouseArea {
                     rounded: true
                     minimumBarHeight: Math.max(2, Math.round(leadIconItem.width / 6))
                     color: compact.foreground
+                    opacity: compact.island.cfg.cavaPanelOpacity / 100
                 }
                 Rectangle {
                     id: eventDot
@@ -345,9 +346,12 @@ MouseArea {
         // text rather than behind it
         CavaBars {
             id: edgeBars
+            readonly property bool outer: compact.island.cfg.cavaEdge === 0
             anchors.left: pill.left
             anchors.right: pill.right
-            anchors.top: parent.top
+            anchors.top: outer ? parent.top : undefined
+            anchors.bottom: outer ? undefined : parent.bottom
+            opacity: compact.island.cfg.cavaPanelOpacity / 100
             anchors.leftMargin: pill.radius
             anchors.rightMargin: pill.radius
             height: Math.max(3, compact.inset + 2)
@@ -361,9 +365,10 @@ MouseArea {
             minimumBarHeight: 0
             color: Kirigami.Theme.highlightColor
             // Grow from the edge inwards
+            // Grow from the edge inwards: flipped at the outer edge (this frame's top)
             transform: Scale {
                 origin.y: edgeBars.height / 2
-                yScale: -1
+                yScale: edgeBars.outer ? -1 : 1
             }
         }
 

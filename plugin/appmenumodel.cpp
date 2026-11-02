@@ -69,6 +69,13 @@ AppMenuModel::AppMenuModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_serviceWatcher(new QDBusServiceWatcher(this))
 {
+    m_hoverTimer.setSingleShot(true);
+    m_hoverTimer.setInterval(120);
+    connect(&m_hoverTimer, &QTimer::timeout, this, [this] {
+        if (m_hoverIndex >= 0 && m_hoverIndex != m_currentIndex && m_currentIndex >= 0) {
+            Q_EMIT requestActivateIndex(m_hoverIndex);
+        }
+    });
     acquireViewService();
     m_holdsViewService = true;
 
@@ -93,8 +100,8 @@ AppMenuModel::~AppMenuModel()
     if (m_currentMenu) {
         m_currentMenu->removeEventFilter(this);
         m_currentMenu->hide();
-        delete m_currentMenu;
     }
+    deleteDetachedMenus();
     if (m_holdsViewService) {
         releaseViewService();
     }
@@ -276,6 +283,7 @@ void AppMenuModel::updateApplicationMenu()
         m_loadedObjectPath.clear();
         m_serviceWatcher->setWatchedServices({});
         m_importer.reset();
+        deleteDetachedMenus();
         m_menu.clear();
         Q_EMIT modelNeedsUpdate();
         return;
@@ -285,13 +293,13 @@ void AppMenuModel::updateApplicationMenu()
     m_loadedObjectPath = menuObjectPath;
     m_serviceWatcher->setWatchedServices(QStringList({serviceName}));
 
-    // The shared popup holds the old menu's actions while open: give them back and start afresh
+    // The shown menu belongs to the old importer, which goes now, with the menus detached from it
     if (m_currentMenu) {
+        m_currentMenu->removeEventFilter(this);
         m_currentMenu->hide();
-        m_currentMenu->deleteLater();
         m_currentMenu.clear();
     }
-    m_sourceMenu.clear();
+    deleteDetachedMenus();
     m_importer = std::make_unique<KDBusMenuImporter>(serviceName, menuObjectPath);
     QMetaObject::invokeMethod(m_importer.get(), "updateMenu", Qt::QueuedConnection);
 
@@ -333,19 +341,6 @@ void AppMenuModel::updateApplicationMenu()
         Q_EMIT modelNeedsUpdate();
     });
 
-    // Contents for the shown menu: fit it to them, or open it if it was waiting for them
-    connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
-        if (!m_currentMenu || menu != m_currentMenu || m_currentIndex < 0 || !m_menuCtx || !m_menuCtx->window()) {
-            return;
-        }
-        if (m_currentMenu->isVisible()) {
-            m_currentMenu->adjustSize();
-        } else if (!m_currentMenu->actions().isEmpty()) {
-            anchorToItem(m_currentMenu->windowHandle(), m_menuCtx);
-            m_currentMenu->popup(m_menuPos);
-        }
-    });
-
     connect(m_importer.get(), &DBusMenuImporter::actionActivationRequested, this, [this](QAction *action) {
         if (!m_menuAvailable || !m_menu) {
             return;
@@ -372,23 +367,23 @@ QMenu *AppMenuModel::menuForIndex(int idx) const
     return actions.at(idx)->menu();
 }
 
+void AppMenuModel::deleteDetachedMenus()
+{
+    for (const QPointer<QMenu> &menu : std::as_const(m_detachedMenus)) {
+        if (menu) {
+            menu->deleteLater();
+        }
+    }
+    m_detachedMenus.clear();
+}
+
 void AppMenuModel::onMenuAboutToHide()
 {
+    // Not while switching to another menu: that one is current already
+    if (m_switching || sender() != m_currentMenu) {
+        return;
+    }
     setCurrentIndex(-1);
-    // Give the actions back to the importer's menu once the triggered action (if any)
-    // has been activated; QMenu hides before it activates the chosen action.
-    QTimer::singleShot(0, this, [this] {
-        if (!m_currentMenu || !m_sourceMenu || m_currentMenu->isVisible()) {
-            return;
-        }
-        const auto actions = m_currentMenu->actions();
-        for (QAction *action : actions) {
-            m_currentMenu->removeAction(action);
-            m_sourceMenu->addAction(action);
-        }
-        m_sourceMenu->menuAction()->setMenu(m_sourceMenu);
-        m_sourceMenu.clear();
-    });
 }
 
 void AppMenuModel::closeMenu()
@@ -400,8 +395,7 @@ void AppMenuModel::closeMenu()
 
 void AppMenuModel::trigger(QQuickItem *ctx, int idx)
 {
-    // The same menu already on show: nothing to do (one still waiting for its contents may be
-    // asked again)
+    // The same menu already on show: nothing to do
     if (m_currentIndex == idx && m_currentMenu && m_currentMenu->isVisible()) {
         return;
     }
@@ -427,71 +421,47 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
         }
     };
 
-    // One persistent QMenu that adopts the actions of whichever top-level menu is shown,
-    // so switching menus while open only moves it instead of re-opening.
-    if (!m_currentMenu) {
-        // No parent widget: Qt would then make that widget's (hidden) window the popup's parent
-        // when it shows, overriding the transient parent set below, and on Wayland the compositor
-        // dismisses a popup whose parent isn't on screen
-        m_currentMenu = new QMenu();
-        connect(m_currentMenu, &QMenu::aboutToHide, this, &AppMenuModel::onMenuAboutToHide, Qt::UniqueConnection);
-        // Also fires for actions in its submenus
-        connect(m_currentMenu, &QMenu::triggered, this, &AppMenuModel::actionTriggered);
-    } else if (m_sourceMenu && m_sourceMenu != actionMenu) {
-        const auto actions = m_currentMenu->actions();
-        for (QAction *action : actions) {
-            m_currentMenu->removeAction(action);
-            m_sourceMenu->addAction(action);
-        }
-        m_sourceMenu->menuAction()->setMenu(m_sourceMenu);
+    // The application's own menu is shown, as Plasma's Global Menu does: showing it asks the
+    // application for its contents (aboutToShow), which arrive lazily over D-Bus. Moving to
+    // another one closes this one and opens that.
+    if (m_currentMenu && m_currentMenu != actionMenu && m_currentMenu->isVisible()) {
+        m_switching = true;
+        m_currentMenu->hide();
+        m_switching = false;
     }
-    m_sourceMenu = actionMenu;
-    const auto sourceActions = m_sourceMenu->actions();
-    for (QAction *action : sourceActions) {
-        m_sourceMenu->removeAction(action);
-        m_currentMenu->addAction(action);
+    if (m_currentMenu && m_currentMenu != actionMenu) {
+        m_currentMenu->removeEventFilter(this);
     }
-    m_sourceMenu->menuAction()->setMenu(m_currentMenu);
-
-    // Ask the application for this menu's current contents, as showing its own menu would
-    // (aboutToShow): menus are sent lazily, and one never asked for opened empty, i.e. not at
-    // all. The answer lands in the shown menu, which now stands in for it (menuUpdated below).
-    if (m_importer) {
-        m_importer->updateMenu(actionMenu);
+    // No parent widget while it's ours to show: Qt makes a popup's parent widget's window its
+    // parent when it shows, here the application's root menu's, never on screen, overriding the
+    // drawer set below, and the compositor then dismisses it. Glance deletes these itself.
+    if (actionMenu->parentWidget()) {
+        actionMenu->setParent(nullptr, actionMenu->windowFlags());
+        m_detachedMenus.append(actionMenu);
     }
+    m_currentMenu = actionMenu;
+    connect(actionMenu, &QMenu::aboutToHide, this, &AppMenuModel::onMenuAboutToHide, Qt::UniqueConnection);
+    // Also fires for actions in its submenus
+    connect(actionMenu, &QMenu::triggered, this, &AppMenuModel::actionTriggered, Qt::UniqueConnection);
+    actionMenu->removeEventFilter(this);
+    actionMenu->installEventFilter(this);
 
     QTimer::singleShot(0, ctx, ungrabMouseHack);
 
     const QRect geo = ctx->window()->screen()->availableVirtualGeometry();
     QPoint pos = ctx->window()->mapToGlobal(ctx->mapToScene(QPointF(0, ctx->height())).toPoint());
+    actionMenu->adjustSize();
+    pos = QPoint(qBound(geo.x(), pos.x(), geo.x() + geo.width() - actionMenu->width()),
+                 qBound(geo.y(), pos.y(), geo.y() + geo.height() - actionMenu->height()));
 
-    m_currentMenu->adjustSize();
-    pos = QPoint(qBound(geo.x(), pos.x(), geo.x() + geo.width() - m_currentMenu->width()),
-                 qBound(geo.y(), pos.y(), geo.y() + geo.height() - m_currentMenu->height()));
-
-    // Switching to another menu while one is open (hovering along the bar) moves the open one:
-    // QtWayland repositions the popup (xdg_popup.reposition) from the new anchor. Closing it and
-    // opening another instead needs a new grab, which the compositor refuses without a fresh
-    // click: the menu then vanished when moving along the bar quickly.
-    const bool sameParent = m_currentMenu->isVisible() && m_currentMenu->windowHandle()
-        && m_currentMenu->windowHandle()->transientParent() == ctx->window();
-    if (m_currentMenu->isVisible() && !sameParent) {
-        m_currentMenu->hide();
-    }
-    if (!m_currentMenu->isVisible()) {
-        m_currentMenu->installEventFilter(this);
-        m_currentMenu->winId(); // create window handle
-        m_currentMenu->windowHandle()->setTransientParent(ctx->window());
-    }
-    anchorToItem(m_currentMenu->windowHandle(), ctx);
-    m_menuCtx = ctx;
-    m_menuPos = pos;
-    if (m_currentMenu->isVisible()) {
-        m_currentMenu->move(pos);
-    } else if (!m_currentMenu->actions().isEmpty()) {
-        m_currentMenu->popup(pos);
-    }
-    // Empty: it opens when the contents arrive (menuUpdated)
+    actionMenu->winId(); // create window handle
+    actionMenu->windowHandle()->setTransientParent(ctx->window());
+    anchorToItem(actionMenu->windowHandle(), ctx);
+    actionMenu->popup(pos);
+    QTimer::singleShot(300, actionMenu, [actionMenu, idx]() {
+        qWarning() << "GLANCEMENU shown" << idx << "visible" << actionMenu->isVisible() << "actions" << actionMenu->actions().size()
+                   << "parent" << (actionMenu->windowHandle() ? actionMenu->windowHandle()->transientParent() : nullptr);
+    });
 
     setCurrentIndex(idx);
 }
@@ -514,6 +484,24 @@ void AppMenuModel::anchorToItem(QWindow *popup, QQuickItem *item)
     popup->setProperty("_q_waylandPopupConstraintAdjustment", 1 | 2 | 8);
 }
 
+// The bar's button under a point of the open menu, or -1: only buttons with a menu, so the
+// pointer never sets off a plain action
+int AppMenuModel::buttonAt(const QPointF &globalPos) const
+{
+    if (!m_buttonGrid || !m_buttonGrid->window()) {
+        return -1;
+    }
+    const QPointF windowLocalPos = m_buttonGrid->window()->mapFromGlobal(globalPos);
+    const QPointF gridLocalPos = m_buttonGrid->mapFromScene(windowLocalPos);
+    QQuickItem *item = m_buttonGrid->childAt(gridLocalPos.x(), gridLocalPos.y());
+    if (!item) {
+        return -1;
+    }
+    bool ok = false;
+    const int index = item->property("buttonIndex").toInt(&ok);
+    return ok && menuForIndex(index) ? index : -1;
+}
+
 bool AppMenuModel::eventFilter(QObject *watched, QEvent *event)
 {
     auto *menu = qobject_cast<QMenu *>(watched);
@@ -533,25 +521,35 @@ bool AppMenuModel::eventFilter(QObject *watched, QEvent *event)
             Q_EMIT requestActivateIndex(m_currentIndex + 1);
             return true;
         }
-    } else if (event->type() == QEvent::MouseMove && !QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
-        // X11 only: there the open menu grabs the pointer, so hovering along the bar arrives here.
-        // On Wayland the bar's buttons get the hover themselves, and global coordinates don't
-        // match between the popup and a layer-shell window: the button found here was a wrong
-        // one, and a plain action under it closed the menu.
+    } else if (event->type() == QEvent::MouseMove) {
+        // While a menu is open it gets all the pointer's events, the bar's buttons none: moving
+        // onto another one switches to its menu here
         auto *e = static_cast<QMouseEvent *>(event);
-        if (!m_buttonGrid || !m_buttonGrid->window()) {
+        if (menu->rect().contains(e->position().toPoint())) {
             return false;
         }
-        const QPointF windowLocalPos = m_buttonGrid->window()->mapFromGlobal(e->globalPosition());
-        const QPointF gridLocalPos = m_buttonGrid->mapFromScene(windowLocalPos);
-        auto *item = m_buttonGrid->childAt(gridLocalPos.x(), gridLocalPos.y());
-        if (!item) {
+        // After a short dwell, so sweeping across the bar doesn't open every menu on the way
+        const int index = buttonAt(e->globalPosition());
+        if (index >= 0 && index != m_currentIndex) {
+            if (index != m_hoverIndex || !m_hoverTimer.isActive()) {
+                m_hoverIndex = index;
+                m_hoverTimer.start();
+            }
+        } else {
+            m_hoverTimer.stop();
+        }
+    } else if (event->type() == QEvent::MouseButtonPress) {
+        // A click on another button switches at once, instead of only closing this menu (Qt
+        // swallows the click that closes a popup)
+        auto *e = static_cast<QMouseEvent *>(event);
+        if (menu->rect().contains(e->position().toPoint())) {
             return false;
         }
-        bool ok = false;
-        const int buttonIndex = item->property("buttonIndex").toInt(&ok);
-        if (ok) {
-            Q_EMIT requestActivateIndex(buttonIndex);
+        const int index = buttonAt(e->globalPosition());
+        if (index >= 0 && index != m_currentIndex) {
+            m_hoverTimer.stop();
+            Q_EMIT requestActivateIndex(index);
+            return true;
         }
     }
     return false;

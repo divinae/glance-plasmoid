@@ -48,6 +48,8 @@ target_sources(islandplugin PRIVATE
     cavasource.h
     drawereffects.cpp
     drawereffects.h
+    systeminfo.cpp
+    systeminfo.h
     shelfhelper.cpp
     shelfhelper.h
 )

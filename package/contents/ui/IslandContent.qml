@@ -169,8 +169,10 @@ Item {
                 Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
                 source: content.task && content.task.icon ? content.task.icon : "preferences-desktop"
             }
+            // The whole name when there are no menus beside it; capped when there are
             PlasmaComponents.Label {
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 10
+                Layout.fillWidth: !stripMenu.visible
+                Layout.maximumWidth: stripMenu.visible ? Kirigami.Units.gridUnit * 10 : -1
                 text: content.task ? content.task.appName : ""
                 textFormat: Text.PlainText
                 font.weight: Font.Bold
@@ -181,10 +183,6 @@ Item {
                 Layout.fillWidth: true
                 appMenu: content.appMenu
                 visible: content.island.cfg.showAppMenu && content.appMenu.menuAvailable && count > 0
-            }
-            Item {
-                Layout.fillWidth: true
-                visible: !stripMenu.visible
             }
             WindowButtons {
                 visible: content.island.cfg.showWindowButtons

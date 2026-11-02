@@ -22,6 +22,8 @@ KCM.SimpleKCM {
     property alias cfg_cavaPopupStyle: cavaPopupStyle.currentIndex
     property alias cfg_cavaRounded: cavaRounded.checked
     property alias cfg_cavaBackgroundOpacity: cavaBackgroundOpacity.value
+    property alias cfg_cavaEdge: cavaEdge.currentIndex
+    property alias cfg_cavaPanelOpacity: cavaPanelOpacity.value
     property alias cfg_cavaBars: cavaBars.value
     property alias cfg_cavaFramerate: cavaFramerate.value
     property alias cfg_cavaMonstercat: cavaMonstercat.checked
@@ -72,6 +74,25 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Panel style:")
             enabled: cavaInPanel.enabled && cavaInPanel.checked
             model: [i18n("Bars"), i18n("Wave")]
+        }
+        QQC2.ComboBox {
+            id: cavaEdge
+            Kirigami.FormData.label: i18n("Edge:")
+            enabled: cavaStyle.enabled && cavaStyle.currentIndex === 3
+            model: [i18n("Outer (the screen's side)"), i18n("Inner (the windows' side)")]
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18n("Bars opacity:")
+            enabled: cavaStyle.enabled && cavaStyle.currentIndex !== 0
+            QQC2.Slider {
+                id: cavaPanelOpacity
+                from: 10
+                to: 100
+                stepSize: 5
+            }
+            QQC2.Label {
+                text: i18nc("percent", "%1%", cavaPanelOpacity.value)
+            }
         }
         QQC2.SpinBox {
             id: cavaBackgroundOpacity

@@ -200,7 +200,7 @@ PlasmoidItem {
         id: openTimer
         interval: root.cfg.hoverDelay
         onTriggered: {
-            if (root.compactHovered) {
+            if (root.compactHovered && !root.hoverSuppressed) {
                 root.setOpen(true);
             }
         }
@@ -216,7 +216,30 @@ PlasmoidItem {
         }
     }
 
+    // A right-click (Plasma's context menu) keeps the drawer away until the pointer leaves: it
+    // opening on hover took the focus and closed the menu
+    property bool hoverSuppressed: false
+    // Only keeps the drawer from opening: closing an open one as the menu appeared (its window
+    // going, maybe with the keyboard focus) took Plasma's menu with it
+    function suppressHover() {
+        hoverSuppressed = true;
+        openTimer.stop();
+    }
+    // Plasma says so just before it shows the menu (the right-click itself stays Plasma's)
+    Connections {
+        target: Plasmoid
+        function onContextualActionsAboutToShow() {
+            root.suppressHover();
+        }
+    }
+
     onCompactHoveredChanged: {
+        if (!compactHovered) {
+            hoverSuppressed = false;
+        }
+        if (compactHovered && hoverSuppressed) {
+            return;
+        }
         if (compactHovered) {
             closeTimer.stop();
             if (cfg.openOnHover && !open) {
