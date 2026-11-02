@@ -316,14 +316,15 @@ MouseArea {
             }
         }
 
-        // playback progress along the capsule's inner edge
+        // playback progress at the very inner edge of the panel, in the margin outside the
+        // capsule, so it never runs into the text
         ProgressEdge {
             anchors.left: pill.left
             anchors.right: pill.right
-            anchors.bottom: pill.bottom
+            anchors.bottom: parent.bottom
             anchors.leftMargin: pill.radius
             anchors.rightMargin: pill.radius
-            anchors.bottomMargin: 1
+            height: Math.max(1, Math.min(2, compact.inset - 1))
             visible: compact.island.cfg.showProgressInPanel && compact.island.cfg.showMedia
                 && compact.mediaState.hasPlayer && compact.mediaState.length > 0
                 && compact.mediaState.playing
