@@ -7,6 +7,7 @@
 import QtQuick
 import QtQuick.Layouts
 
+import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
@@ -23,16 +24,6 @@ Item {
 
     implicitHeight: column.implicitHeight
 
-    function add(urls) {
-        const list = items.slice();
-        for (const u of urls) {
-            const s = String(u);
-            if (s && list.indexOf(s) === -1) {
-                list.push(s);
-            }
-        }
-        tab.island.cfg.shelfItems = list;
-    }
     function remove(url) {
         tab.island.cfg.shelfItems = items.filter(u => u !== url);
     }
@@ -45,16 +36,15 @@ Item {
         }
     }
 
-    DropArea {
+    DragDrop.DropArea {
         id: drop
         anchors.fill: parent
-        keys: ["text/uri-list"]
-        onDropped: drag => {
-            if (drag.hasUrls) {
-                tab.add(drag.urls);
-                drag.acceptProposedAction();
+        onDragEnter: event => {
+            if (tab.island.dropHasFiles(event)) {
+                event.accept(Qt.CopyAction);
             }
         }
+        onDrop: event => tab.island.acceptFiles(event)
     }
 
     Rectangle {

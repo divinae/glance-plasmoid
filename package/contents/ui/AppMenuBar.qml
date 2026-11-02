@@ -26,7 +26,13 @@ Flow {
         }
     }
 
+    // Only the bar on show opens menus (a hidden window's bar would place them nowhere)
+    readonly property bool onShow: visible && Window.window !== null && Window.window.visible
+
     function activate(index) {
+        if (!onShow) {
+            return;
+        }
         const n = repeater.count;
         if (n === 0) {
             return;
@@ -68,9 +74,9 @@ Flow {
             down: bar.appMenu.currentIndex === index
             Accessible.description: i18nc("@info:usagetip", "Open a menu")
 
-            onClicked: bar.appMenu.trigger(menuButton, index)
+            onClicked: if (bar.onShow) bar.appMenu.trigger(menuButton, index)
             onHoveredChanged: {
-                if (hovered && bar.appMenu.menuOpen && bar.appMenu.currentIndex !== index) {
+                if (hovered && bar.onShow && bar.appMenu.menuOpen && bar.appMenu.currentIndex !== index) {
                     bar.appMenu.trigger(menuButton, index);
                 }
             }

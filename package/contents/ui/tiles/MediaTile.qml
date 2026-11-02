@@ -128,7 +128,7 @@ Tile {
 
             PlasmaComponents.ToolButton {
                 icon.name: "media-skip-backward"
-                enabled: tile.player && tile.player.canGoPrevious
+                enabled: !!(tile.player && tile.player.canGoPrevious)
                 onClicked: tile.player.Previous()
             }
             // Play/pause: an accent circle
@@ -136,7 +136,7 @@ Tile {
                 id: playButton
                 icon.name: tile.mediaState.playing ? "media-playback-pause" : "media-playback-start"
                 icon.color: Kirigami.Theme.highlightedTextColor
-                enabled: tile.player && (tile.mediaState.playing ? tile.player.canPause : tile.player.canPlay)
+                enabled: !!(tile.player && (tile.mediaState.playing ? tile.player.canPause : tile.player.canPlay))
                 onClicked: tile.player.PlayPause()
                 background: Rectangle {
                     radius: height / 2
@@ -146,7 +146,7 @@ Tile {
             }
             PlasmaComponents.ToolButton {
                 icon.name: "media-skip-forward"
-                enabled: tile.player && tile.player.canGoNext
+                enabled: !!(tile.player && tile.player.canGoNext)
                 onClicked: tile.player.Next()
             }
         }

@@ -119,6 +119,36 @@ PlasmoidItem {
         return text.length > max ? text.slice(0, max - 1) + "…" : text;
     }
 
+    // Keep files on the shelf: only their URLs are stored, the files stay where they are
+    function shelve(urls): int {
+        const list = (cfg.shelfItems || []).slice();
+        let added = 0;
+        for (const u of urls) {
+            const s = String(u);
+            if (s && list.indexOf(s) === -1) {
+                list.push(s);
+                ++added;
+            }
+        }
+        if (added > 0) {
+            Plasmoid.configuration.shelfItems = list;
+        }
+        return added;
+    }
+    // A drop of files: always as a copy, so the source never deletes what it "moved" here
+    // (org.kde.draganddrop's DropArea: Qt Quick's never gets the drop of another app's drag here)
+    function dropHasFiles(event): bool {
+        return !!(event && event.mimeData && event.mimeData.urls && event.mimeData.urls.length > 0);
+    }
+    function acceptFiles(event): bool {
+        if (!dropHasFiles(event)) {
+            return false;
+        }
+        event.accept(Qt.CopyAction);
+        shelve(event.mimeData.urls);
+        return true;
+    }
+
     function openOn(tab: string, pin: bool) {
         requestedTab = tab;
         if (pin) {
@@ -273,8 +303,14 @@ PlasmoidItem {
     }
 
     // Always set: without a full representation Plasma lays the applet out as a bare icon. With
-    // the drawer, `expanded` never stays true, so this popup never shows.
-    fullRepresentation: flyoutComponent
+    // the drawer it's an empty item: Plasma makes it (hidden) anyway, and a second copy of the
+    // content there opened the application menus from that hidden window.
+    fullRepresentation: useDrawer ? emptyFullComponent : flyoutComponent
+
+    Component {
+        id: emptyFullComponent
+        Item {}
+    }
 
     Component {
         id: flyoutComponent

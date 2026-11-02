@@ -14,7 +14,9 @@
 #include <QDBusServiceWatcher>
 #include <QIcon>
 #include <QKeyEvent>
+#include <QGuiApplication>
 #include <QMenu>
+#include <QWindow>
 #include <QMouseEvent>
 #include <QQuickWindow>
 #include <QScreen>
@@ -91,6 +93,7 @@ AppMenuModel::~AppMenuModel()
     if (m_currentMenu) {
         m_currentMenu->removeEventFilter(this);
         m_currentMenu->hide();
+        delete m_currentMenu;
     }
     if (m_holdsViewService) {
         releaseViewService();
@@ -282,6 +285,13 @@ void AppMenuModel::updateApplicationMenu()
     m_loadedObjectPath = menuObjectPath;
     m_serviceWatcher->setWatchedServices(QStringList({serviceName}));
 
+    // The shared popup holds the old menu's actions while open: give them back and start afresh
+    if (m_currentMenu) {
+        m_currentMenu->hide();
+        m_currentMenu->deleteLater();
+        m_currentMenu.clear();
+    }
+    m_sourceMenu.clear();
     m_importer = std::make_unique<KDBusMenuImporter>(serviceName, menuObjectPath);
     QMetaObject::invokeMethod(m_importer.get(), "updateMenu", Qt::QueuedConnection);
 
@@ -301,6 +311,8 @@ void AppMenuModel::updateApplicationMenu()
         // cache first layer of sub menus, which we'll be popping up
         const auto actions = m_menu->actions();
         for (QAction *a : actions) {
+            // A lambda can't be a unique connection: drop an earlier one instead
+            disconnect(a, &QAction::changed, this, nullptr);
             connect(a, &QAction::changed, this, [this, a] {
                 if (m_menuAvailable && m_menu) {
                     const int actionIdx = m_menu->actions().indexOf(a);
@@ -309,7 +321,7 @@ void AppMenuModel::updateApplicationMenu()
                         Q_EMIT dataChanged(modelIdx, modelIdx);
                     }
                 }
-            }, Qt::UniqueConnection);
+            });
             connect(a, &QAction::destroyed, this, &AppMenuModel::modelNeedsUpdate, Qt::UniqueConnection);
 
             if (a->menu()) {
@@ -402,7 +414,10 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
     // One persistent QMenu that adopts the actions of whichever top-level menu is shown,
     // so switching menus while open only moves it instead of re-opening.
     if (!m_currentMenu) {
-        m_currentMenu = new QMenu(qobject_cast<QWidget *>(actionMenu->parent()));
+        // No parent widget: Qt would then make that widget's (hidden) window the popup's parent
+        // when it shows, overriding the transient parent set below, and on Wayland the compositor
+        // dismisses a popup whose parent isn't on screen
+        m_currentMenu = new QMenu();
         connect(m_currentMenu, &QMenu::aboutToHide, this, &AppMenuModel::onMenuAboutToHide, Qt::UniqueConnection);
     } else if (m_sourceMenu && m_sourceMenu != actionMenu) {
         const auto actions = m_currentMenu->actions();
@@ -429,16 +444,37 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
     pos = QPoint(qBound(geo.x(), pos.x(), geo.x() + geo.width() - m_currentMenu->width()),
                  qBound(geo.y(), pos.y(), geo.y() + geo.height() - m_currentMenu->height()));
 
+    // Switching to another menu while one is open: close it and open it again under the new
+    // button. Moving a shown popup (Wayland: repositioning it) could leave it unmapped when
+    // done quickly, open as far as Qt knew but invisible.
     if (m_currentMenu->isVisible()) {
-        m_currentMenu->move(pos);
-    } else {
-        m_currentMenu->installEventFilter(this);
-        m_currentMenu->winId(); // create window handle
-        m_currentMenu->windowHandle()->setTransientParent(ctx->window());
-        m_currentMenu->popup(pos);
+        m_currentMenu->hide();
     }
+    m_currentMenu->installEventFilter(this);
+    m_currentMenu->winId(); // create window handle
+    m_currentMenu->windowHandle()->setTransientParent(ctx->window());
+    anchorToItem(m_currentMenu->windowHandle(), ctx);
+    m_currentMenu->popup(pos);
 
     setCurrentIndex(idx);
+}
+
+// On Wayland a popup is placed relative to its parent surface, from global coordinates Qt
+// only knows for windows the shell told it about: not for a layer-shell surface such as the
+// drawer, whose menus then landed anywhere. QtWayland takes the placement from these window
+// properties instead: under the button, growing down and right, flipped up or slid along when
+// it doesn't fit.
+void AppMenuModel::anchorToItem(QWindow *popup, QQuickItem *item)
+{
+    if (!popup || !item || !QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+        return;
+    }
+    const QRect anchor = item->mapRectToScene(QRectF(0, 0, item->width(), item->height())).toAlignedRect();
+    popup->setProperty("_q_waylandPopupAnchorRect", anchor);
+    popup->setProperty("_q_waylandPopupAnchor", QVariant::fromValue(Qt::Edges(Qt::BottomEdge | Qt::LeftEdge)));
+    popup->setProperty("_q_waylandPopupGravity", QVariant::fromValue(Qt::Edges(Qt::BottomEdge | Qt::RightEdge)));
+    // xdg_positioner: slide_x 1, slide_y 2, flip_x 4, flip_y 8
+    popup->setProperty("_q_waylandPopupConstraintAdjustment", 1 | 2 | 8);
 }
 
 bool AppMenuModel::eventFilter(QObject *watched, QEvent *event)

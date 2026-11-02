@@ -23,6 +23,7 @@
 class QAction;
 class QDBusServiceWatcher;
 class QMenu;
+class QWindow;
 class KDBusMenuImporter;
 
 class AppMenuModel : public QAbstractListModel
@@ -74,6 +75,7 @@ public:
     Q_INVOKABLE void closeMenu();
 
     bool eventFilter(QObject *watched, QEvent *event) override;
+    static void anchorToItem(QWindow *popup, QQuickItem *item);
 
 Q_SIGNALS:
     void enabledChanged();

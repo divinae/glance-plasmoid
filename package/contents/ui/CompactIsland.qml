@@ -7,6 +7,7 @@
 import QtQuick
 import QtQuick.Layouts
 
+import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.core as PlasmaCore
@@ -116,11 +117,17 @@ MouseArea {
     }
 
     // Dragging files onto the strip opens the shelf (hover events stop during a drag)
-    DropArea {
+    // Files dragged onto the strip: open the shelf, or drop them right here
+    DragDrop.DropArea {
         anchors.fill: parent
-        keys: ["text/uri-list"]
         enabled: compact.island.cfg.showShelf
-        onEntered: compact.island.openOn("shelf", true)
+        onDragEnter: event => {
+            if (compact.island.dropHasFiles(event)) {
+                event.accept(Qt.CopyAction);
+                compact.island.openOn("shelf", true);
+            }
+        }
+        onDrop: event => compact.island.acceptFiles(event)
     }
 
     Connections {

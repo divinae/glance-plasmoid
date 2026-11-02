@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 
+import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.extras as PlasmaExtras
@@ -39,7 +40,10 @@ Item {
         if (island.cfg.showDashboard) {
             t.push({key: "dashboard", label: i18n("Dashboard"), icon: "view-grid"});
         }
-        t.push({key: "window", label: i18n("Window"), icon: "window"});
+        // The dashboard's window tile has the buttons and the menu: the tab only without it
+        if (!island.cfg.showDashboard) {
+            t.push({key: "window", label: i18n("Window"), icon: "window"});
+        }
         if (island.cfg.showMedia && island.hasPlayer) {
             t.push({key: "media", label: i18n("Media"), icon: "media-playback-start"});
         }
@@ -123,11 +127,16 @@ Item {
     }
 
     // Drop files anywhere to shelve them
-    DropArea {
+    DragDrop.DropArea {
         anchors.fill: parent
-        keys: ["text/uri-list"]
-        enabled: content.island.cfg.showShelf && content.currentKey !== "shelf"
-        onEntered: content.currentKey = "shelf"
+        enabled: content.island.cfg.showShelf
+        onDragEnter: event => {
+            if (content.island.dropHasFiles(event)) {
+                event.accept(Qt.CopyAction);
+                content.currentKey = "shelf";
+            }
+        }
+        onDrop: event => content.island.acceptFiles(event)
     }
 
     ColumnLayout {

@@ -147,7 +147,7 @@
     </entry>
     <!-- v0.2 -->
     <entry name="showProgressInPanel" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
     <entry name="showNotifications" type="Bool">
       <default>true</default>

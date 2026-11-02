@@ -7,6 +7,7 @@
 import QtQuick
 import QtQuick.Layouts
 
+import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
@@ -21,24 +22,15 @@ Tile {
     border.width: drop.containsDrag ? 2 : 0
     border.color: Kirigami.Theme.highlightColor
 
-    DropArea {
+    DragDrop.DropArea {
         id: drop
         anchors.fill: parent
-        keys: ["text/uri-list"]
-        onDropped: drag => {
-            if (!drag.hasUrls) {
-                return;
+        onDragEnter: event => {
+            if (tile.island.dropHasFiles(event)) {
+                event.accept(Qt.CopyAction);
             }
-            const list = tile.items.slice();
-            for (const u of drag.urls) {
-                const s = String(u);
-                if (s && list.indexOf(s) === -1) {
-                    list.push(s);
-                }
-            }
-            tile.island.cfg.shelfItems = list;
-            drag.acceptProposedAction();
         }
+        onDrop: event => tile.island.acceptFiles(event)
     }
 
     RowLayout {

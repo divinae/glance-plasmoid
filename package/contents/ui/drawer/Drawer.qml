@@ -119,6 +119,28 @@ Window {
         const center = sideways ? p.y - scrInfo.virtualY : p.x - scrInfo.virtualX;
         const length = along + 2 * ear;
         alongMargin = Math.round(Math.max(0, Math.min(total - length, center - length / 2)));
+        tellQtWhereItIs(scrInfo);
+    }
+
+    // The compositor places a layer-shell surface by its anchors and margins, and Qt doesn't
+    // learn where that is. Popups (the application menus) are positioned through
+    // mapToGlobal(), so give the window its real position, or they land somewhere else each time.
+    function tellQtWhereItIs(scrInfo) {
+        const sx = scrInfo.virtualX, sy = scrInfo.virtualY, sw = scrInfo.width, sh = scrInfo.height;
+        let px, py;
+        if (fromTop) {
+            px = sx + Math.round((sw - width) / 2);
+            py = sy;
+        } else {
+            switch (edge) {
+            case "left": px = sx + edgeMargin; py = sy + alongMargin; break;
+            case "right": px = sx + sw - edgeMargin - width; py = sy + alongMargin; break;
+            case "bottom": px = sx + alongMargin; py = sy + sh - edgeMargin - height; break;
+            default: px = sx + alongMargin; py = sy + edgeMargin;
+            }
+        }
+        x = px;
+        y = py;
     }
 
     LayerShell.Window.scope: "island-drawer"
