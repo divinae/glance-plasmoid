@@ -144,11 +144,11 @@ PlasmoidItem {
         }
     }
     // With the drawer, Plasma's own expansion (the widget's shortcut) toggles the drawer instead
-    onExpandedChanged: {
-        if (useDrawer && expanded) {
-            expanded = false;
-            pinnedByClick = !drawerOpen;
-            drawerOpen = !drawerOpen;
+    onExpandedChanged: () => {
+        if (root.useDrawer && root.expanded) {
+            root.expanded = false;
+            root.pinnedByClick = !root.drawerOpen;
+            root.drawerOpen = !root.drawerOpen;
         }
     }
 
@@ -272,7 +272,9 @@ PlasmoidItem {
         calendar: calendarSource
     }
 
-    fullRepresentation: useDrawer ? null : flyoutComponent
+    // Always set: without a full representation Plasma lays the applet out as a bare icon. With
+    // the drawer, `expanded` never stays true, so this popup never shows.
+    fullRepresentation: flyoutComponent
 
     Component {
         id: flyoutComponent

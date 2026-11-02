@@ -74,18 +74,22 @@ Window {
     property real alongMargin: 0
     function place() {
         const win = anchorItem ? anchorItem.Window.window : null;
-        if (!win || !win.screen) {
+        if (!win) {
             return;
         }
-        const scr = win.screen;
-        drawer.screen = scr;
+        // The panel is a C++ window that doesn't hand its QScreen to QML: find it by name
+        const scrInfo = anchorItem.Screen;
+        const scr = Qt.application.screens.find(s => s.name === scrInfo.name) || null;
+        if (scr) {
+            drawer.screen = scr;
+        }
         if (fromTop) {
             alongMargin = 0;
             return;
         }
         const p = anchorItem.mapToGlobal(anchorItem.width / 2, anchorItem.height / 2);
-        const total = sideways ? scr.height : scr.width;
-        const center = sideways ? p.y - scr.virtualY : p.x - scr.virtualX;
+        const total = sideways ? scrInfo.height : scrInfo.width;
+        const center = sideways ? p.y - scrInfo.virtualY : p.x - scrInfo.virtualX;
         const length = along + 2 * ear;
         alongMargin = Math.round(Math.max(0, Math.min(total - length, center - length / 2)));
     }
@@ -94,7 +98,7 @@ Window {
     LayerShell.Window.layer: LayerShell.Window.LayerTop
     // 0: beside the panels' exclusive zones, so the drawer starts where the panel ends
     LayerShell.Window.exclusionZone: 0
-    LayerShell.Window.screenConfiguration: LayerShell.Window.ScreenFromQWindow
+    LayerShell.Window.wantsToBeOnActiveScreen: false
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
     // Opened by hover it leaves the keyboard where it is; a click hands it over (Esc closes)
     LayerShell.Window.activateOnShow: island ? island.pinnedByClick : false
