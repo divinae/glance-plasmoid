@@ -1,12 +1,16 @@
-# Island
+# Glance
 
 Plasma 6 panel widget for a vertical panel. It replaces a window-title widget.
 
 - **In the panel:** the active application's name, rotated along the panel. While media plays it
-  crossfades to the track and artist, with live audio bars from `cava`.
-- **On hover (or click to pin):** a popup with the window's icon and title, window buttons
-  (keep above, minimize, maximize, close), the application's global menu, and media controls.
+  crossfades to the track and artist, with a small equalizer from `cava` and a progress line.
+- **On hover (or click to pin):** a drawer slides out of the panel beside it, translucent over a
+  blurred background, flowing into the panel's edge. Its first tab is a dashboard: the time,
+  what's playing, today's events (from Event Calendar), notifications, the shelf, and the active
+  window with its buttons and global menu. The other tabs show each of these in full.
 - Middle-click plays or pauses. The wheel skips tracks.
+- The drawer needs `layer-shell-qt`; without it, or if you prefer, Glance opens Plasma's usual
+  popup instead (Settings > Popup > Style).
 
 ## Build and install
 

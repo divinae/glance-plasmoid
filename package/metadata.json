@@ -7,11 +7,11 @@
             }
         ],
         "Category": "Windows and Tasks",
-        "Description": "Active window name, global menu, window buttons and media in one island",
+        "Description": "The active window, media, agenda and notifications at a glance, in a drawer that slides out of the panel",
         "Icon": "window",
         "Id": "com.dv.island",
         "License": "GPL-2.0-or-later",
-        "Name": "Island",
+        "Name": "Glance",
         "Version": "0.2.0"
     },
     "KPackageStructure": "Plasma/Applet",

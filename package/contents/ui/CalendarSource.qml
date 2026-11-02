@@ -5,7 +5,7 @@
 
     Reads the event cache written by the Event Calendar widget
     (~/.cache/plasma-eventcalendar/events.ini, [events] json=...). Read-only:
-    Island never talks to Google itself.
+    Glance never talks to Google itself.
 */
 
 import QtQuick

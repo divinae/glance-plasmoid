@@ -92,7 +92,7 @@ PlasmoidItem {
             const probe = Qt.createComponent(Qt.resolvedUrl(probeFile), Component.PreferSynchronous);
             moduleProbes[probeFile] = probe.status === Component.Ready;
             if (probe.status === Component.Error) {
-                console.warn("Island:", probe.errorString());
+                console.warn("Glance:", probe.errorString());
             }
             probe.destroy();
         }

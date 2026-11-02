@@ -70,7 +70,7 @@ Window {
     height: sideways ? along + 2 * ear : depth + slack
     color: "transparent"
     flags: Qt.FramelessWindowHint
-    title: i18n("Island")
+    title: i18n("Glance")
 
     // ---- placement: centered on the island, kept on its screen ------------------
     property real alongMargin: 0
