@@ -119,7 +119,7 @@ Tile {
                 text: (user.fullName || user.loginName) + "@" + Island.SystemInfo.hostName
                 textFormat: Text.PlainText
                 font.weight: Font.Bold
-                color: Kirigami.Theme.highlightColor
+                color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
                 elide: Text.ElideRight
             }
             Line {

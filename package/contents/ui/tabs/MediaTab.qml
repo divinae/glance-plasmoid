@@ -160,7 +160,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: tab.hasPlayer ? (tab.player.track || tab.player.identity || "") : ""
                 textFormat: Text.PlainText
-                color: Kirigami.Theme.highlightColor
+                color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
                 font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.3
                 font.weight: Font.DemiBold
                 wrapMode: Text.Wrap

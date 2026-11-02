@@ -9,6 +9,7 @@ import QtQuick.Layouts
 
 import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
+import org.kde.ksvg as KSvg
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
@@ -26,12 +27,9 @@ MouseArea {
     readonly property bool vertical: island.isVertical
     readonly property string mode: island.stripMode
     readonly property bool barsShown: island.showMediaInPanel && island.cfg.cavaInPanel && cava.available && cava.running
-    // Text and equalizer: the accent color under the pointer and while the drawer is open
+    // Text and equalizer keep the text colour; an open drawer shows by the indicator below
     readonly property bool lit: containsMouse || island.open
-    property color foreground: lit && !island.cfg.showCapsule ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
-    Behavior on foreground {
-        ColorAnimation { duration: Kirigami.Units.longDuration }
-    }
+    readonly property color foreground: Kirigami.Theme.textColor
     readonly property int barsStyle: island.cfg.cavaStyle
     readonly property bool barsBehind: barsStyle === 0
     readonly property bool barsBeside: barsStyle === 1
@@ -118,6 +116,28 @@ MouseArea {
     }
 
     // Dragging files onto the strip opens the shelf (hover events stop during a drag)
+    // The drawer open: the panel's "expanded" indicator, as every applet shows with its popup
+    // (libplasma's CompactApplet: the theme's tab bar, its active tab for this edge)
+    KSvg.FrameSvgItem {
+        anchors.fill: parent
+        imagePath: "widgets/tabbar"
+        prefix: {
+            let p;
+            switch (Plasmoid.location) {
+            case PlasmaCore.Types.LeftEdge: p = "west-active-tab"; break;
+            case PlasmaCore.Types.TopEdge: p = "north-active-tab"; break;
+            case PlasmaCore.Types.RightEdge: p = "east-active-tab"; break;
+            default: p = "south-active-tab";
+            }
+            return hasElementPrefix(p) ? p : "active-tab";
+        }
+        opacity: compact.island.open ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity {
+            NumberAnimation { duration: Kirigami.Units.shortDuration; easing.type: Easing.InOutQuad }
+        }
+    }
+
     // Files dragged onto the strip: open the shelf, or drop them right here
     DragDrop.DropArea {
         anchors.fill: parent

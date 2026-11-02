@@ -107,7 +107,7 @@ Tile {
             horizontalAlignment: Text.AlignHCenter
             text: tile.player ? (tile.player.track || tile.player.identity || "") : ""
             textFormat: Text.PlainText
-            color: Kirigami.Theme.highlightColor
+            color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
             font.weight: Font.DemiBold
             elide: Text.ElideRight
         }

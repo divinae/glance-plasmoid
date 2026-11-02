@@ -44,7 +44,7 @@ Tile {
             text: tile.now.toLocaleDateString(Qt.locale(), "dddd")
             textFormat: Text.PlainText
             font.weight: Font.DemiBold
-            color: Kirigami.Theme.highlightColor
+            color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
             elide: Text.ElideRight
         }
         PlasmaComponents.Label {

@@ -107,7 +107,7 @@ ColumnLayout {
                 }
                 PlasmaComponents.Label {
                     text: "↓ " + tab.bytes(tab.monitor.number(tab.monitor.down)) + "/s"
-                    color: Kirigami.Theme.highlightColor
+                    color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
                 }
                 PlasmaComponents.Label {
                     text: "↑ " + tab.bytes(tab.monitor.number(tab.monitor.up)) + "/s"
