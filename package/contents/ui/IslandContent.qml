@@ -30,6 +30,7 @@ Item {
     required property Item notifications
     required property Item calendar
     required property Item monitor
+    required property Item privacy
     // The drawer's look: icon tabs with a sliding indicator instead of Plasma's TabBar
     property bool drawerStyle: false
 
@@ -58,7 +59,7 @@ Item {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
         }
         if (island.cfg.showSystem) {
-            t.push({key: "system", label: i18n("System"), icon: "utilities-system-monitor"});
+            t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
         }
         return t;
     }
@@ -147,6 +148,12 @@ Item {
         anchors.fill: parent
         spacing: content.drawerStyle ? Kirigami.Units.largeSpacing : Kirigami.Units.smallSpacing
         clip: true
+
+        // ---- camera and screen sharing in use, above everything (as macOS) --------
+        PrivacyBar {
+            Layout.fillWidth: true
+            privacy: content.privacy
+        }
 
         // ---- tabs: drawer style on top, before the header ------------------
         TabStrip {

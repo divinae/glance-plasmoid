@@ -10,49 +10,11 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
-// The time, large, and the date; with the system monitor on, CPU and memory below.
+// The time stacked, hours over minutes with three dots between (Caelestia's), and the date.
 Tile {
     id: tile
 
-    property Item monitor: null
-
     property date now: new Date()
-
-    component MiniMeter: RowLayout {
-        id: meter
-        property string label
-        property real value: 0
-        Layout.fillWidth: true
-        spacing: Kirigami.Units.smallSpacing
-        PlasmaComponents.Label {
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 1.8
-            text: meter.label
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-        }
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 4
-            radius: 2
-            color: Qt.alpha(Kirigami.Theme.textColor, 0.12)
-            Rectangle {
-                width: parent.width * Math.max(0, Math.min(1, meter.value / 100))
-                height: parent.height
-                radius: parent.radius
-                color: Kirigami.Theme.highlightColor
-                Behavior on width {
-                    NumberAnimation { duration: Kirigami.Units.longDuration }
-                }
-            }
-        }
-        PlasmaComponents.Label {
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 1.8
-            horizontalAlignment: Text.AlignRight
-            text: Math.round(meter.value) + "%"
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-        }
-    }
     Timer {
         interval: 1000
         repeat: true
@@ -61,52 +23,46 @@ Tile {
         onTriggered: tile.now = new Date()
     }
 
+    readonly property real digitSize: Kirigami.Theme.defaultFont.pointSize * 2.6
+
     ColumnLayout {
-        anchors.fill: parent
+        anchors.centerIn: parent
         spacing: 0
 
-        Item {
-            Layout.fillHeight: true
-        }
         PlasmaComponents.Label {
-            Layout.fillWidth: true
-            text: Qt.formatTime(tile.now, Qt.locale().timeFormat(Locale.ShortFormat))
-            textFormat: Text.PlainText
-            font.pointSize: Kirigami.Theme.defaultFont.pointSize * 2.8
+            Layout.alignment: Qt.AlignHCenter
+            text: Qt.formatTime(tile.now, "hh")
+            font.pointSize: tile.digitSize
             font.weight: Font.Bold
-            fontSizeMode: Text.HorizontalFit
-            minimumPointSize: Kirigami.Theme.defaultFont.pointSize
+        }
+        Row {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: -Kirigami.Units.smallSpacing
+            Layout.bottomMargin: -Kirigami.Units.smallSpacing
+            spacing: 3
+            Repeater {
+                model: 3
+                Rectangle {
+                    width: 6
+                    height: 6
+                    radius: 3
+                    color: Kirigami.Theme.highlightColor
+                }
+            }
         }
         PlasmaComponents.Label {
-            Layout.fillWidth: true
-            text: tile.now.toLocaleDateString(Qt.locale(), "dddd")
+            Layout.alignment: Qt.AlignHCenter
+            text: Qt.formatTime(tile.now, "mm")
+            font.pointSize: tile.digitSize
+            font.weight: Font.Bold
+        }
+        PlasmaComponents.Label {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: Kirigami.Units.smallSpacing
+            text: tile.now.toLocaleDateString(Qt.locale(), "ddd, d")
             textFormat: Text.PlainText
-            font.weight: Font.DemiBold
             color: Kirigami.Theme.highlightColor
-            elide: Text.ElideRight
-        }
-        PlasmaComponents.Label {
-            Layout.fillWidth: true
-            text: tile.now.toLocaleDateString(Qt.locale(), "d MMMM yyyy")
-            textFormat: Text.PlainText
-            opacity: 0.7
-            elide: Text.ElideRight
-        }
-        Item {
-            Layout.fillHeight: true
-        }
-
-        // CPU and memory at a glance (two fixed rows: a model rebuilt every second recreated
-        // the bars, their animation starting from zero each time)
-        MiniMeter {
-            visible: tile.monitor !== null
-            label: i18nc("processor, short", "CPU")
-            value: tile.monitor ? tile.monitor.number(tile.monitor.cpu) : 0
-        }
-        MiniMeter {
-            visible: tile.monitor !== null
-            label: i18nc("memory, short", "RAM")
-            value: tile.monitor ? tile.monitor.number(tile.monitor.memPercent) : 0
+            font.weight: Font.DemiBold
         }
     }
 }

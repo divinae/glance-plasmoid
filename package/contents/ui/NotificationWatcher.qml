@@ -110,8 +110,18 @@ Item {
         }
     }
 
+    // Everything goes: the expired ones, and those not timed out yet, except running file
+    // transfers and the ones that can't be closed
     function clearHistory() {
         historyModel.clear(NotificationManager.Notifications.ClearExpired);
+        for (let row = historyModel.count - 1; row >= 0; --row) {
+            const idx = historyModel.index(row, 0);
+            const isJob = historyModel.data(idx, NotificationManager.Notifications.TypeRole) === NotificationManager.Notifications.JobType;
+            const running = isJob && historyModel.data(idx, NotificationManager.Notifications.JobStateRole) !== NotificationManager.Notifications.JobStateStopped;
+            if (!running && historyModel.data(idx, NotificationManager.Notifications.ClosableRole) !== false) {
+                historyModel.close(idx);
+            }
+        }
     }
 
     NotificationManager.Settings {

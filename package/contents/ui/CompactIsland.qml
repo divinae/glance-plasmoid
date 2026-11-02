@@ -21,6 +21,7 @@ MouseArea {
     required property Item mediaState
     required property Item notifications
     required property Item calendar
+    required property Item privacy
 
     readonly property bool vertical: island.isVertical
     readonly property string mode: island.stripMode
@@ -301,6 +302,29 @@ MouseArea {
                 visible: compact.island.cfg.showNotifications && compact.island.cfg.unreadDot
                     && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
                 color: Kirigami.Theme.highlightColor
+            }
+            // Camera (green) and screen sharing (purple) in use: dots at the start of the strip,
+            // as macOS's in its menu bar
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: -compact.margin / 2 - width / 2
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
+                visible: compact.privacy.anyActive
+                Repeater {
+                    model: [
+                        {on: compact.privacy.cameraActive, color: compact.privacy.cameraColor},
+                        {on: compact.privacy.screenActive, color: compact.privacy.screenColor},
+                    ]
+                    delegate: Rectangle {
+                        required property var modelData
+                        visible: modelData.on
+                        width: Math.max(5, Math.round(compact.pillThickness * 0.32))
+                        height: width
+                        radius: width / 2
+                        color: modelData.color
+                    }
+                }
             }
             // Do Not Disturb: a small crossed-out bell at the end of the strip, upright
             Kirigami.Icon {

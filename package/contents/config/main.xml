@@ -84,7 +84,7 @@
       <max>48</max>
     </entry>
     <entry name="drawerWidth" type="Int">
-      <default>30</default>
+      <default>38</default>
       <min>20</min>
       <max>50</max>
     </entry>

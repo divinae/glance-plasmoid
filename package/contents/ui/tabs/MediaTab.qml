@@ -116,18 +116,13 @@ Item {
                             opacity: 0.6
                         }
                     }
-                    Kirigami.ShadowedTexture {
+                    RoundedImage {
+                        id: art
                         anchors.fill: parent
                         radius: Kirigami.Units.cornerRadius * 2
-                        visible: art.status === Image.Ready
-                        source: Image {
-                            id: art
-                            source: tab.hasPlayer ? tab.player.artUrl : ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            sourceSize.width: artBox.side * Screen.devicePixelRatio
-                            sourceSize.height: artBox.side * Screen.devicePixelRatio
-                        }
+                        source: tab.hasPlayer ? tab.player.artUrl : ""
+                        sourceSize.width: artBox.side * Screen.devicePixelRatio
+                        sourceSize.height: artBox.side * Screen.devicePixelRatio
                     }
                 }
                 DragHandler {

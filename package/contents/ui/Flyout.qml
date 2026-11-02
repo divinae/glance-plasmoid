@@ -23,6 +23,7 @@ Item {
     required property Item notifications
     required property Item calendar
     required property Item monitor
+    required property Item privacy
 
     // fixed size, so the popup never jumps between tabs
     readonly property real fixedHeight: Kirigami.Units.gridUnit * island.cfg.popupHeight
@@ -50,5 +51,6 @@ Item {
         notifications: flyout.notifications
         calendar: flyout.calendar
         monitor: flyout.monitor
+        privacy: flyout.privacy
     }
 }

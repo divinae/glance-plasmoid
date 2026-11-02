@@ -12,8 +12,8 @@ import org.kde.plasma.components as PlasmaComponents
 
 import ".."
 
-// Now playing: the cover, the track, the controls and a little spectrum. A click on the cover or
-// the title opens the Media tab.
+// Now playing, upright (Caelestia's): a round cover (a click opens the Media tab), the track in
+// the accent colour, the artist, the album, and the controls; the spectrum faint at the bottom.
 Tile {
     id: tile
 
@@ -26,61 +26,72 @@ Tile {
 
     signal openMedia()
 
-    // The spectrum, faint, along the bottom of the card
     CavaBars {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: -tile.padding + 2
         height: parent.height * 0.3
         cava: tile.cava
-        visible: tile.mediaState.playing && tile.cava.available
+        visible: tile.hasPlayer && tile.mediaState.playing && tile.cava.available
         stretch: true
         fadeUp: true
         boost: true
         spacing: 2
         style: tile.island.cfg.cavaPopupStyle
         rounded: tile.island.cfg.cavaRounded
-        opacity: 0.35
+        opacity: 0.25
     }
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: Kirigami.Units.smallSpacing
+        spacing: Kirigami.Units.smallSpacing / 2
         visible: tile.hasPlayer
 
+        // The cover takes what the text and controls leave
         Item {
+            id: coverArea
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: Kirigami.Units.gridUnit * 3
 
-            Rectangle {
-                id: coverFrame
-                readonly property real side: Math.min(parent.width, parent.height)
+            Item {
+                id: coverBox
+                readonly property real side: Math.min(coverArea.width, coverArea.height)
                 anchors.centerIn: parent
                 width: side
                 height: side
-                radius: Kirigami.Units.cornerRadius * 2
-                color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
-                clip: true
 
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    width: parent.width * 0.45
-                    height: width
-                    visible: cover.status !== Image.Ready
-                    source: tile.player && tile.player.iconName ? tile.player.iconName : "media-default-album"
-                    opacity: 0.6
-                }
-                Kirigami.ShadowedTexture {
+                Rectangle {
                     anchors.fill: parent
-                    radius: coverFrame.radius
-                    visible: cover.status === Image.Ready
-                    source: Image {
-                        id: cover
-                        source: tile.player ? tile.player.artUrl : ""
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        sourceSize: Qt.size(coverFrame.width * 2, coverFrame.height * 2)
+                    radius: width / 2
+                    color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
+                    visible: cover.status !== Image.Ready
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        width: parent.width * 0.45
+                        height: width
+                        source: tile.player && tile.player.iconName ? tile.player.iconName : "media-default-album"
+                        opacity: 0.6
                     }
+                }
+                RoundedImage {
+                    id: cover
+                    anchors.fill: parent
+                    radius: width / 2
+                    source: tile.player ? tile.player.artUrl : ""
+                    sourceSize: Qt.size(256, 256)
+                }
+                // Turns slowly while playing, as a record would
+                RotationAnimator on rotation {
+                    from: 0
+                    to: 360
+                    duration: 30000
+                    loops: Animation.Infinite
+                    running: tile.mediaState.playing && tile.visible
+                }
+                HoverHandler {
+                    cursorShape: Qt.PointingHandCursor
                 }
                 TapHandler {
                     onTapped: tile.openMedia()
@@ -90,58 +101,57 @@ Tile {
 
         PlasmaComponents.Label {
             Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
             text: tile.player ? (tile.player.track || tile.player.identity || "") : ""
             textFormat: Text.PlainText
+            color: Kirigami.Theme.highlightColor
             font.weight: Font.DemiBold
-            horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
         }
         PlasmaComponents.Label {
             Layout.fillWidth: true
             visible: text !== ""
+            horizontalAlignment: Text.AlignHCenter
             text: tile.player ? (tile.player.artist || "") : ""
             textFormat: Text.PlainText
-            horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
-            opacity: 0.7
             font: Kirigami.Theme.smallFont
-        }
-
-        // Thin progress line
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 3
-            radius: 1.5
-            visible: tile.mediaState.length > 0
-            color: Qt.alpha(Kirigami.Theme.textColor, 0.15)
-            Rectangle {
-                width: parent.width * tile.mediaState.fraction
-                height: parent.height
-                radius: parent.radius
-                color: Kirigami.Theme.highlightColor
-            }
+            opacity: 0.75
         }
 
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: Kirigami.Units.smallSpacing
-
             PlasmaComponents.ToolButton {
                 icon.name: "media-skip-backward"
                 enabled: !!(tile.player && tile.player.canGoPrevious)
                 onClicked: tile.player.Previous()
             }
-            // Play/pause: an accent circle
-            PlasmaComponents.ToolButton {
+            Rectangle {
                 id: playButton
-                icon.name: tile.mediaState.playing ? "media-playback-pause" : "media-playback-start"
-                icon.color: Kirigami.Theme.highlightedTextColor
-                enabled: !!(tile.player && (tile.mediaState.playing ? tile.player.canPause : tile.player.canPlay))
-                onClicked: tile.player.PlayPause()
-                background: Rectangle {
-                    radius: height / 2
-                    color: playButton.down ? Qt.darker(Kirigami.Theme.highlightColor, 1.15)
-                        : playButton.hovered ? Qt.lighter(Kirigami.Theme.highlightColor, 1.1) : Kirigami.Theme.highlightColor
+                readonly property bool canToggle: !!(tile.player && (tile.mediaState.playing ? tile.player.canPause : tile.player.canPlay))
+                implicitWidth: Kirigami.Units.gridUnit * 2
+                implicitHeight: implicitWidth
+                radius: width / 2
+                color: playTap.pressed ? Qt.darker(Kirigami.Theme.highlightColor, 1.15)
+                    : playHover.hovered ? Qt.lighter(Kirigami.Theme.highlightColor, 1.1) : Kirigami.Theme.highlightColor
+                opacity: canToggle ? 1 : 0.4
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: Kirigami.Units.iconSizes.small
+                    height: width
+                    source: tile.mediaState.playing ? "media-playback-pause" : "media-playback-start"
+                    isMask: true
+                    color: Kirigami.Theme.highlightedTextColor
+                }
+                HoverHandler {
+                    id: playHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+                TapHandler {
+                    id: playTap
+                    enabled: playButton.canToggle
+                    onTapped: tile.player.PlayPause()
                 }
             }
             PlasmaComponents.ToolButton {

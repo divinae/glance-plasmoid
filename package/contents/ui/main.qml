@@ -278,6 +278,10 @@ PlasmoidItem {
         onTriggered: root.noticeText = ""
     }
 
+    PrivacyMonitor {
+        id: privacyMonitor
+    }
+
     SystemMonitor {
         id: systemMonitor
         active: root.open && root.cfg.showSystem
@@ -319,6 +323,7 @@ PlasmoidItem {
         mediaState: mediaStateItem
         notifications: notificationWatcher
         calendar: calendarSource
+        privacy: privacyMonitor
     }
 
     // Always set: without a full representation Plasma lays the applet out as a bare icon. With
@@ -343,6 +348,7 @@ PlasmoidItem {
             notifications: notificationWatcher
             calendar: calendarSource
             monitor: systemMonitor
+            privacy: privacyMonitor
         }
     }
 
@@ -368,6 +374,7 @@ PlasmoidItem {
             item.notifications = notificationWatcher;
             item.calendar = calendarSource;
             item.monitor = systemMonitor;
+            item.privacy = privacyMonitor;
             item.ready = true;
         }
         Connections {

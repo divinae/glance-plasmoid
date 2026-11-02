@@ -197,17 +197,13 @@ Item {
                             radius: Kirigami.Units.cornerRadius
                             color: Qt.alpha(Kirigami.Theme.textColor, fileHover.hovered ? 0.12 : 0.06)
                         }
-                        Kirigami.ShadowedTexture {
+                        RoundedImage {
+                            id: thumb
                             anchors.fill: parent
-                            visible: file.image && thumb.status === Image.Ready
+                            visible: file.image
                             radius: Kirigami.Units.cornerRadius
-                            source: Image {
-                                id: thumb
-                                source: file.image ? file.url : ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                sourceSize: Qt.size(Kirigami.Units.gridUnit * 12, Kirigami.Units.gridUnit * 8)
-                            }
+                            source: file.image ? file.url : ""
+                            sourceSize: Qt.size(Kirigami.Units.gridUnit * 12, Kirigami.Units.gridUnit * 8)
                         }
                         Row {
                             id: fileRow

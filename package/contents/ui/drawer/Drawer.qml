@@ -32,6 +32,7 @@ Window {
     property Item notifications: null
     property Item calendar: null
     property Item monitor: null
+    property Item privacy: null
     property bool ready: false
 
     // The close animation finished: main.qml unloads the window
@@ -64,7 +65,7 @@ Window {
     // Resizing with the grip: the size follows the pointer, and is saved (in grid units) on release
     property real liveWidth: -1
     property real liveHeight: -1
-    readonly property real bodyWidth: liveWidth > 0 ? liveWidth : Kirigami.Units.gridUnit * (cfg ? cfg.drawerWidth : 30)
+    readonly property real bodyWidth: liveWidth > 0 ? liveWidth : Kirigami.Units.gridUnit * (cfg ? cfg.drawerWidth : 38)
     readonly property real bodyHeight: liveHeight > 0 ? liveHeight : Kirigami.Units.gridUnit * (cfg ? cfg.popupHeight : 24)
     readonly property real depth: sideways ? bodyWidth : bodyHeight
     readonly property real along: sideways ? bodyHeight : bodyWidth
@@ -330,6 +331,7 @@ Window {
                         notifications: drawer.notifications
                         calendar: drawer.calendar
                         monitor: drawer.monitor
+                        privacy: drawer.privacy
                     }
                 }
             }
