@@ -45,6 +45,7 @@ Tile {
 
     ColumnLayout {
         anchors.fill: parent
+        anchors.topMargin: Kirigami.Units.smallSpacing
         spacing: Kirigami.Units.smallSpacing / 2
         visible: tile.hasPlayer
 
@@ -57,7 +58,8 @@ Tile {
 
             Item {
                 id: coverBox
-                readonly property real side: Math.min(coverArea.width, coverArea.height)
+                // Not quite all of it: room around the cover, as around the text
+                readonly property real side: Math.min(coverArea.width, coverArea.height) * 0.86
                 anchors.centerIn: parent
                 width: side
                 height: side
@@ -101,6 +103,7 @@ Tile {
 
         PlasmaComponents.Label {
             Layout.fillWidth: true
+            Layout.topMargin: Kirigami.Units.smallSpacing
             horizontalAlignment: Text.AlignHCenter
             text: tile.player ? (tile.player.track || tile.player.identity || "") : ""
             textFormat: Text.PlainText
@@ -121,7 +124,9 @@ Tile {
 
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: Kirigami.Units.smallSpacing
+            Layout.topMargin: Kirigami.Units.smallSpacing
+            Layout.bottomMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.largeSpacing
             PlasmaComponents.ToolButton {
                 icon.name: "media-skip-backward"
                 enabled: !!(tile.player && tile.player.canGoPrevious)

@@ -299,6 +299,9 @@ PlasmoidItem {
         serviceName: root.activeTask ? root.activeTask.menuService : ""
         objectPath: root.activeTask ? root.activeTask.menuPath : ""
 
+        // A menu item chosen: done here, close (as macOS's menu bar)
+        onActionTriggered: root.setOpen(false)
+
         onMenuOpenChanged: {
             if (!menuOpen && root.open) {
                 closeTimer.restart();

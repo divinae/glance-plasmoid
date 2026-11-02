@@ -400,6 +400,7 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
         if (m_menu && idx >= 0 && idx < m_menu->actions().count()) {
             closeMenu();
             m_menu->actions().at(idx)->trigger();
+            Q_EMIT actionTriggered();
         }
         return;
     }
@@ -419,6 +420,8 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
         // dismisses a popup whose parent isn't on screen
         m_currentMenu = new QMenu();
         connect(m_currentMenu, &QMenu::aboutToHide, this, &AppMenuModel::onMenuAboutToHide, Qt::UniqueConnection);
+        // Also fires for actions in its submenus
+        connect(m_currentMenu, &QMenu::triggered, this, &AppMenuModel::actionTriggered);
     } else if (m_sourceMenu && m_sourceMenu != actionMenu) {
         const auto actions = m_currentMenu->actions();
         for (QAction *action : actions) {

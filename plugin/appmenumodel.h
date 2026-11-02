@@ -86,6 +86,8 @@ Q_SIGNALS:
     void menuOpenChanged();
     void buttonGridChanged();
     void requestActivateIndex(int index);
+    // An action was chosen from the menus (the drawer closes, as macOS's menu bar does)
+    void actionTriggered();
     void modelNeedsUpdate();
 
 private Q_SLOTS:
