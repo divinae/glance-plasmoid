@@ -871,6 +871,9 @@ Item {
 
     // A session going (or a break counting past its end): Glance's strip shows it
     readonly property bool active: timer.running || breakOvertime
+    // Stopped part-way through a session (not at its start): the panel keeps the pill to resume
+    readonly property bool paused: !timer.running && !breakOvertime
+        && Math.abs(counterMilliseconds - initialSeconds * 1000) >= 1000
 
     // Tooltip text, for Glance's panel
     readonly property string tooltipText: timeText + "\n" + getToolTipText()
@@ -1188,5 +1191,30 @@ Item {
 
     executable: ExecUtil {
         id: executable
+    }
+
+    // Locking the screen pauses a running focus block (you have walked away), and unlocking
+    // resumes it - only one this paused. Breaks run on: being away is what they are for.
+    // Polled, as Shift does: the lock has no signal QML can reach without a plugin.
+    property bool pausedByLock: false
+    readonly property string lockCmd: "dbus-send --session --print-reply=literal --dest=org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.GetActive"
+    Timer {
+        interval: 5 * 1000
+        repeat: true
+        running: root.settings.focus_pause_on_lock_enabled
+            && ((timer.running && !root.isBreak()) || root.pausedByLock)
+        onTriggered: executable.exec(root.lockCmd, function(cmd, exitCode, exitStatus, stdout) {
+            if (exitCode !== 0)
+                return;
+            var locked = /true/.test(stdout);
+            if (locked && timer.running && !root.isBreak()) {
+                root.pause();
+                root.pausedByLock = true;
+            } else if (!locked && root.pausedByLock) {
+                root.pausedByLock = false;
+                if (!timer.running)
+                    root.start();
+            }
+        })
     }
 }

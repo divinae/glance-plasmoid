@@ -17,6 +17,10 @@ Tile {
     id: tile
 
     property date now: new Date()
+    // Top-aligned rather than centred, for a card that has more below it
+    property bool alignTop: false
+    // The time's size, in multiples of the default font
+    property real timeScale: 2.8
     Timer {
         interval: 1000
         repeat: true
@@ -30,13 +34,14 @@ Tile {
         spacing: 0
 
         Item {
+            visible: !tile.alignTop
             Layout.fillHeight: true
         }
         PlasmaComponents.Label {
             Layout.fillWidth: true
             text: Qt.formatTime(tile.now, Qt.locale().timeFormat(Locale.ShortFormat))
             textFormat: Text.PlainText
-            font.pointSize: Kirigami.Theme.defaultFont.pointSize * 2.8
+            font.pointSize: Kirigami.Theme.defaultFont.pointSize * tile.timeScale
             font.weight: Font.Bold
             fontSizeMode: Text.HorizontalFit
             minimumPointSize: Kirigami.Theme.defaultFont.pointSize

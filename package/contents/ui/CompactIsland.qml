@@ -49,7 +49,6 @@ MouseArea {
         switch (mode) {
         case "media": return null; // no cover in the panel: the track's text (and its bars) say it
         case "notice": return "notifications";
-        case "focus": return "chronometer";
         case "window": return island.cfg.showAppIcon && island.activeTask && island.activeTask.icon ? island.activeTask.icon : null;
         default: return null;
         }
@@ -86,6 +85,13 @@ MouseArea {
                 tip: stoppable ? i18n("Screen is being shared: %1. Click to stop sharing.", privacy.screenNames.join(", "))
                     : i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
+        // Focus: the session's time left beside its icon (a break has its own icon), also while
+        // paused; a click does what the Focus tab's main button does. The title stays in the strip.
+        // The time and tooltip are bound in the segment, so the model isn't rebuilt every second
+        if (island.focusTimer && (island.focusActive || island.focusTimer.paused) && island.cfg.pillFocus) {
+            out.push({color: Kirigami.Theme.highlightColor, action: "focus", hasText: true,
+                icon: island.focusOnBreak ? "chronometer-pause-symbolic" : "chronometer-symbolic"});
+        }
         // Stand: time to switch (or a switch waiting to be confirmed); click switches
         if (island.stand && (island.stand.switchDue || island.stand.pendingPosition)) {
             out.push({color: "#c9a227", action: "stand",
@@ -103,8 +109,20 @@ MouseArea {
         id: micStreams
     }
     readonly property bool micMuted: micStreams.muted
+    // A segment with text (Focus's time) is wider by the text, measured on a fixed "00:00" so
+    // it doesn't jitter every second
+    TextMetrics {
+        id: pillTextMetrics
+        font: Kirigami.Theme.smallFont
+        // The time's shape with every digit a 0: wider only when it gains a digit or a sign
+        text: island.focusTimer ? island.focusTimer.panelTimeText.replace(/[0-9]/g, "0") : "00:00"
+    }
+    readonly property int pillTextLength: Math.ceil(pillTextMetrics.advanceWidth) + 4
+    function segmentLengthOf(p) {
+        return p.hasText ? segmentLength + pillTextLength : segmentLength;
+    }
     readonly property int capsuleLength: pills.length > 0
-        ? pills.length * segmentLength + (pills.length - 1) * pillGap : 0
+        ? pills.reduce((sum, p) => sum + segmentLengthOf(p), 0) + (pills.length - 1) * pillGap : 0
     readonly property int trailLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
@@ -387,7 +405,7 @@ MouseArea {
                             readonly property bool first: index === 0
                             readonly property bool last: index === compact.pills.length - 1
                             readonly property real end: height / 2
-                            width: compact.segmentLength
+                            width: compact.segmentLengthOf(modelData)
                             height: compact.pillHeight
                             topLeftRadius: first ? end : 3
                             bottomLeftRadius: first ? end : 3
@@ -405,13 +423,24 @@ MouseArea {
                                 id: pillHover
                             }
                             Kirigami.Icon {
-                                x: Math.round((parent.width - width) / 2)
+                                id: segmentIcon
+                                x: segment.modelData.hasText ? 6 : Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
                                 height: width
                                 source: segment.modelData.action === "mic" && compact.micMuted
                                     ? "audio-input-microphone-muted-symbolic" : segment.modelData.icon
                                 isMask: true
+                                color: Kirigami.Theme.textColor
+                            }
+                            PlasmaComponents.Label {
+                                visible: !!segment.modelData.hasText
+                                anchors.left: segmentIcon.right
+                                anchors.leftMargin: 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: segment.modelData.hasText && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText : ""
+                                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                font.features: { "tnum": 1 }
                                 color: Kirigami.Theme.textColor
                             }
                             scale: pillMouse.pressed && segment.clickable ? 0.88 : 1
@@ -447,6 +476,9 @@ MouseArea {
                                     case "mic":
                                         micStreams.toggle();
                                         break;
+                                    case "focus":
+                                        compact.island.focusTimer.toggleSession();
+                                        break;
                                     }
                                 }
                             }
@@ -455,7 +487,12 @@ MouseArea {
                             PlasmaCore.ToolTipArea {
                                 anchors.fill: parent
                                 mainText: segment.modelData.action === "mic" && compact.micMuted
-                                    ? i18n("Microphone muted. Click to unmute it.") : (segment.modelData.tip || "")
+                                    ? i18n("Microphone muted. Click to unmute it.")
+                                    : segment.modelData.action === "focus" && compact.island.focusTimer
+                                    ? compact.island.focusTimer.tooltipText + "\n"
+                                        + i18nc("what a click on the Focus pill does", "Click: %1",
+                                            compact.island.focusTimer.sessionBtnText.replace("&", ""))
+                                    : (segment.modelData.tip || "")
                                 location: Plasmoid.location
                             }
                         }

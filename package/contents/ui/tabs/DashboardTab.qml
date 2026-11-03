@@ -13,8 +13,9 @@ import "../tiles"
 
 // The first tab, after Caelestia's dashboard:
 //
-//   clock | today's events     | CPU·RAM·disk | media
-//   user and system | notifications            | shelf
+//   clock    | today's events | CPU·RAM·disk | media
+//   user and | notifications · focus · stand · shelf
+//   system   |
 // (the window's menus and buttons are in the menu bar along the top of the drawer)
 GridLayout {
     id: tab
@@ -38,15 +39,43 @@ GridLayout {
     rowSpacing: Kirigami.Units.largeSpacing
     columnSpacing: Kirigami.Units.largeSpacing
 
-    // ---- top row ------------------------------------------------------------------
-    ClockTile {
+    // ---- the clock, and who and what: one card down both rows --------------------------
+    Tile {
         Layout.fillHeight: true
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 8
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
         Layout.fillWidth: true
+        Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+        Layout.rowSpan: 2
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Kirigami.Units.largeSpacing
+
+            // The time at the top, who and what at the bottom
+            ClockTile {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                color: "transparent"
+                padding: 0
+                alignTop: true
+                timeScale: 3.6
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Kirigami.Theme.textColor
+                opacity: 0.12
+            }
+            InfoTile {
+                Layout.fillWidth: true
+                implicitHeight: Kirigami.Units.gridUnit * 7.5
+                color: "transparent"
+                padding: 0
+            }
+        }
     }
     // What's next today, from Event Calendar (the month itself is Event Calendar's)
     AgendaTile {
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
         visible: tab.showAgenda
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -56,6 +85,7 @@ GridLayout {
         onClicked: tab.openTab("agenda")
     }
     ResourcesTile {
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
         visible: tab.showSystem
         Layout.fillHeight: true
         Layout.preferredWidth: Kirigami.Units.gridUnit * 5
@@ -63,6 +93,7 @@ GridLayout {
         onClicked: tab.openTab("system")
     }
     MediaTile {
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
         visible: tab.showMedia
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -75,17 +106,13 @@ GridLayout {
         onOpenMedia: tab.openTab("media")
     }
 
-    // ---- who and what, notifications, shelf ---------------------------------------------
-    InfoTile {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 7
-    }
+    // ---- notifications, focus, stand, shelf ---------------------------------------------
     // Notifications get most of the room, the shelf what it needs
     RowLayout {
         visible: tab.showNotifications || tab.showShelf || !!tab.island.stand || !!tab.island.focusTimer
         Layout.fillWidth: true
-        Layout.preferredHeight: Kirigami.Units.gridUnit * 7
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 7
+        Layout.fillHeight: true
         Layout.columnSpan: 3
         spacing: Kirigami.Units.largeSpacing
 
@@ -97,25 +124,20 @@ GridLayout {
             watcher: tab.notifications
             onClicked: tab.openTab("notifications")
         }
-        FocusTile {
-            visible: !!tab.island.focusTimer
+        // Focus and Stand share a card, one row each
+        WorkTile {
+            visible: !!tab.island.focusTimer || !!tab.island.stand
             Layout.fillHeight: true
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 9
             timer: tab.island.focusTimer
-            onClicked: tab.openTab("focus")
-        }
-        StandTile {
-            visible: !!tab.island.stand
-            Layout.fillHeight: true
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 7
             stand: tab.island.stand
-            onClicked: tab.openTab("stand")
+            onOpenTab: key => tab.openTab(key)
         }
         ShelfTile {
             visible: tab.showShelf
             Layout.fillWidth: !tab.showNotifications
             Layout.fillHeight: true
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 6
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 5
             island: tab.island
             onClicked: tab.openTab("shelf")
         }

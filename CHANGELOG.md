@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.1.0 — 2026-11-03
+
+Glance takes in two widgets of its own: Fokus and Shift.
+
+**Focus.** Fokus's pomodoro and flowmodoro timer as a Focus tab: the timer and its stats side by
+side, the break overlay on every screen, Do Not Disturb while you focus, media paused for breaks,
+sounds, notifications and scripts. In the panel, a pill with the time left beside the window's
+title (a click starts or pauses); on the dashboard, a row with a button; in the right-click menu,
+Start, Skip to Break, Stop and Flowmodoro. Locking the screen pauses a focus session and
+unlocking resumes it. Its settings are one page.
+
+**Shift.** Shift's sit/stand reminders as a Shift tab: where you are and what's next, today
+against your goal, the week, and the desk with its height on a scale. When a switch is due, an
+amber pill in the panel (a click switches) and an amber edge on the dashboard's card; Sit Down /
+Stand Up in the right-click menu and on the dashboard. A motorized desk (idasen by default)
+can move by itself. Its settings, desk included, are one page.
+
+**Together.** Shift waits for focus breaks: no reminder or desk move in the middle of a
+session, and a switch due within 10 minutes is made at the break. Breaks count as neither
+sitting nor standing ("Switch at focus breaks", on by default).
+
+**Dashboard.** The clock and who-and-what share one tall card; focus and posture share another,
+which leaves the notifications room for their header.
+
+**Also:** the right-click menu drops its "Open …" entries; the Polish translation covers the new
+pages. Fokus's and Shift's own settings and history aren't imported: Focus and Shift start fresh
+and are off until turned on.
+
 ## 1.0.0 — 2026-11-03
 
 The widget is Glance now, through and through: its id is `com.dv.glance` (see the README for

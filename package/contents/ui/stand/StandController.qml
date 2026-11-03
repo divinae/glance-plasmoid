@@ -41,7 +41,15 @@ Item {
 
     // Do Not Disturb, as the notification server reports it. Reminders wait while it is on.
     property bool dndActive: false
-    // A reminder held back by Do Not Disturb, shown once it ends.
+    // A focus block is running (set by Glance when Focus is on and the two are linked):
+    // reminders and desk moves wait for its break, like they do for Do Not Disturb.
+    property bool holdForFocus: false
+    // A focus break (or its overrun) is on: away from the desk, so the cycle stands still -
+    // the break counts as neither sitting nor standing.
+    property bool focusBreak: false
+    // Either reason to keep quiet
+    readonly property bool quiet: dndActive || holdForFocus
+    // A reminder held back by Do Not Disturb or a focus block, shown once it ends.
     property bool pendingRemind: false
     readonly property string dndCmd: "dbus-send --session --print-reply=literal --dest=org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.DBus.Properties.Get string:org.freedesktop.Notifications string:Inhibited"
     readonly property string lockCmd: "dbus-send --session --print-reply=literal --dest=org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.GetActive"
@@ -115,6 +123,8 @@ Item {
     }
 
     function countdownText() {
+        if (focusBreak && !switchDue && !idle)
+            return i18n("On hold during the focus break");
         if (status === "away")
             return i18n("Paused while the screen is locked");
         if (status === "paused")
@@ -125,6 +135,8 @@ Item {
             return i18n("Reminders start again at %1", formatClock(workHours.startMinutes));
         if (status === "snoozed")
             return i18n("Snoozed for %1", Cycle.formatMinutes(cycle.snoozeUntil - nowMs));
+        if (cycle.dueSinceMs && holdForFocus)
+            return i18n("Due for %1, waits for the focus break", Cycle.formatMinutes(nowMs - cycle.dueSinceMs));
         if (cycle.dueSinceMs && dndActive)
             return i18n("Due for %1, reminder waits for Do Not Disturb to end", Cycle.formatMinutes(nowMs - cycle.dueSinceMs));
         if (cycle.dueSinceMs)
@@ -232,6 +244,13 @@ Item {
         var now = Date.now();
         var dt = now - lastTickMs;
         lastTickMs = now;
+        if (focusBreak) {
+            // The cycle stands still, but a due switch is still re-announced
+            nowMs = now;
+            if (switchDue && !pendingPosition && lastNotifiedMs && now - lastNotifiedMs >= renotifyMs)
+                remind();
+            return;
+        }
         if (Cycle.countsStanding(cycle, now, offHours) && dt > 0 && dt <= Cycle.MAX_TICK_MS)
             unsavedStandMs += dt;
         cycle = Cycle.advance(cycle, now, dt, cfg);
@@ -243,7 +262,7 @@ Item {
 
     function remind() {
         lastNotifiedMs = Date.now();
-        if (dndActive) {
+        if (quiet) {
             pendingRemind = true;
             return;
         }
@@ -267,17 +286,30 @@ Item {
         actOnDue();
     }
 
-    onDndActiveChanged: {
-        if (dndActive || !pendingRemind)
+    onQuietChanged: {
+        if (quiet || !pendingRemind)
             return;
         pendingRemind = false;
         if (switchDue)
             actOnDue();
     }
 
+    // A focus break has started and the next switch is close: make it now rather than a few
+    // minutes into the next block. Moves the desk when it moves by itself, reminds otherwise.
+    function switchAtBreak(withinMs) {
+        if (idle || pendingPosition || switchDue || remainingMs > withinMs)
+            return;
+        if (deskEnabled && desk.reachable && settings.stand_auto_move_enabled
+                && desk.moveTo(Cycle.opposite(cycle.position))) {
+            lastNotifiedMs = Date.now();
+            return;
+        }
+        remind();
+    }
+
     function actOnDue() {
         // A desk moving by itself mid-presentation is worse than a notification.
-        if (dndActive) {
+        if (quiet) {
             pendingRemind = true;
             return;
         }

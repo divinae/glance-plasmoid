@@ -18,6 +18,7 @@ KCM.SimpleKCM {
     property alias cfg_pillCamera: pillCamera.checked
     property alias cfg_pillMicrophone: pillMicrophone.checked
     property alias cfg_pillScreen: pillScreen.checked
+    property alias cfg_pillFocus: pillFocus.checked
     property alias cfg_pillDnd: pillDnd.checked
     property alias cfg_showAppIcon: showAppIcon.checked
     property alias cfg_boldFont: boldFont.checked
@@ -59,6 +60,10 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: pillScreen
             text: i18n("Screen being shared")
+        }
+        QQC2.CheckBox {
+            id: pillFocus
+            text: i18n("Focus session, with its time left")
         }
         QQC2.CheckBox {
             id: pillDnd

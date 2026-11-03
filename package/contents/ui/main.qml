@@ -68,18 +68,12 @@ PlasmoidItem {
     readonly property bool focusActive: focusTimer !== null && focusTimer !== undefined && focusTimer.active
     readonly property string stripMode: noticeText !== "" ? "notice"
         : standDue ? "stand"
-        : focusActive ? "focus"
         : showMediaInPanel ? "media"
         : stripEvent ? "event"
         : "window"
     readonly property string stripText: {
         switch (stripMode) {
         case "notice": return noticeText;
-        case "focus": {
-            // "24:31 · task", or the kind of session ("focus", "short break") without a task
-            const task = cfg.focus_task_label || "";
-            return focusTimer.panelTimeText + " · " + truncate(task !== "" && !focusTimer.isBreak() ? task : focusTimer.statusText);
-        }
         case "stand": return stand.cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
         case "media": return mediaText;
         case "event": return truncate(calendarSource.label(stripEvent));
@@ -332,6 +326,10 @@ PlasmoidItem {
         sourceComponent: Component {
             Stand.StandController {
                 settings: root.cfg
+                // Focus and Stand together: switches wait for the focus break
+                holdForFocus: root.cfg.stand_focus_sync_enabled && root.focusInBlock
+                // A focus break is time away from the desk: neither sitting nor standing
+                focusBreak: root.cfg.stand_focus_sync_enabled && root.focusOnBreak
             }
         }
     }
@@ -349,6 +347,24 @@ PlasmoidItem {
         }
     }
     readonly property var focusTimer: focusLoader.item
+    // A focus block (not a break) is running
+    readonly property bool focusInBlock: focusTimer !== null && focusTimer !== undefined
+        && focusTimer.active && !focusTimer.breakOvertime && !focusTimer.isBreak()
+
+    // A break is running (or running over)
+    readonly property bool focusOnBreak: focusActive && !focusInBlock
+    // A break has begun: a posture switch due within 10 minutes is made now, not mid-block.
+    // Only on a running break, and a beat later so Shift's hold has lifted by then; not for a
+    // session restored at startup.
+    property real loadedAtMs: Date.now()
+    onFocusOnBreakChanged: {
+        if (!focusOnBreak || !stand || !cfg.stand_focus_sync_enabled || Date.now() - loadedAtMs < 15000)
+            return;
+        Qt.callLater(() => {
+            if (root.focusOnBreak && root.stand)
+                root.stand.switchAtBreak(10 * 60 * 1000);
+        });
+    }
 
     SystemMonitor {
         id: systemMonitor
@@ -391,26 +407,32 @@ PlasmoidItem {
     // ---- the widget's right-click menu ---------------------------------------------------------
     Plasmoid.contextualActions: [
         // Focus (from Fokus): what its own menu offered
+        // Named and drawn as the timer's, so they don't read as a second set of media controls
         PlasmaCore.Action {
-            text: root.focusTimer ? root.focusTimer.sessionBtnText.replace("&", "") : ""
-            icon.name: root.focusTimer ? root.focusTimer.sessionBtnIconSource : ""
+            readonly property string mode: !root.focusTimer ? ""
+                : root.focusTimer.sessionBtnIconSource === "media-playback-start" ? "start"
+                : root.focusTimer.sessionBtnIconSource === "chronometer-pause" ? "break"
+                : root.focusTimer.sessionBtnIconSource === "media-skip-forward" ? "endBreak" : "pause"
+            text: mode === "start" ? i18n("Start Focus") : mode === "break" ? i18n("Take a Break")
+                : mode === "endBreak" ? i18n("End Break") : i18n("Pause Focus")
+            icon.name: mode === "start" ? "chronometer-start" : mode === "endBreak" ? "chronometer-lap" : "chronometer-pause"
             visible: !!root.focusTimer
             onTriggered: root.focusTimer.toggleSession()
         },
         PlasmaCore.Action {
-            text: i18n("Skip")
-            icon.name: "media-skip-forward"
+            text: root.focusTimer && root.focusTimer.isBreak() ? i18n("Skip Break") : i18n("Skip to Break")
+            icon.name: "chronometer-lap"
             visible: !!root.focusTimer && !root.focusTimer.flowmodoroModeEnabled
             onTriggered: root.focusTimer.skip()
         },
         PlasmaCore.Action {
-            text: root.focusTimer && (root.focusTimer.isBreak() || root.focusTimer.breakOvertime) ? i18n("End for today") : i18n("Stop")
-            icon.name: "media-playback-stop"
+            text: root.focusTimer && (root.focusTimer.isBreak() || root.focusTimer.breakOvertime) ? i18n("End Focus for Today") : i18n("Stop Focus")
+            icon.name: "chronometer-reset"
             visible: !!root.focusTimer
             onTriggered: root.focusTimer.endForToday()
         },
         PlasmaCore.Action {
-            text: i18n("Flowmodoro")
+            text: i18n("Flowmodoro Mode")
             checkable: true
             checked: root.cfg.focus_flowmodoro_mode_enabled
             visible: !!root.focusTimer
@@ -419,6 +441,24 @@ PlasmoidItem {
         PlasmaCore.Action {
             isSeparator: true
             visible: !!root.focusTimer
+        },
+        // Shift: switch to the other posture (the desk moves when it's controlled)
+        PlasmaCore.Action {
+            readonly property bool standing: !!root.stand && root.stand.cycle.position === "stand"
+            text: standing ? i18n("Sit Down") : i18n("Stand Up")
+            icon.name: standing ? "go-down-symbolic" : "go-up-symbolic"
+            visible: !!root.stand
+            onTriggered: {
+                if (root.stand.pendingPosition) {
+                    root.stand.confirmPending();
+                } else {
+                    root.stand.goTo(standing ? "sit" : "stand");
+                }
+            }
+        },
+        PlasmaCore.Action {
+            isSeparator: true
+            visible: !!root.stand
         },
         PlasmaCore.Action {
             text: i18n("Do Not Disturb")
@@ -459,33 +499,6 @@ PlasmoidItem {
             visible: root.cfg.showMedia && root.hasPlayer
             enabled: root.hasPlayer && root.player.canGoNext
             onTriggered: root.player.Next()
-        },
-        PlasmaCore.Action {
-            isSeparator: true
-        },
-        PlasmaCore.Action {
-            text: i18n("Open Dashboard")
-            icon.name: "view-grid"
-            visible: root.cfg.showDashboard
-            onTriggered: root.openOn("dashboard", true)
-        },
-        PlasmaCore.Action {
-            text: i18n("Open Media")
-            icon.name: "media-playback-start"
-            visible: root.cfg.showMedia && root.hasPlayer
-            onTriggered: root.openOn("media", true)
-        },
-        PlasmaCore.Action {
-            text: i18n("Open Notifications")
-            icon.name: "notifications"
-            visible: root.cfg.showNotifications
-            onTriggered: root.openOn("notifications", true)
-        },
-        PlasmaCore.Action {
-            text: i18n("Open System Monitor")
-            icon.name: "view-statistics"
-            visible: root.cfg.showSystem
-            onTriggered: root.openOn("system", true)
         }
     ]
 
