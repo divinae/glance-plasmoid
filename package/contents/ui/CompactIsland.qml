@@ -15,7 +15,6 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 
 import com.dv.island.private as Island
-import org.kde.plasma.private.volume as PlasmaPa
 
 MouseArea {
     id: compact
@@ -79,8 +78,12 @@ MouseArea {
                 tip: i18n("Microphone in use: %1. Click to mute it.", privacy.micNames.join(", "))});
         }
         if (privacy.screenActive && island.cfg.pillScreen) {
-            out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "screen",
-                tip: i18n("Screen is being shared: %1. Click to stop sharing.", privacy.screenNames.join(", "))});
+            // Stopping goes through the portal's tray icon: offered only when there is one
+            // (a recording that doesn't go through the portal has none)
+            const stoppable = Island.TrayActions.itemIds.indexOf("xdg-desktop-portal-kde") !== -1;
+            out.push({color: privacy.screenColor, icon: "computer-symbolic", action: stoppable ? "screen" : "privacy",
+                tip: stoppable ? i18n("Screen is being shared: %1. Click to stop sharing.", privacy.screenNames.join(", "))
+                    : i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
@@ -88,7 +91,11 @@ MouseArea {
         }
         return out;
     }
-    readonly property bool micMuted: PlasmaPa.PreferredDevice.source ? PlasmaPa.PreferredDevice.source.muted : false
+    // The recording streams themselves (MicStreams), whichever microphone each uses
+    MicStreams {
+        id: micStreams
+    }
+    readonly property bool micMuted: micStreams.muted
     readonly property int capsuleLength: pills.length > 0
         ? pills.length * segmentLength + (pills.length - 1) * pillGap : 0
     readonly property int trailLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
@@ -433,12 +440,7 @@ MouseArea {
                                             [i18nd("xdg-desktop-portal-kde", "End"), "End"]);
                                         break;
                                     case "mic":
-                                        // As the volume applet: the default microphone's mute.
-                                        // (Plasma's Microphone icon is in this very process, so
-                                        // calling it over D-Bus doesn't go through.)
-                                        if (PlasmaPa.PreferredDevice.source) {
-                                            PlasmaPa.PreferredDevice.source.muted = !PlasmaPa.PreferredDevice.source.muted;
-                                        }
+                                        micStreams.toggle();
                                         break;
                                     }
                                 }

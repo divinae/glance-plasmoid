@@ -9,6 +9,7 @@
 #include "dbusmenutypes_p.h"
 
 #include <QCoreApplication>
+#include <QDBusArgument>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
@@ -16,11 +17,25 @@
 #include <QDBusReply>
 #include <QDBusVariant>
 #include <QDateTime>
+#include <QFutureWatcher>
+#include <QtConcurrentRun>
+
+static const QString s_watcher = QStringLiteral("org.kde.StatusNotifierWatcher");
 
 TrayActions::TrayActions(QObject *parent)
     : QObject(parent)
 {
     DBusMenuTypes_register();
+    QDBusConnection bus = QDBusConnection::sessionBus();
+    for (const char *signal : {"StatusNotifierItemRegistered", "StatusNotifierItemUnregistered"}) {
+        bus.connect(s_watcher, QStringLiteral("/StatusNotifierWatcher"), s_watcher, QString::fromLatin1(signal), this, SLOT(refresh()));
+    }
+    refresh();
+}
+
+QStringList TrayActions::itemIds() const
+{
+    return m_itemIds;
 }
 
 static int findEntry(const DBusMenuLayoutItem &item, const QStringList &labels)
@@ -64,55 +79,108 @@ static QVariant dbusProperty(const QDBusConnection &bus, const QString &service,
     return reply.arguments().constFirst().value<QDBusVariant>().variant();
 }
 
-bool TrayActions::trigger(const QString &itemId, const QStringList &labels)
+// The tray icons of other processes: service, path and Id. Never ask our own process
+// (plasmashell's own icons): a blocking call to ourselves waits for an answer only we could
+// give. KStatusNotifierItem registers each icon on a connection of its own, under a name of
+// its own, so compare the owning process, not our connection's name. Runs on a worker thread.
+struct TrayItem {
+    QString service;
+    QString path;
+    QString id;
+};
+
+static QList<TrayItem> listItems(const QDBusConnection &bus)
 {
-    QDBusConnection bus = QDBusConnection::sessionBus();
+    QList<TrayItem> out;
     QDBusConnectionInterface *daemon = bus.interface();
     if (!daemon) {
-        return false;
+        return out;
     }
-    // Never ask our own process (plasmashell's own tray icons): a blocking call to ourselves
-    // waits for an answer only we could give, and froze the shell until D-Bus gave up.
-    // KStatusNotifierItem registers each icon on a connection of its own, under a name of its
-    // own, so compare the owning process, not our connection's name.
     const uint self = static_cast<uint>(QCoreApplication::applicationPid());
-    const QStringList items = dbusProperty(bus, QStringLiteral("org.kde.StatusNotifierWatcher"), QStringLiteral("/StatusNotifierWatcher"),
-                                       QStringLiteral("org.kde.StatusNotifierWatcher"), QStringLiteral("RegisteredStatusNotifierItems"), 300)
-                                  .toStringList();
-    bool triggered = false;
+    // An array inside a variant arrives as a QDBusArgument, not a QStringList
+    const QVariant registered = dbusProperty(bus, s_watcher, QStringLiteral("/StatusNotifierWatcher"), s_watcher,
+                                             QStringLiteral("RegisteredStatusNotifierItems"), 300);
+    const QStringList items = registered.canConvert<QDBusArgument>() ? qdbus_cast<QStringList>(registered.value<QDBusArgument>())
+                                                                     : registered.toStringList();
     for (const QString &entry : items) {
         const int slash = entry.indexOf(QLatin1Char('/'));
-        const QString service = slash > 0 ? entry.left(slash) : entry;
-        const QString path = slash > 0 ? entry.mid(slash) : QStringLiteral("/StatusNotifierItem");
-        const QDBusReply<uint> pid = daemon->servicePid(service);
+        TrayItem item;
+        item.service = slash > 0 ? entry.left(slash) : entry;
+        item.path = slash > 0 ? entry.mid(slash) : QStringLiteral("/StatusNotifierItem");
+        const QDBusReply<uint> pid = daemon->servicePid(item.service);
         if (!pid.isValid() || pid.value() == self) {
             continue;
         }
-        const QString sni = QStringLiteral("org.kde.StatusNotifierItem");
-        if (dbusProperty(bus, service, path, sni, QStringLiteral("Id"), 300).toString() != itemId) {
-            continue;
+        item.id = dbusProperty(bus, item.service, item.path, QStringLiteral("org.kde.StatusNotifierItem"), QStringLiteral("Id"), 300).toString();
+        if (!item.id.isEmpty()) {
+            out << item;
         }
-        const QString menuPath = dbusProperty(bus, service, path, sni, QStringLiteral("Menu"), 300).value<QDBusObjectPath>().path();
-        if (menuPath.isEmpty()) {
-            continue;
-        }
-        const QString dbusmenu = QStringLiteral("com.canonical.dbusmenu");
-        callWithTimeout(bus, service, menuPath, dbusmenu, QStringLiteral("AboutToShow"), {0}, 500);
-        const QDBusMessage reply = callWithTimeout(bus, service, menuPath, dbusmenu, QStringLiteral("GetLayout"), {0, -1, QStringList()}, 500);
-        if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() < 2) {
-            continue;
-        }
-        const DBusMenuLayoutItem root = qdbus_cast<DBusMenuLayoutItem>(reply.arguments().at(1));
-        const int id = findEntry(root, labels);
-        if (id < 0) {
-            continue;
-        }
-        // Every matching icon (one per shared stream), and without waiting for the answer
-        QDBusMessage event = QDBusMessage::createMethodCall(service, menuPath, dbusmenu, QStringLiteral("Event"));
-        event.setArguments({id, QStringLiteral("clicked"), QVariant::fromValue(QDBusVariant(QString())),
-                            static_cast<uint>(QDateTime::currentSecsSinceEpoch())});
-        bus.send(event);
-        triggered = true;
     }
-    return triggered;
+    return out;
+}
+
+void TrayActions::refresh()
+{
+    // One scan at a time; a change during one asks for another after it
+    if (m_refreshing) {
+        m_refreshAgain = true;
+        return;
+    }
+    m_refreshing = true;
+    auto *watcher = new QFutureWatcher<QStringList>(this);
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher] {
+        const QStringList ids = watcher->result();
+        watcher->deleteLater();
+        m_refreshing = false;
+        if (ids != m_itemIds) {
+            m_itemIds = ids;
+            Q_EMIT itemIdsChanged();
+        }
+        if (m_refreshAgain) {
+            m_refreshAgain = false;
+            refresh();
+        }
+    });
+    watcher->setFuture(QtConcurrent::run([] {
+        QStringList ids;
+        for (const TrayItem &item : listItems(QDBusConnection::sessionBus())) {
+            if (!ids.contains(item.id)) {
+                ids << item.id;
+            }
+        }
+        return ids;
+    }));
+}
+
+void TrayActions::trigger(const QString &itemId, const QStringList &labels)
+{
+    (void)QtConcurrent::run([itemId, labels] {
+        const QDBusConnection bus = QDBusConnection::sessionBus();
+        const QString dbusmenu = QStringLiteral("com.canonical.dbusmenu");
+        for (const TrayItem &item : listItems(bus)) {
+            if (item.id != itemId) {
+                continue;
+            }
+            const QString menuPath = dbusProperty(bus, item.service, item.path, QStringLiteral("org.kde.StatusNotifierItem"), QStringLiteral("Menu"), 300)
+                                         .value<QDBusObjectPath>()
+                                         .path();
+            if (menuPath.isEmpty()) {
+                continue;
+            }
+            callWithTimeout(bus, item.service, menuPath, dbusmenu, QStringLiteral("AboutToShow"), {0}, 500);
+            const QDBusMessage reply = callWithTimeout(bus, item.service, menuPath, dbusmenu, QStringLiteral("GetLayout"), {0, -1, QStringList()}, 500);
+            if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() < 2) {
+                continue;
+            }
+            const int id = findEntry(qdbus_cast<DBusMenuLayoutItem>(reply.arguments().at(1)), labels);
+            if (id < 0) {
+                continue;
+            }
+            // Every matching icon (one per shared stream), without waiting for the answer
+            QDBusMessage event = QDBusMessage::createMethodCall(item.service, menuPath, dbusmenu, QStringLiteral("Event"));
+            event.setArguments({id, QStringLiteral("clicked"), QVariant::fromValue(QDBusVariant(QString())),
+                                static_cast<uint>(QDateTime::currentSecsSinceEpoch())});
+            bus.send(event);
+        }
+    });
 }
