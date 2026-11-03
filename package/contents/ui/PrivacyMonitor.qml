@@ -17,13 +17,17 @@ Item {
 
     readonly property color cameraColor: "#6fb383"
     readonly property color screenColor: "#d77a72"
+    // The microphone in macOS's orange, faded as the others
+    readonly property color micColor: "#e0a35c"
+    readonly property bool micActive: Island.ScreenCastMonitor.micActive
+    readonly property var micNames: Island.ScreenCastMonitor.micUsers
 
     readonly property bool available: camera.detectionAvailable
     readonly property bool cameraActive: camera.runningCount > 0
     // KWin's screencasts carry no media role, so MediaMonitor misses them: ScreenCastMonitor
     // watches PipeWire for those
     readonly property bool screenActive: screen.runningCount > 0 || Island.ScreenCastMonitor.active
-    readonly property bool anyActive: cameraActive || screenActive
+    readonly property bool anyActive: cameraActive || screenActive || micActive
 
     // Names of what's running (the camera's, the shared stream's), from the rows below
     property var cameraNames: []

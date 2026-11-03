@@ -28,6 +28,9 @@ class ScreenCastMonitor : public QObject
     Q_PROPERTY(bool active READ active NOTIFY changed)
     // [{what: "jetbrains-studio" or "", viewers: ["slack"]}]
     Q_PROPERTY(QVariantList casts READ casts NOTIFY changed)
+    // The microphone recorded by an application (not audio meters or visualisers)
+    Q_PROPERTY(bool micActive READ micActive NOTIFY changed)
+    Q_PROPERTY(QStringList micUsers READ micUsers NOTIFY changed)
 
 public:
     explicit ScreenCastMonitor(QObject *parent = nullptr);
@@ -35,12 +38,17 @@ public:
 
     bool active() const;
     QVariantList casts() const;
+    bool micActive() const;
+    QStringList micUsers() const;
 
     struct Node {
         QString mediaClass;
         QString name;
         QString mediaName;
         QString application;
+        QString binary;
+        QString category;
+        bool captureSink = false;
         quint32 target = 0;
         bool running = false;
     };
@@ -66,4 +74,5 @@ private:
 
     QHash<quint32, Node> m_nodes; // on the Qt thread
     QVariantList m_casts;
+    QStringList m_micUsers;
 };

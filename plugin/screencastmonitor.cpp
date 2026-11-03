@@ -43,9 +43,10 @@ QString applicationName(const QString &id)
     return id.left(1).toUpper() + id.mid(1);
 }
 
-bool isVideoStream(const QString &mediaClass)
+bool isWatched(const QString &mediaClass)
 {
-    return mediaClass == QLatin1String("Stream/Output/Video") || mediaClass == QLatin1String("Stream/Input/Video");
+    return mediaClass == QLatin1String("Stream/Output/Video") || mediaClass == QLatin1String("Stream/Input/Video")
+        || mediaClass == QLatin1String("Stream/Input/Audio");
 }
 }
 
@@ -71,6 +72,9 @@ static void nodeInfo(void *data, const pw_node_info *info)
     n.name = prop(info->props, PW_KEY_NODE_NAME);
     n.mediaName = prop(info->props, PW_KEY_MEDIA_NAME);
     n.application = prop(info->props, PW_KEY_APP_NAME);
+    n.binary = prop(info->props, PW_KEY_APP_PROCESS_BINARY);
+    n.category = prop(info->props, PW_KEY_MEDIA_CATEGORY);
+    n.captureSink = prop(info->props, PW_KEY_STREAM_CAPTURE_SINK) == QLatin1String("true");
     bool ok = false;
     n.target = prop(info->props, PW_KEY_TARGET_OBJECT).toUInt(&ok);
     if (!ok) {
@@ -116,7 +120,7 @@ static RegistryContext *s_ctx = nullptr;
 static void registryGlobal(void *data, uint32_t id, uint32_t, const char *type, uint32_t, const spa_dict *props)
 {
     auto *ctx = static_cast<RegistryContext *>(data);
-    if (qstrcmp(type, PW_TYPE_INTERFACE_Node) != 0 || !isVideoStream(prop(props, PW_KEY_MEDIA_CLASS))) {
+    if (qstrcmp(type, PW_TYPE_INTERFACE_Node) != 0 || !isWatched(prop(props, PW_KEY_MEDIA_CLASS))) {
         return;
     }
     auto node = std::make_unique<BoundNode>();
@@ -245,8 +249,25 @@ void ScreenCastMonitor::recompute()
         }
         casts << QVariantMap{{QStringLiteral("what"), what}, {QStringLiteral("viewers"), viewers}};
     }
-    if (casts != m_casts) {
+    // Recording the microphone: running audio captures, but not of what's playing (cava and
+    // other visualisers, a sink's monitor) nor level meters (the volume applet, pavucontrol)
+    static const QStringList meters = {QStringLiteral("cava"), QStringLiteral("plasmashell"), QStringLiteral("pavucontrol"),
+                                       QStringLiteral("pavucontrol-qt"), QStringLiteral("easyeffects"), QStringLiteral("pwvucontrol")};
+    QStringList mic;
+    for (const Node &n : std::as_const(m_nodes)) {
+        if (!n.running || n.mediaClass != QLatin1String("Stream/Input/Audio") || n.captureSink
+            || n.category == QLatin1String("Monitor") || meters.contains(n.binary)
+            || n.mediaName.contains(QLatin1String("Peak detect"), Qt::CaseInsensitive)) {
+            continue;
+        }
+        const QString who = applicationName(!n.application.isEmpty() ? n.application : n.name);
+        if (!who.isEmpty() && !mic.contains(who)) {
+            mic << who;
+        }
+    }
+    if (casts != m_casts || mic != m_micUsers) {
         m_casts = casts;
+        m_micUsers = mic;
         Q_EMIT changed();
     }
 }
@@ -259,4 +280,14 @@ bool ScreenCastMonitor::active() const
 QVariantList ScreenCastMonitor::casts() const
 {
     return m_casts;
+}
+
+bool ScreenCastMonitor::micActive() const
+{
+    return !m_micUsers.isEmpty();
+}
+
+QStringList ScreenCastMonitor::micUsers() const
+{
+    return m_micUsers;
 }

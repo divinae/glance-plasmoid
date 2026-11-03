@@ -63,8 +63,8 @@ MouseArea {
     // A standard icon size, sharp; the room around it comes from the pill's length
     // Whole pixels throughout, or the icons come out soft
     readonly property int pillIconSize: 12
-    // Circles, as wide as the strip allows
-    readonly property int pillLength: pillHeight
+    // Wider than tall, with room around the icon
+    readonly property int pillLength: pillHeight + 10
     readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 8)
     readonly property int pillSpacing: 4
     readonly property var pills: {
@@ -72,6 +72,10 @@ MouseArea {
         if (privacy.cameraActive) {
             out.push({color: privacy.cameraColor, icon: "camera-on-symbolic", action: "privacy",
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
+        }
+        if (privacy.micActive) {
+            out.push({color: privacy.micColor, icon: "audio-input-microphone-symbolic", action: "privacy",
+                tip: i18n("Microphone in use: %1", privacy.micNames.join(", "))});
         }
         if (privacy.screenActive) {
             out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "privacy",
@@ -372,10 +376,11 @@ MouseArea {
                         width: compact.pillLength
                         height: compact.pillHeight
                         radius: height / 2
-                        color: modelData.color
-                        // A thin darker rim, so the grey one doesn't melt into the panel
+                        // A pale tint of the colour, its rim in the colour itself, and the icon
+                        // in a deep shade of it: soft, but the icon reads clearly
+                        color: Kirigami.ColorUtils.linearInterpolation(modelData.color, "white", 0.6)
                         border.width: 1
-                        border.color: Qt.darker(modelData.color, 1.15)
+                        border.color: modelData.color
                         Kirigami.Icon {
                             // The bell's strokes are thinner: a pixel larger
                             width: compact.pillIconSize + (pill.modelData.action === "dnd" ? 1 : 0)
@@ -384,7 +389,8 @@ MouseArea {
                             y: Math.round((parent.height - height) / 2)
                             source: pill.modelData.icon
                             isMask: true
-                            color: "white"
+                            // A deep shade of the fill: faded fills leave white too faint
+                            color: Qt.darker(pill.modelData.color, 2.2)
                         }
                         // A click turns Do Not Disturb off; the camera's and the screen's only say who
                         // uses them, in their tooltip
