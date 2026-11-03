@@ -365,7 +365,7 @@ MouseArea {
                     delegate: Rectangle {
                         id: pill
                         required property var modelData
-                        // A solid circle of its colour with a white icon, upright whatever the panel
+                        // A solid circle of its colour with a white icon, turned with the panel as the text
                         width: compact.pillLength
                         height: compact.pillHeight
                         radius: height / 2
@@ -374,7 +374,6 @@ MouseArea {
                             anchors.centerIn: parent
                             width: Math.round(compact.pillHeight * 0.62)
                             height: width
-                            rotation: -content.rotation
                             source: pill.modelData.icon
                             isMask: true
                             color: "white"
