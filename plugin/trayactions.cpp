@@ -39,14 +39,22 @@ static int findEntry(const DBusMenuLayoutItem &item, const QString &label)
 bool TrayActions::trigger(const QString &itemId, const QString &label)
 {
     QDBusConnection bus = QDBusConnection::sessionBus();
+    // Never ask our own process (plasmashell's own tray icons): a blocking call to ourselves
+    // waits for an answer only we could give, and froze the shell until D-Bus gave up
+    const QString self = bus.baseService();
     QDBusInterface watcher(QStringLiteral("org.kde.StatusNotifierWatcher"), QStringLiteral("/StatusNotifierWatcher"),
                            QStringLiteral("org.kde.StatusNotifierWatcher"), bus);
+    watcher.setTimeout(300);
     const QStringList items = watcher.property("RegisteredStatusNotifierItems").toStringList();
     for (const QString &entry : items) {
         const int slash = entry.indexOf(QLatin1Char('/'));
         const QString service = slash > 0 ? entry.left(slash) : entry;
         const QString path = slash > 0 ? entry.mid(slash) : QStringLiteral("/StatusNotifierItem");
+        if (service == self) {
+            continue;
+        }
         QDBusInterface item(service, path, QStringLiteral("org.kde.StatusNotifierItem"), bus);
+        item.setTimeout(300);
         if (item.property("Id").toString() != itemId) {
             continue;
         }
@@ -55,6 +63,7 @@ bool TrayActions::trigger(const QString &itemId, const QString &label)
             return false;
         }
         QDBusInterface menu(service, menuPath, QStringLiteral("com.canonical.dbusmenu"), bus);
+        menu.setTimeout(500);
         menu.call(QStringLiteral("AboutToShow"), 0);
         QDBusMessage reply = menu.call(QStringLiteral("GetLayout"), 0, -1, QStringList());
         if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().size() < 2) {
