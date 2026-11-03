@@ -11,7 +11,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.layershell as LayerShell
 import org.kde.plasma.core as PlasmaCore
 
-import com.dv.island.private as Island
+import com.dv.glance.private as Island
 
 import ".."
 import "DrawerGeometry.js" as Geometry
@@ -147,7 +147,7 @@ Window {
         y = py;
     }
 
-    LayerShell.Window.scope: "island-drawer"
+    LayerShell.Window.scope: "glance-drawer"
     LayerShell.Window.layer: LayerShell.Window.LayerTop
     // -1: placed from the screen edge itself, by edgeMargin (exclusive zones leave out a floating
     // panel's gap)

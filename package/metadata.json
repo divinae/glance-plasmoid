@@ -9,10 +9,12 @@
         "Category": "Windows and Tasks",
         "Description": "The active window, media, agenda and notifications at a glance, in a drawer that slides out of the panel",
         "Icon": "window",
-        "Id": "com.dv.island",
+        "Id": "com.dv.glance",
         "License": "GPL-2.0-or-later",
         "Name": "Glance",
-        "Version": "0.2.0"
+        "Version": "1.0.0",
+        "Website": "https://gitlab.com/divinae/glance-plasmoid",
+        "BugReportUrl": "https://gitlab.com/divinae/glance-plasmoid/-/issues"
     },
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0"

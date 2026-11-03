@@ -5,7 +5,7 @@ file(READ ${CMAKE_CURRENT_SOURCE_DIR}/package/metadata.json METADATA)
 string(JSON PLUGIN_ID GET ${METADATA} KPlugin Id)
 string(JSON CUR_VERSION GET ${METADATA} KPlugin Version)
 
-project(island VERSION ${CUR_VERSION})
+project(glance VERSION ${CUR_VERSION})
 message(STATUS "Plugin Id: ${PLUGIN_ID}")
 message(STATUS "Version: ${CUR_VERSION}")
 

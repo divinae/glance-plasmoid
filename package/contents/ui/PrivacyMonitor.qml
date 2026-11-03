@@ -8,7 +8,7 @@ import QtQuick
 
 import org.kde.pipewire.monitor as Monitor
 
-import com.dv.island.private as Island
+import com.dv.glance.private as Island
 
 // Camera, microphone and screen sharing in use, from PipeWire (as the stock Camera Indicator), for
 // the panel's status segments. Colours as macOS: green the camera, red the screen.

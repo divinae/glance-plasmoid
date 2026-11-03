@@ -26,7 +26,7 @@ set(dbusmenu_SRCS
 ecm_qt_declare_logging_category(dbusmenu_SRCS
     HEADER debug.h
     IDENTIFIER DBUSMENUQT
-    CATEGORY_NAME com.dv.island.dbusmenu
+    CATEGORY_NAME com.dv.glance.dbusmenu
     DEFAULT_SEVERITY Warning
 )
 set_source_files_properties(dbusmenuqt/com.canonical.dbusmenu.xml PROPERTIES
@@ -36,16 +36,16 @@ set_source_files_properties(dbusmenuqt/com.canonical.dbusmenu.xml PROPERTIES
 )
 qt_add_dbus_interface(dbusmenu_SRCS dbusmenuqt/com.canonical.dbusmenu.xml dbusmenu_interface)
 
-add_library(islanddbusmenuqt STATIC ${dbusmenu_SRCS})
-set_target_properties(islanddbusmenuqt PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_include_directories(islanddbusmenuqt PUBLIC
+add_library(glancedbusmenuqt STATIC ${dbusmenu_SRCS})
+set_target_properties(glancedbusmenuqt PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(glancedbusmenuqt PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/dbusmenuqt
     ${CMAKE_CURRENT_BINARY_DIR}
 )
-target_link_libraries(islanddbusmenuqt PUBLIC Qt::DBus Qt::Widgets)
+target_link_libraries(glancedbusmenuqt PUBLIC Qt::DBus Qt::Widgets)
 
-ecm_add_qml_module(islandplugin URI com.dv.island.private GENERATE_PLUGIN_SOURCE)
-target_sources(islandplugin PRIVATE
+ecm_add_qml_module(glanceplugin URI com.dv.glance.private GENERATE_PLUGIN_SOURCE)
+target_sources(glanceplugin PRIVATE
     appmenumodel.cpp
     appmenumodel.h
     cavasource.cpp
@@ -62,7 +62,7 @@ target_sources(islandplugin PRIVATE
     shelfhelper.h
 )
 
-target_link_libraries(islandplugin PRIVATE
+target_link_libraries(glanceplugin PRIVATE
     Qt::Core
     Qt::Gui
     Qt::Qml
@@ -74,7 +74,7 @@ target_link_libraries(islandplugin PRIVATE
     KF6::Service
     Plasma::Plasma
     PkgConfig::PipeWire
-    islanddbusmenuqt
+    glancedbusmenuqt
 )
 
-ecm_finalize_qml_module(islandplugin)
+ecm_finalize_qml_module(glanceplugin)

@@ -12,7 +12,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
 
-import com.dv.island.private as Island
+import com.dv.glance.private as Island
 
 // Files dropped here stay until removed; drag them out again anywhere.
 Item {

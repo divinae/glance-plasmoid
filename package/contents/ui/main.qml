@@ -10,7 +10,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.mpris as Mpris
 
-import com.dv.island.private as Island
+import com.dv.glance.private as Island
 
 PlasmoidItem {
     id: root

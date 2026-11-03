@@ -11,7 +11,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.notificationmanager as NotificationManager
 import org.kde.plasma.components as PlasmaComponents
 
-import com.dv.island.private as Island
+import com.dv.glance.private as Island
 
 import "Format.js" as Format
 

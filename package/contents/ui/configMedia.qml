@@ -11,7 +11,7 @@ import QtQuick.Layouts
 import org.kde.kcmutils as KCM
 import org.kde.kirigami as Kirigami
 
-import com.dv.island.private as Island
+import com.dv.glance.private as Island
 
 KCM.SimpleKCM {
     property alias cfg_mediaInPanel: mediaInPanel.checked

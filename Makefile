@@ -1,4 +1,4 @@
-PLUGIN_ID = com.dv.island
+PLUGIN_ID = com.dv.glance
 PREFIX ?= $(HOME)/.local
 BUILD_DIR ?= build
 
@@ -24,7 +24,7 @@ install: build
 
 uninstall:
 	kpackagetool6 -t Plasma/Applet -r $(PLUGIN_ID) || true
-	rm -rf $(PREFIX)/lib/qml/com/dv/island
+	rm -rf $(PREFIX)/lib/qml/com/dv/glance
 
 lint: build
 	$(QMLLINT) $(QMLLINT_FLAGS) $(QML_SOURCES)
