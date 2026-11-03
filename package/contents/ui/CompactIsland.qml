@@ -328,10 +328,8 @@ MouseArea {
                     wrapMode: Text.NoWrap
                     textFormat: Text.PlainText
                     horizontalAlignment: Text.AlignHCenter
-                    // The window's name semibold, to hold its own beside the status icons; the
-                    // playing track and other notices in the normal weight
-                    font.weight: compact.island.cfg.boldFont ? Font.Bold
-                        : compact.mode === "window" ? Font.DemiBold : Font.Normal
+                    // Normal weight; bold only when set (General > Font)
+                    font.weight: compact.island.cfg.boldFont ? Font.Bold : Font.Normal
                     font.capitalization: compact.island.cfg.capitalFont ? Font.Capitalize : Font.MixedCase
                     color: compact.foreground
                     visible: opacity > 0
