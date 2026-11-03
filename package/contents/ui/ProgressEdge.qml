@@ -14,7 +14,6 @@ Item {
 
     property real fraction: 0
     property color color: Kirigami.Theme.highlightColor
-    property bool playing: false
 
     implicitHeight: 2
 
@@ -33,14 +32,10 @@ Item {
         radius: height / 2
         color: edge.color
         width: Math.round(edge.fraction * edge.width)
-        opacity: edge.playing ? 1 : 0.6
         Behavior on width {
             // glide between the 1 s position polls, but jump on seeks/track changes
             enabled: Math.abs(fill.width - edge.fraction * edge.width) < edge.width * 0.05
             NumberAnimation { duration: 1000; easing.type: Easing.Linear }
-        }
-        Behavior on opacity {
-            NumberAnimation { duration: Kirigami.Units.longDuration }
         }
     }
 }

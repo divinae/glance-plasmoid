@@ -19,10 +19,7 @@ Item {
     property bool pulseOnJobs: true
     property var ignoredApps: []
 
-    readonly property alias model: historyModel
-    // Plasma's notification settings (timeouts, blacklists, Do Not Disturb's), for the popups
-    readonly property alias settings: settings
-    // The same history, grouped by application, for the Notifications tab
+    // The history, grouped by application, for the Notifications tab
     readonly property alias groupedModel: groupedModel
     readonly property int count: historyModel.count
     readonly property int unreadCount: historyModel.unreadNotificationsCount
@@ -131,8 +128,8 @@ Item {
         live: true
     }
 
-    NotificationManager.Notifications {
-        id: historyModel
+    // The history as Plasma's Notifications applet keeps it; flat here, grouped for the tab
+    component History: NotificationManager.Notifications {
         showExpired: true
         showDismissed: true
         // Neither is on by default: no notifications at all without the first, none from while
@@ -143,7 +140,6 @@ Item {
         showJobs: settings.jobsInNotifications
         sortMode: NotificationManager.Notifications.SortByDate
         sortOrder: Qt.DescendingOrder
-        groupMode: NotificationManager.Notifications.GroupDisabled
         expandUnread: true
         blacklistedDesktopEntries: settings.historyBlacklistedApplications
         blacklistedNotifyRcNames: settings.historyBlacklistedServices
@@ -154,28 +150,18 @@ Item {
             }
             return u;
         }
+    }
 
+    History {
+        id: historyModel
+        groupMode: NotificationManager.Notifications.GroupDisabled
         onRowsInserted: (parent, first, last) => watcher.handleInserted(first, last)
     }
 
-    NotificationManager.Notifications {
+    History {
         id: groupedModel
-        showExpired: true
-        showDismissed: true
-        // Neither is on by default: no notifications at all without the first, none from while
-        // Do Not Disturb was on without the second
-        showNotifications: true
-        showAddedDuringInhibition: true
-        ignoreBlacklistDuringInhibition: true
-        showJobs: settings.jobsInNotifications
-        sortMode: NotificationManager.Notifications.SortByDate
-        sortOrder: Qt.DescendingOrder
         groupMode: NotificationManager.Notifications.GroupApplicationsFlat
         groupLimit: 2
-        expandUnread: true
-        blacklistedDesktopEntries: settings.historyBlacklistedApplications
-        blacklistedNotifyRcNames: settings.historyBlacklistedServices
-        urgencies: historyModel.urgencies
     }
 
     // The model fills with history at startup; only rows added later are "new"

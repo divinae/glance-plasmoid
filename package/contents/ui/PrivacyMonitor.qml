@@ -10,8 +10,8 @@ import org.kde.pipewire.monitor as Monitor
 
 import com.dv.island.private as Island
 
-// Camera and screen sharing in use, from PipeWire (as the stock Camera Indicator), for the panel's
-// dots and the drawer's privacy bar. Colours as macOS: green the camera, red the screen.
+// Camera, microphone and screen sharing in use, from PipeWire (as the stock Camera Indicator), for
+// the panel's status segments. Colours as macOS: green the camera, red the screen.
 Item {
     id: privacy
 
@@ -22,13 +22,11 @@ Item {
     readonly property bool micActive: Island.ScreenCastMonitor.micActive
     readonly property var micNames: Island.ScreenCastMonitor.micUsers
 
-    readonly property bool available: camera.detectionAvailable
     // Through PipeWire, or a camera device opened directly
     readonly property bool cameraActive: camera.runningCount > 0 || Island.ScreenCastMonitor.cameraUsers.length > 0
     // KWin's screencasts carry no media role, so MediaMonitor misses them: ScreenCastMonitor
     // watches PipeWire for those
     readonly property bool screenActive: screen.runningCount > 0 || Island.ScreenCastMonitor.active
-    readonly property bool anyActive: cameraActive || screenActive || micActive
 
     // Names of what's running (the camera's, the shared stream's), from the rows below
     property var cameraNames: []

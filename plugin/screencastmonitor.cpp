@@ -7,19 +7,20 @@
 #include "screencastmonitor.h"
 
 #include <pipewire/pipewire.h>
-#include <spa/utils/hook.h>
 
 #include <KService>
 
-#include <QDir>
 #include <QFile>
-#include <QFileInfo>
-#include <QMetaObject>
+#include <QFutureWatcher>
+#include <QHash>
 #include <QTimer>
-#include <QPointer>
+#include <QtConcurrentRun>
 
+#include <dirent.h>
+#include <unistd.h>
+
+#include <cstring>
 #include <map>
-#include <memory>
 
 namespace
 {
@@ -52,141 +53,261 @@ bool isWatched(const QString &mediaClass)
     return mediaClass == QLatin1String("Stream/Output/Video") || mediaClass == QLatin1String("Stream/Input/Video")
         || mediaClass == QLatin1String("Stream/Input/Audio");
 }
+
+// The names (comm) of the processes with a /dev/video* open. Off the GUI thread: thousands of
+// /proc/*/fd links to read, every two seconds.
+QStringList cameraProcesses()
+{
+    QStringList names;
+    DIR *proc = opendir("/proc");
+    if (!proc) {
+        return names;
+    }
+    while (const dirent *entry = readdir(proc)) {
+        if (entry->d_name[0] < '0' || entry->d_name[0] > '9') {
+            continue;
+        }
+        char path[sizeof("/proc//comm") + sizeof(entry->d_name)];
+        snprintf(path, sizeof(path), "/proc/%s/fd", entry->d_name);
+        DIR *fds = opendir(path);
+        if (!fds) {
+            continue; // not ours to look into, or gone
+        }
+        bool usesCamera = false;
+        while (const dirent *fd = readdir(fds)) {
+            char target[32];
+            const ssize_t length = readlinkat(dirfd(fds), fd->d_name, target, sizeof(target));
+            if (length >= 10 && std::memcmp(target, "/dev/video", 10) == 0) {
+                usesCamera = true;
+                break;
+            }
+        }
+        closedir(fds);
+        if (!usesCamera) {
+            continue;
+        }
+        snprintf(path, sizeof(path), "/proc/%s/comm", entry->d_name);
+        QFile comm(QString::fromLatin1(path));
+        if (comm.open(QIODevice::ReadOnly)) {
+            const QString name = QString::fromUtf8(comm.readAll()).trimmed();
+            if (!name.isEmpty()) {
+                names << name;
+            }
+        }
+    }
+    closedir(proc);
+    return names;
+}
 }
 
-// One bound node, listened to for its state and properties (on PipeWire's thread)
-struct BoundNode {
-    ScreenCastMonitor *monitor = nullptr;
-    quint32 id = 0;
-    // What's known so far: PipeWire sends only what changed after the first info
-    ScreenCastMonitor::Node node;
-    pw_proxy *proxy = nullptr;
-    spa_hook listener{};
-    spa_hook proxyListener{};
-};
-
 struct ScreenCastMonitor::Private {
+    struct Node {
+        QString mediaClass;
+        QString name;
+        QString mediaName;
+        QString application;
+        QString binary;
+        QString category;
+        bool captureSink = false;
+        quint32 target = 0;
+        bool running = false;
+    };
+
+    // One bound node, listened to for its state and properties (on PipeWire's thread)
+    struct BoundNode {
+        Private *d = nullptr;
+        quint32 id = 0;
+        // What's known so far: PipeWire sends only what changed after the first info
+        Node node;
+        pw_proxy *proxy = nullptr;
+        spa_hook listener{};
+        spa_hook proxyListener{};
+    };
+
+    ScreenCastMonitor *q = nullptr;
+
+    pw_thread_loop *loop = nullptr;
+    pw_context *context = nullptr;
+    pw_core *core = nullptr;
+    pw_registry *registry = nullptr;
     spa_hook registryListener{};
-    std::map<quint32, std::unique_ptr<BoundNode>> bound;
+    std::map<quint32, std::unique_ptr<BoundNode>> bound; // on PipeWire's thread
+
+    QHash<quint32, Node> nodes; // on the Qt thread
+    QFutureWatcher<QStringList> cameraScan;
+
+    void connectPipeWire();
+    void disconnectPipeWire();
+
+    // From PipeWire's thread to the Qt thread: q outlives the thread (joined in ~ScreenCastMonitor),
+    // and events still queued for it are dropped with it
+    void nodeChanged(quint32 id, const Node &node)
+    {
+        QMetaObject::invokeMethod(q, [q = q, id, node] {
+            q->d->nodes.insert(id, node);
+            q->recompute();
+        }, Qt::QueuedConnection);
+    }
+    void nodeRemoved(quint32 id)
+    {
+        QMetaObject::invokeMethod(q, [q = q, id] {
+            if (q->d->nodes.remove(id)) {
+                q->recompute();
+            }
+        }, Qt::QueuedConnection);
+    }
+
+    static void nodeInfo(void *data, const pw_node_info *info);
+    static void proxyRemoved(void *data);
+    static void registryGlobal(void *data, uint32_t id, uint32_t permissions, const char *type, uint32_t version, const spa_dict *props);
+    static void registryGlobalRemove(void *data, uint32_t id);
 };
 
-static void nodeInfo(void *data, const pw_node_info *info)
+void ScreenCastMonitor::Private::nodeInfo(void *data, const pw_node_info *info)
 {
-    auto *node = static_cast<BoundNode *>(data);
-    ScreenCastMonitor::Node &n = node->node;
+    auto *bound = static_cast<BoundNode *>(data);
+    Node &n = bound->node;
     if (info->change_mask & PW_NODE_CHANGE_MASK_STATE) {
         n.running = info->state == PW_NODE_STATE_RUNNING;
     }
-    if (!(info->change_mask & PW_NODE_CHANGE_MASK_PROPS) || !info->props) {
-        node->monitor->nodeChanged(node->id, n);
-        return;
+    if ((info->change_mask & PW_NODE_CHANGE_MASK_PROPS) && info->props) {
+        n.mediaClass = prop(info->props, PW_KEY_MEDIA_CLASS);
+        n.name = prop(info->props, PW_KEY_NODE_NAME);
+        n.mediaName = prop(info->props, PW_KEY_MEDIA_NAME);
+        n.application = prop(info->props, PW_KEY_APP_NAME);
+        n.binary = prop(info->props, PW_KEY_APP_PROCESS_BINARY);
+        n.category = prop(info->props, PW_KEY_MEDIA_CATEGORY);
+        n.captureSink = prop(info->props, PW_KEY_STREAM_CAPTURE_SINK) == QLatin1String("true");
+        bool ok = false;
+        n.target = prop(info->props, PW_KEY_TARGET_OBJECT).toUInt(&ok);
+        if (!ok) {
+            n.target = prop(info->props, "node.target").toUInt(&ok);
+        }
+        if (!ok) {
+            n.target = prop(info->props, "node.driver-id").toUInt();
+        }
     }
-    n.mediaClass = prop(info->props, PW_KEY_MEDIA_CLASS);
-    n.name = prop(info->props, PW_KEY_NODE_NAME);
-    n.mediaName = prop(info->props, PW_KEY_MEDIA_NAME);
-    n.application = prop(info->props, PW_KEY_APP_NAME);
-    n.binary = prop(info->props, PW_KEY_APP_PROCESS_BINARY);
-    n.category = prop(info->props, PW_KEY_MEDIA_CATEGORY);
-    n.captureSink = prop(info->props, PW_KEY_STREAM_CAPTURE_SINK) == QLatin1String("true");
-    bool ok = false;
-    n.target = prop(info->props, PW_KEY_TARGET_OBJECT).toUInt(&ok);
-    if (!ok) {
-        n.target = prop(info->props, "node.target").toUInt(&ok);
-    }
-    if (!ok) {
-        n.target = prop(info->props, "node.driver-id").toUInt();
-    }
-    node->monitor->nodeChanged(node->id, n);
+    bound->d->nodeChanged(bound->id, n);
 }
 
-static const pw_node_events nodeEvents = {
-    .version = PW_VERSION_NODE_EVENTS,
-    .info = nodeInfo,
-    .param = nullptr,
-};
-
-static void proxyRemoved(void *data)
+void ScreenCastMonitor::Private::proxyRemoved(void *data)
 {
-    auto *node = static_cast<BoundNode *>(data);
-    spa_hook_remove(&node->listener);
-    spa_hook_remove(&node->proxyListener);
+    // The node is gone on the server: no more events for it (its proxy goes with global_remove)
+    auto *bound = static_cast<BoundNode *>(data);
+    spa_hook_remove(&bound->listener);
+    spa_hook_remove(&bound->proxyListener);
 }
 
-static const pw_proxy_events proxyEvents = {
-    .version = PW_VERSION_PROXY_EVENTS,
-    .destroy = nullptr,
-    .bound = nullptr,
-    .removed = proxyRemoved,
-    .done = nullptr,
-    .error = nullptr,
-    .bound_props = nullptr,
-};
-
-struct RegistryContext {
-    ScreenCastMonitor *monitor;
-    pw_registry *registry;
-    ScreenCastMonitor::Private *d;
-};
-static RegistryContext *s_ctx = nullptr;
-
-static void registryGlobal(void *data, uint32_t id, uint32_t, const char *type, uint32_t, const spa_dict *props)
+void ScreenCastMonitor::Private::registryGlobal(void *data, uint32_t id, uint32_t, const char *type, uint32_t, const spa_dict *props)
 {
-    auto *ctx = static_cast<RegistryContext *>(data);
+    static const pw_node_events nodeEvents = {
+        .version = PW_VERSION_NODE_EVENTS,
+        .info = nodeInfo,
+        .param = nullptr,
+    };
+    static const pw_proxy_events proxyEvents = {
+        .version = PW_VERSION_PROXY_EVENTS,
+        .destroy = nullptr,
+        .bound = nullptr,
+        .removed = proxyRemoved,
+        .done = nullptr,
+        .error = nullptr,
+        .bound_props = nullptr,
+    };
+
+    auto *d = static_cast<Private *>(data);
     if (qstrcmp(type, PW_TYPE_INTERFACE_Node) != 0 || !isWatched(prop(props, PW_KEY_MEDIA_CLASS))) {
         return;
     }
-    auto node = std::make_unique<BoundNode>();
-    node->monitor = ctx->monitor;
-    node->id = id;
-    node->proxy = static_cast<pw_proxy *>(pw_registry_bind(ctx->registry, id, PW_TYPE_INTERFACE_Node, PW_VERSION_NODE, 0));
-    if (!node->proxy) {
+    auto bound = std::make_unique<BoundNode>();
+    bound->d = d;
+    bound->id = id;
+    bound->proxy = static_cast<pw_proxy *>(pw_registry_bind(d->registry, id, PW_TYPE_INTERFACE_Node, PW_VERSION_NODE, 0));
+    if (!bound->proxy) {
         return;
     }
-    pw_node_add_listener(reinterpret_cast<pw_node *>(node->proxy), &node->listener, &nodeEvents, node.get());
-    pw_proxy_add_listener(node->proxy, &node->proxyListener, &proxyEvents, node.get());
-    ctx->d->bound[id] = std::move(node);
+    pw_node_add_listener(reinterpret_cast<pw_node *>(bound->proxy), &bound->listener, &nodeEvents, bound.get());
+    pw_proxy_add_listener(bound->proxy, &bound->proxyListener, &proxyEvents, bound.get());
+    d->bound[id] = std::move(bound);
 }
 
-static void registryGlobalRemove(void *data, uint32_t id)
+void ScreenCastMonitor::Private::registryGlobalRemove(void *data, uint32_t id)
 {
-    auto *ctx = static_cast<RegistryContext *>(data);
-    auto it = ctx->d->bound.find(id);
-    if (it != ctx->d->bound.end()) {
+    auto *d = static_cast<Private *>(data);
+    auto it = d->bound.find(id);
+    if (it != d->bound.end()) {
         pw_proxy_destroy(it->second->proxy);
-        ctx->d->bound.erase(it);
+        d->bound.erase(it);
+        d->nodeRemoved(id);
     }
-    ctx->monitor->nodeRemoved(id);
 }
 
-static const pw_registry_events registryEvents = {
-    .version = PW_VERSION_REGISTRY_EVENTS,
-    .global = registryGlobal,
-    .global_remove = registryGlobalRemove,
-};
+void ScreenCastMonitor::Private::connectPipeWire()
+{
+    static const pw_registry_events registryEvents = {
+        .version = PW_VERSION_REGISTRY_EVENTS,
+        .global = registryGlobal,
+        .global_remove = registryGlobalRemove,
+    };
+
+    pw_init(nullptr, nullptr);
+    loop = pw_thread_loop_new("glance-screencast", nullptr);
+    if (!loop) {
+        return;
+    }
+    context = pw_context_new(pw_thread_loop_get_loop(loop), nullptr, 0);
+    if (!context) {
+        return;
+    }
+    core = pw_context_connect(context, nullptr, 0);
+    if (!core) {
+        return;
+    }
+    registry = pw_core_get_registry(core, PW_VERSION_REGISTRY, 0);
+    if (!registry) {
+        return;
+    }
+    // The loop isn't running yet: no locking needed before it starts
+    pw_registry_add_listener(registry, &registryListener, &registryEvents, this);
+    pw_thread_loop_start(loop);
+}
+
+void ScreenCastMonitor::Private::disconnectPipeWire()
+{
+    // Joins PipeWire's thread: no callbacks from here on, and its objects are ours to destroy
+    if (loop) {
+        pw_thread_loop_stop(loop);
+    }
+    for (auto &[id, node] : bound) {
+        pw_proxy_destroy(node->proxy);
+    }
+    bound.clear();
+    if (registry) {
+        spa_hook_remove(&registryListener);
+        pw_proxy_destroy(reinterpret_cast<pw_proxy *>(registry));
+    }
+    if (core) {
+        pw_core_disconnect(core);
+    }
+    if (context) {
+        pw_context_destroy(context);
+    }
+    if (loop) {
+        pw_thread_loop_destroy(loop);
+    }
+}
 
 ScreenCastMonitor::ScreenCastMonitor(QObject *parent)
     : QObject(parent)
-    , d(new Private)
+    , d(std::make_unique<Private>())
 {
-    pw_init(nullptr, nullptr);
-    m_loop = pw_thread_loop_new("glance-screencast", nullptr);
-    if (!m_loop) {
-        return;
-    }
-    m_context = pw_context_new(pw_thread_loop_get_loop(m_loop), nullptr, 0);
-    if (!m_context) {
-        return;
-    }
-    m_core = pw_context_connect(m_context, nullptr, 0);
-    if (!m_core) {
-        return;
-    }
-    m_registry = pw_core_get_registry(m_core, PW_VERSION_REGISTRY, 0);
-    s_ctx = new RegistryContext{this, m_registry, d};
-    pw_registry_add_listener(m_registry, &d->registryListener, &registryEvents, s_ctx);
-    pw_thread_loop_start(m_loop);
+    d->q = this;
+    d->connectPipeWire();
 
     // Cameras opened directly: who has a /dev/video* open, every two seconds
+    connect(&d->cameraScan, &QFutureWatcher<QStringList>::finished, this, [this] {
+        camerasScanned(d->cameraScan.result());
+    });
     auto *timer = new QTimer(this);
     timer->setInterval(2000);
     connect(timer, &QTimer::timeout, this, &ScreenCastMonitor::scanCameras);
@@ -194,36 +315,25 @@ ScreenCastMonitor::ScreenCastMonitor(QObject *parent)
     scanCameras();
 }
 
+ScreenCastMonitor::~ScreenCastMonitor()
+{
+    d->disconnectPipeWire();
+}
+
 void ScreenCastMonitor::scanCameras()
+{
+    if (!d->cameraScan.isRunning()) {
+        d->cameraScan.setFuture(QtConcurrent::run(cameraProcesses));
+    }
+}
+
+void ScreenCastMonitor::camerasScanned(const QStringList &processes)
 {
     // PipeWire and its session manager keep the devices open for everyone: not "in use"
     static const QStringList services = {QStringLiteral("pipewire"), QStringLiteral("wireplumber"), QStringLiteral("pipewire-media-session")};
     QStringList users;
-    const QStringList pids = QDir(QStringLiteral("/proc")).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QString &pid : pids) {
-        bool numeric = false;
-        pid.toInt(&numeric);
-        if (!numeric) {
-            continue;
-        }
-        const QString fdDir = QStringLiteral("/proc/") + pid + QStringLiteral("/fd");
-        const QStringList fds = QDir(fdDir).entryList(QDir::Files | QDir::System | QDir::NoDotAndDotDot);
-        bool usesCamera = false;
-        for (const QString &fd : fds) {
-            if (QFileInfo(fdDir + QLatin1Char('/') + fd).symLinkTarget().startsWith(QLatin1String("/dev/video"))) {
-                usesCamera = true;
-                break;
-            }
-        }
-        if (!usesCamera) {
-            continue;
-        }
-        QFile comm(QStringLiteral("/proc/") + pid + QStringLiteral("/comm"));
-        if (!comm.open(QIODevice::ReadOnly)) {
-            continue;
-        }
-        const QString name = QString::fromUtf8(comm.readAll()).trimmed();
-        if (name.isEmpty() || services.contains(name)) {
+    for (const QString &name : processes) {
+        if (services.contains(name)) {
             continue;
         }
         const QString who = applicationName(name);
@@ -237,61 +347,12 @@ void ScreenCastMonitor::scanCameras()
     }
 }
 
-ScreenCastMonitor::~ScreenCastMonitor()
-{
-    if (m_loop) {
-        pw_thread_loop_stop(m_loop);
-    }
-    for (auto &[id, node] : d->bound) {
-        if (node->proxy) {
-            pw_proxy_destroy(node->proxy);
-        }
-    }
-    d->bound.clear();
-    if (m_registry) {
-        spa_hook_remove(&d->registryListener);
-        pw_proxy_destroy(reinterpret_cast<pw_proxy *>(m_registry));
-    }
-    if (m_core) {
-        pw_core_disconnect(m_core);
-    }
-    if (m_context) {
-        pw_context_destroy(m_context);
-    }
-    if (m_loop) {
-        pw_thread_loop_destroy(m_loop);
-    }
-    delete s_ctx;
-    s_ctx = nullptr;
-    delete d;
-}
-
-void ScreenCastMonitor::nodeChanged(quint32 id, const Node &node)
-{
-    QPointer<ScreenCastMonitor> self(this);
-    QMetaObject::invokeMethod(this, [self, id, node] {
-        if (self) {
-            self->m_nodes.insert(id, node);
-            self->recompute();
-        }
-    }, Qt::QueuedConnection);
-}
-
-void ScreenCastMonitor::nodeRemoved(quint32 id)
-{
-    QPointer<ScreenCastMonitor> self(this);
-    QMetaObject::invokeMethod(this, [self, id] {
-        if (self && self->m_nodes.remove(id)) {
-            self->recompute();
-        }
-    }, Qt::QueuedConnection);
-}
-
 void ScreenCastMonitor::recompute()
 {
+    const auto &nodes = d->nodes;
     QVariantList casts;
-    for (auto it = m_nodes.cbegin(); it != m_nodes.cend(); ++it) {
-        const Node &cast = it.value();
+    for (auto it = nodes.cbegin(); it != nodes.cend(); ++it) {
+        const Private::Node &cast = it.value();
         if (!cast.running || cast.mediaClass != QLatin1String("Stream/Output/Video") || cast.name != QLatin1String("kwin_wayland")) {
             continue;
         }
@@ -300,8 +361,8 @@ void ScreenCastMonitor::recompute()
         what.remove(QLatin1String("kwin-screencast-"));
         what = applicationName(what);
         QStringList viewers;
-        for (auto v = m_nodes.cbegin(); v != m_nodes.cend(); ++v) {
-            const Node &viewer = v.value();
+        for (auto v = nodes.cbegin(); v != nodes.cend(); ++v) {
+            const Private::Node &viewer = v.value();
             if (viewer.mediaClass == QLatin1String("Stream/Input/Video") && viewer.target == it.key()) {
                 const QString who = applicationName(!viewer.application.isEmpty() ? viewer.application : viewer.name);
                 if (!who.isEmpty() && !viewers.contains(who)) {
@@ -316,7 +377,7 @@ void ScreenCastMonitor::recompute()
     static const QStringList meters = {QStringLiteral("cava"), QStringLiteral("plasmashell"), QStringLiteral("pavucontrol"),
                                        QStringLiteral("pavucontrol-qt"), QStringLiteral("easyeffects"), QStringLiteral("pwvucontrol")};
     QStringList mic;
-    for (const Node &n : std::as_const(m_nodes)) {
+    for (const Private::Node &n : nodes) {
         if (!n.running || n.mediaClass != QLatin1String("Stream/Input/Audio") || n.captureSink
             || n.category == QLatin1String("Monitor") || meters.contains(n.binary)
             || n.mediaName.contains(QLatin1String("Peak detect"), Qt::CaseInsensitive)) {

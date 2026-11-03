@@ -23,7 +23,7 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: pulseEnabled
             Kirigami.FormData.label: i18n("New notification:")
-            text: i18n("Flash the island")
+            text: i18n("Flash Glance in the panel")
         }
         QQC2.CheckBox {
             id: pulseOnJobs

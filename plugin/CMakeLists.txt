@@ -8,6 +8,7 @@ find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED
     Quick
     Widgets
     DBus
+    Concurrent
 )
 find_package(KF6WindowSystem ${KF6_MIN_VERSION} REQUIRED)
 find_package(KF6Service ${KF6_MIN_VERSION} REQUIRED)
@@ -68,6 +69,7 @@ target_link_libraries(islandplugin PRIVATE
     Qt::Quick
     Qt::Widgets
     Qt::DBus
+    Qt::Concurrent
     KF6::WindowSystem
     KF6::Service
     Plasma::Plasma

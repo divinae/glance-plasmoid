@@ -5,9 +5,7 @@
 */
 
 import QtQuick
-import QtQuick.Layouts
 
-import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.mpris as Mpris
@@ -180,8 +178,7 @@ PlasmoidItem {
     onOpenChanged: {
         if (root.open) {
             taskWhenOpened = activeTask;
-        }
-        if (!root.open) {
+        } else {
             pinnedByClick = false;
             closeTimer.stop();
             menuModel.closeMenu();
@@ -304,7 +301,6 @@ PlasmoidItem {
     PrivacyMonitor {
         id: privacyMonitor
     }
-
 
     SystemMonitor {
         id: systemMonitor
@@ -446,7 +442,6 @@ PlasmoidItem {
             notifications: notificationWatcher
             calendar: calendarSource
             monitor: systemMonitor
-            privacy: privacyMonitor
         }
     }
 
@@ -472,7 +467,6 @@ PlasmoidItem {
             item.notifications = notificationWatcher;
             item.calendar = calendarSource;
             item.monitor = systemMonitor;
-            item.privacy = privacyMonitor;
             item.ready = true;
         }
         Connections {

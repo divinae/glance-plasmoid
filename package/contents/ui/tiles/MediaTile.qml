@@ -13,7 +13,7 @@ import org.kde.plasma.components as PlasmaComponents
 import ".."
 
 // Now playing, upright (Caelestia's): a round cover (a click opens the Media tab), the track in
-// the accent colour, the artist, the album, and the controls; the spectrum faint at the bottom.
+// the accent colour, the artist, and the controls; the spectrum faint at the bottom.
 Tile {
     id: tile
 
@@ -101,13 +101,12 @@ Tile {
             }
         }
 
-        PlasmaComponents.Label {
+        AccentLabel {
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.smallSpacing
             horizontalAlignment: Text.AlignHCenter
             text: tile.player ? (tile.player.track || tile.player.identity || "") : ""
             textFormat: Text.PlainText
-            color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
             font.weight: Font.DemiBold
             elide: Text.ElideRight
         }

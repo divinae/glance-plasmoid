@@ -10,13 +10,14 @@
 #pragma once
 
 #include <QObject>
-#include <QProcess>
-#include <QTemporaryFile>
-#include <QTimer>
 #include <QVariantList>
 #include <qqmlregistration.h>
 
 #include <memory>
+
+class QProcess;
+class QTemporaryFile;
+class QTimer;
 
 class CavaSource : public QObject
 {

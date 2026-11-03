@@ -80,60 +80,59 @@ Item {
             NumberAnimation { duration: Kirigami.Units.longDuration * 2 }
         }
 
-    Row {
-        visible: barsRoot.style === 0
-        anchors.horizontalCenter: parent.horizontalCenter
-        height: barsRoot.height
-        spacing: barsRoot.spacing
+        Row {
+            visible: barsRoot.style === 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            height: barsRoot.height
+            spacing: barsRoot.spacing
 
-        Repeater {
-            model: barsRoot.style === 0 ? barsRoot.count : 0
+            Repeater {
+                model: barsRoot.style === 0 ? barsRoot.count : 0
 
-            Rectangle {
-                required property int index
-                readonly property real v: barsRoot.level(index)
-                width: barsRoot.effectiveBarWidth
-                height: Math.max(barsRoot.minimumBarHeight, v * barsRoot.height)
-                y: barsRoot.centered ? (barsRoot.height - height) / 2 : barsRoot.height - height
-                radius: barsRoot.rounded ? Math.min(width / 2, 2) : Math.min(width / 2, 1)
-                color: barsRoot.color
-                gradient: barsRoot.fadeUp ? fadeGradient : null
+                Rectangle {
+                    required property int index
+                    readonly property real v: barsRoot.level(index)
+                    width: barsRoot.effectiveBarWidth
+                    height: Math.max(barsRoot.minimumBarHeight, v * barsRoot.height)
+                    y: barsRoot.centered ? (barsRoot.height - height) / 2 : barsRoot.height - height
+                    radius: barsRoot.rounded ? Math.min(width / 2, 2) : Math.min(width / 2, 1)
+                    color: barsRoot.color
+                    gradient: barsRoot.fadeUp ? fadeGradient : null
 
-                Gradient {
-                    id: fadeGradient
-                    GradientStop {
-                        position: 0
-                        color: Qt.alpha(barsRoot.color, barsRoot.alphaAt(barsRoot.height - parent.height))
+                    Gradient {
+                        id: fadeGradient
+                        GradientStop {
+                            position: 0
+                            color: Qt.alpha(barsRoot.color, barsRoot.alphaAt(barsRoot.height - parent.height))
+                        }
+                        GradientStop {
+                            position: 1
+                            color: barsRoot.color
+                        }
                     }
-                    GradientStop {
-                        position: 1
-                        color: barsRoot.color
-                    }
-                }
 
-                Behavior on height {
-                    NumberAnimation { duration: 60 }
+                    Behavior on height {
+                        NumberAnimation { duration: 60 }
+                    }
                 }
             }
         }
-    }
 
-    Shape {
-        id: wave
-        visible: barsRoot.style === 1
-        anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
+        Shape {
+            id: wave
+            visible: barsRoot.style === 1
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
 
-        ShapePath {
-            fillColor: barsRoot.color
-            strokeColor: "transparent"
-            fillGradient: barsRoot.fadeUp ? waveGradient : null
-            PathPolyline {
-                path: barsRoot.style === 1 ? barsRoot.wavePoints() : []
+            ShapePath {
+                fillColor: barsRoot.color
+                strokeColor: "transparent"
+                fillGradient: barsRoot.fadeUp ? waveGradient : null
+                PathPolyline {
+                    path: barsRoot.style === 1 ? barsRoot.wavePoints() : []
+                }
             }
         }
-    }
-
     }
 
     LinearGradient {

@@ -5,7 +5,6 @@
 */
 
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 
 import org.kde.kirigami as Kirigami
@@ -13,6 +12,8 @@ import org.kde.notificationmanager as NotificationManager
 import org.kde.plasma.components as PlasmaComponents
 
 import com.dv.island.private as Island
+
+import "Format.js" as Format
 
 // One notification: who sent it and when, its text, the files it carries (images as thumbnails),
 // a file transfer's progress with pause, resume and cancel, its actions, and a reply field.
@@ -27,7 +28,6 @@ Item {
 
     // In a group, the app name and icon are in the group's header
     property bool inGroup: false
-    property bool showClose: true
 
     readonly property bool isJob: notif.type === NotificationManager.Notifications.JobType
     readonly property bool critical: notif.urgency === NotificationManager.Notifications.CriticalUrgency
@@ -47,18 +47,6 @@ Item {
         return notifications.index(rowIndex, 0);
     }
 
-    function formatBytes(b: real): string {
-        if (!(b > 0)) {
-            return "0 B";
-        }
-        const units = ["B", "KiB", "MiB", "GiB", "TiB"];
-        let i = 0;
-        while (b >= 1024 && i < units.length - 1) {
-            b /= 1024;
-            ++i;
-        }
-        return (i === 0 ? Math.round(b) : b.toFixed(b < 10 ? 1 : 0)) + " " + units[i];
-    }
     function formatDuration(secs: real): string {
         secs = Math.max(0, Math.round(secs));
         if (secs < 60) {
@@ -76,12 +64,12 @@ Item {
         }
         const parts = [];
         if (job.totalBytes > 0) {
-            parts.push(i18nc("bytes done of total", "%1 of %2", formatBytes(job.processedBytes), formatBytes(job.totalBytes)));
+            parts.push(i18nc("bytes done of total", "%1 of %2", Format.bytes(job.processedBytes), Format.bytes(job.totalBytes)));
         } else if (job.totalFiles > 1) {
             parts.push(i18nc("files done of total", "%1 of %2 files", job.processedFiles, job.totalFiles));
         }
         if (jobRunning && job.speed > 0) {
-            parts.push(i18nc("transfer speed", "%1/s", formatBytes(job.speed)));
+            parts.push(i18nc("transfer speed", "%1/s", Format.bytes(job.speed)));
             if (job.totalBytes > job.processedBytes) {
                 parts.push(i18nc("time left", "%1 left", formatDuration((job.totalBytes - job.processedBytes) / job.speed)));
             }
@@ -256,23 +244,17 @@ Item {
                         value: item.notif.percentage || 0
                         indeterminate: item.jobRunning && !(item.notif.percentage > 0)
                     }
-                    PlasmaComponents.ToolButton {
+                    IconButton {
                         visible: item.notif.suspendable === true
                         icon.name: item.jobSuspended ? "media-playback-start" : "media-playback-pause"
                         text: item.jobSuspended ? i18n("Resume") : i18n("Pause")
-                        display: PlasmaComponents.AbstractButton.IconOnly
                         onClicked: item.jobSuspended ? item.notifications.resumeJob(item.idx()) : item.notifications.suspendJob(item.idx())
-                        PlasmaComponents.ToolTip.text: text
-                        PlasmaComponents.ToolTip.visible: hovered
                     }
-                    PlasmaComponents.ToolButton {
+                    IconButton {
                         visible: item.notif.killable === true
                         icon.name: "media-playback-stop"
                         text: i18n("Cancel")
-                        display: PlasmaComponents.AbstractButton.IconOnly
                         onClicked: item.notifications.killJob(item.idx())
-                        PlasmaComponents.ToolTip.text: text
-                        PlasmaComponents.ToolTip.visible: hovered
                     }
                 }
                 PlasmaComponents.Label {
@@ -287,7 +269,7 @@ Item {
                 }
                 // Done: open what came, or where it went
                 Row {
-                    visible: item.jobDone && !item.jobFailed && item.job
+                    visible: item.jobDone && !item.jobFailed && item.job !== null
                     spacing: Kirigami.Units.smallSpacing
                     PlasmaComponents.Button {
                         visible: item.urls.length === 1
@@ -352,15 +334,12 @@ Item {
             }
         }
 
-        PlasmaComponents.ToolButton {
+        IconButton {
             Layout.alignment: Qt.AlignTop
             icon.name: "window-close"
-            visible: item.showClose && item.notif.closable !== false && !(item.isJob && !item.jobDone)
-            display: PlasmaComponents.AbstractButton.IconOnly
+            visible: item.notif.closable !== false && !(item.isJob && !item.jobDone)
             text: i18n("Close")
             onClicked: item.notifications.close(item.idx())
-            PlasmaComponents.ToolTip.text: text
-            PlasmaComponents.ToolTip.visible: hovered
         }
     }
 }

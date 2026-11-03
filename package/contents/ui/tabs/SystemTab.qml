@@ -12,6 +12,7 @@ import org.kde.plasma.components as PlasmaComponents
 
 import ".."
 import "../tiles"
+import "../Format.js" as Format
 
 // The system after Caelestia's Performance tab: the processor large in the middle (its usage
 // around, its temperature inside), the graphics card and memory smaller either side; the disk
@@ -23,18 +24,6 @@ ColumnLayout {
 
     spacing: Kirigami.Units.largeSpacing
 
-    function bytes(b: real): string {
-        if (!(b > 0)) {
-            return "0 B";
-        }
-        const units = ["B", "KiB", "MiB", "GiB", "TiB"];
-        let i = 0;
-        while (b >= 1024 && i < units.length - 1) {
-            b /= 1024;
-            ++i;
-        }
-        return (i === 0 ? Math.round(b) : b.toFixed(b < 10 ? 1 : 0)) + " " + units[i];
-    }
     readonly property real cpu: monitor.number(monitor.cpu)
     readonly property bool hasTemp: monitor.ready(monitor.cpuTemp)
     readonly property real temp: monitor.number(monitor.cpuTemp)
@@ -44,7 +33,6 @@ ColumnLayout {
     readonly property real disk: monitor.number(monitor.disk)
     readonly property color readColor: Kirigami.Theme.highlightColor
     readonly property color writeColor: Kirigami.Theme.positiveTextColor
-    readonly property color accentText: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
 
     // ---- gauges: small, large, small ---------------------------------------------------
     Tile {
@@ -86,9 +74,9 @@ ColumnLayout {
                 Layout.preferredHeight: parent.height * 0.7
                 Layout.alignment: Qt.AlignVCenter
                 fraction: tab.mem / 100
-                value: tab.bytes(tab.monitor.number(tab.monitor.memUsed))
+                value: Format.bytes(tab.monitor.number(tab.monitor.memUsed))
                 label: i18n("Memory")
-                detail: i18nc("of total memory", "of %1", tab.bytes(tab.monitor.number(tab.monitor.memTotal)))
+                detail: i18nc("of total memory", "of %1", Format.bytes(tab.monitor.number(tab.monitor.memTotal)))
             }
         }
     }
@@ -182,9 +170,8 @@ ColumnLayout {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Kirigami.Units.largeSpacing
-                    PlasmaComponents.Label {
+                    AccentLabel {
                         text: card.firstLabel
-                        color: tab.accentText
                         font: Kirigami.Theme.smallFont
                     }
                     PlasmaComponents.Label {
@@ -201,16 +188,16 @@ ColumnLayout {
             title: i18n("Disk")
             figure: Math.round(tab.disk) + "%"
             fraction: tab.disk / 100
-            firstLabel: i18nc("disk read speed", "read %1/s", tab.bytes(tab.monitor.number(tab.monitor.diskRead)))
-            secondLabel: i18nc("disk write speed", "write %1/s", tab.bytes(tab.monitor.number(tab.monitor.diskWrite)))
+            firstLabel: i18nc("disk read speed", "read %1/s", Format.bytes(tab.monitor.number(tab.monitor.diskRead)))
+            secondLabel: i18nc("disk write speed", "write %1/s", Format.bytes(tab.monitor.number(tab.monitor.diskWrite)))
             firstHistory: tab.monitor.diskReadHistory
             secondHistory: tab.monitor.diskWriteHistory
         }
         Activity {
             icon: "network-wired"
             title: i18n("Network")
-            firstLabel: "↓ " + tab.bytes(tab.monitor.number(tab.monitor.down)) + "/s"
-            secondLabel: "↑ " + tab.bytes(tab.monitor.number(tab.monitor.up)) + "/s"
+            firstLabel: "↓ " + Format.bytes(tab.monitor.number(tab.monitor.down)) + "/s"
+            secondLabel: "↑ " + Format.bytes(tab.monitor.number(tab.monitor.up)) + "/s"
             firstHistory: tab.monitor.downHistory
             secondHistory: tab.monitor.upHistory
         }

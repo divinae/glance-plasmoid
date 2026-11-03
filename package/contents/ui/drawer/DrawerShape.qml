@@ -20,15 +20,14 @@ Shape {
     property real ear: 20
     property real radius: 20
     property color color: "black"
-    property color outlineColor: "transparent"
 
     preferredRendererType: Shape.CurveRenderer
     antialiasing: true
 
     ShapePath {
         fillColor: shape.color
-        strokeColor: shape.outlineColor
-        strokeWidth: shape.outlineColor.a > 0 ? 1 : -1
+        strokeColor: "transparent"
+        strokeWidth: -1
         PathSvg {
             path: Geometry.path(shape.edge, shape.width, shape.height, shape.depth, shape.along, shape.ear, shape.radius)
         }

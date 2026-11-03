@@ -16,7 +16,7 @@ import org.kde.plasma.plasmoid
 
 import "tabs"
 
-// What the island opens: the tabs and their pages. Shared by the classic Plasma popup
+// What Glance opens: the tabs and their pages. Shared by the classic Plasma popup
 // (Flyout.qml) and the drawer that slides out of the screen edge (drawer/Drawer.qml).
 Item {
     id: content
@@ -30,7 +30,6 @@ Item {
     required property Item notifications
     required property Item calendar
     required property Item monitor
-    required property Item privacy
     // The drawer's look: icon tabs with a sliding indicator instead of Plasma's TabBar
     property bool drawerStyle: false
 
@@ -42,7 +41,8 @@ Item {
         if (island.cfg.showDashboard) {
             t.push({key: "dashboard", label: i18n("Dashboard"), icon: "view-grid"});
         }
-        // The dashboard's window tile has the buttons and the menu: the tab only without it
+        // With the dashboard the menu strip on top has the window's buttons and menus: the
+        // Window tab only without it
         if (!island.cfg.showDashboard) {
             t.push({key: "window", label: i18n("Window"), icon: "window"});
         }
@@ -196,7 +196,7 @@ Item {
             onActivated: key => content.currentKey = key
         }
 
-        // ---- window header + buttons: only on the Window tab (the dashboard has a window tile) --
+        // ---- window header + buttons: only on the Window tab (else the menu strip has them) --
         RowLayout {
             id: header
             Layout.fillWidth: true
@@ -325,8 +325,6 @@ Item {
                 key: "dashboard"
                 sourceComponent: DashboardTab {
                     island: content.island
-                    tasks: content.tasks
-                    appMenu: content.appMenu
                     cava: content.cava
                     mediaState: content.mediaState
                     notifications: content.notifications

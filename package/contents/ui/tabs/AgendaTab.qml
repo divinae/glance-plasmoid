@@ -59,10 +59,10 @@ ColumnLayout {
             required property var modelData
             readonly property var ev: modelData
             readonly property int minutes: ev && !ev.allDay ? tab.calendar.minutesUntil(ev) : 0
-            readonly property bool now: ev && !ev.allDay && minutes <= 0 && ev.end > tab.calendar.now
+            readonly property bool now: !!ev && !ev.allDay && minutes <= 0 && ev.end > tab.calendar.now
 
             Layout.fillWidth: true
-            enabled: ev && ev.link !== ""
+            enabled: !!ev && ev.link !== ""
             onClicked: Qt.openUrlExternally(ev.link)
 
             contentItem: RowLayout {
@@ -96,7 +96,7 @@ ColumnLayout {
                     }
                 }
                 PlasmaComponents.Label {
-                    visible: row.ev && !row.ev.allDay && (row.now || (row.minutes > 0 && row.minutes < 120))
+                    visible: !!row.ev && !row.ev.allDay && (row.now || (row.minutes > 0 && row.minutes < 120))
                     text: row.now ? i18n("now") : i18n("in %1 min", row.minutes)
                     font: Kirigami.Theme.smallFont
                     color: row.now ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor

@@ -16,8 +16,8 @@ import com.dv.island.private as Island
 import ".."
 import "DrawerGeometry.js" as Geometry
 
-// The island's drawer: a layer-shell surface that slides out of the screen edge next to the
-// island and flows into it through concave ears (Caelestia's dashboard look). Loaded by URL only
+// Glance's drawer: a layer-shell surface that slides out of the screen edge next to the
+// panel strip and flows into it through concave ears (Caelestia's dashboard look). Loaded by URL only
 // once LayerShellProbe.qml found org.kde.layershell; main.qml fills in the properties below.
 Window {
     id: drawer
@@ -32,7 +32,6 @@ Window {
     property Item notifications: null
     property Item calendar: null
     property Item monitor: null
-    property Item privacy: null
     property bool ready: false
 
     // The close animation finished: main.qml unloads the window
@@ -41,7 +40,7 @@ Window {
     readonly property var cfg: island ? island.cfg : null
 
     // ---- which edge -----------------------------------------------------------
-    // "From the panel": the panel's own edge, the drawer beside the island.
+    // "From the panel": the panel's own edge, the drawer beside the strip.
     // "Top of the screen": centered under the top edge, like Caelestia's dashboard.
     readonly property bool fromTop: cfg ? cfg.drawerEdge === 1 : false
     readonly property string edge: {
@@ -79,7 +78,7 @@ Window {
     flags: Qt.FramelessWindowHint
     title: i18n("Glance")
 
-    // ---- placement: centered on the island, kept on its screen ------------------
+    // ---- placement: centered on the strip, kept on its screen ------------------
     property real alongMargin: 0
     // From the screen edge to where the drawer starts: the panel window's far side. A floating
     // panel's window holds its gap on both sides, so the drawer keeps the same gap from it.
@@ -409,7 +408,6 @@ Window {
                         notifications: drawer.notifications
                         calendar: drawer.calendar
                         monitor: drawer.monitor
-                        privacy: drawer.privacy
                     }
                 }
             }

@@ -10,6 +10,8 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
+import ".."
+
 // The time, large, the weekday in the accent colour and the date.
 Tile {
     id: tile
@@ -39,12 +41,11 @@ Tile {
             fontSizeMode: Text.HorizontalFit
             minimumPointSize: Kirigami.Theme.defaultFont.pointSize
         }
-        PlasmaComponents.Label {
+        AccentLabel {
             Layout.fillWidth: true
             text: tile.now.toLocaleDateString(Qt.locale(), "dddd")
             textFormat: Text.PlainText
             font.weight: Font.DemiBold
-            color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
             elide: Text.ElideRight
         }
         PlasmaComponents.Label {

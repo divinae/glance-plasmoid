@@ -54,15 +54,11 @@ Tile {
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
-            PlasmaComponents.ToolButton {
+            IconButton {
                 visible: tile.watcher.count > 0
                 icon.name: "edit-clear-history"
                 text: i18n("Clear All")
-                display: PlasmaComponents.AbstractButton.IconOnly
                 onClicked: tile.watcher.clearHistory()
-                PlasmaComponents.ToolTip.text: text
-                PlasmaComponents.ToolTip.visible: hovered
-                PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
             DndButton {
                 watcher: tile.watcher

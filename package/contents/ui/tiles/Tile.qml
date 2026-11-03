@@ -16,7 +16,6 @@ Rectangle {
     default property alias contentData: inner.data
     property bool clickable: false
     property real padding: Kirigami.Units.largeSpacing
-    readonly property bool hovered: hover.hovered
 
     signal clicked()
 

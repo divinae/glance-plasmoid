@@ -26,7 +26,7 @@
     <entry name="showAppIcon" type="Bool">
       <default>false</default>
     </entry>
-    <!-- Status pills in the panel -->
+    <!-- Status segments in the panel's capsule -->
     <entry name="pillCamera" type="Bool">
       <default>true</default>
     </entry>
@@ -172,7 +172,6 @@
       <min>5</min>
       <max>144</max>
     </entry>
-    <!-- v0.2 -->
     <entry name="showProgressInPanel" type="Bool">
       <default>false</default>
     </entry>

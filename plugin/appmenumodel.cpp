@@ -12,15 +12,12 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusServiceWatcher>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QKeyEvent>
-#include <QGuiApplication>
 #include <QMenu>
-#include <QWindow>
 #include <QMouseEvent>
 #include <QQuickWindow>
-#include <QScreen>
-#include <QTimer>
 
 #include <algorithm>
 
@@ -82,7 +79,7 @@ AppMenuModel::AppMenuModel(QObject *parent)
     connect(this, &AppMenuModel::modelNeedsUpdate, this, [this] {
         if (!m_updatePending) {
             m_updatePending = true;
-            QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(this, &AppMenuModel::update, Qt::QueuedConnection);
         }
     });
 
@@ -97,10 +94,8 @@ AppMenuModel::AppMenuModel(QObject *parent)
 
 AppMenuModel::~AppMenuModel()
 {
-    if (m_currentMenu) {
-        m_currentMenu->removeEventFilter(this);
-        m_currentMenu->hide();
-    }
+    // Without telling us (aboutToHide, currentIndex) while we go
+    releaseCurrentMenu();
     deleteDetachedMenus();
     if (m_holdsViewService) {
         releaseViewService();
@@ -275,15 +270,17 @@ void AppMenuModel::updateApplicationMenu()
         return;
     }
 
+    // The shown menu belongs to the old importer, which goes now, with the menus detached from it
     closeMenu();
+    releaseCurrentMenu();
+    m_importer.reset();
+    deleteDetachedMenus();
 
     if (serviceName.isEmpty() || menuObjectPath.isEmpty()) {
         setMenuAvailable(false);
         m_loadedServiceName.clear();
         m_loadedObjectPath.clear();
         m_serviceWatcher->setWatchedServices({});
-        m_importer.reset();
-        deleteDetachedMenus();
         m_menu.clear();
         Q_EMIT modelNeedsUpdate();
         return;
@@ -293,13 +290,6 @@ void AppMenuModel::updateApplicationMenu()
     m_loadedObjectPath = menuObjectPath;
     m_serviceWatcher->setWatchedServices(QStringList({serviceName}));
 
-    // The shown menu belongs to the old importer, which goes now, with the menus detached from it
-    if (m_currentMenu) {
-        m_currentMenu->removeEventFilter(this);
-        m_currentMenu->hide();
-        m_currentMenu.clear();
-    }
-    deleteDetachedMenus();
     m_importer = std::make_unique<KDBusMenuImporter>(serviceName, menuObjectPath);
     QMetaObject::invokeMethod(m_importer.get(), "updateMenu", Qt::QueuedConnection);
 
@@ -386,6 +376,16 @@ void AppMenuModel::onMenuAboutToHide()
     setCurrentIndex(-1);
 }
 
+void AppMenuModel::releaseCurrentMenu()
+{
+    if (m_currentMenu) {
+        m_currentMenu->removeEventFilter(this);
+        disconnect(m_currentMenu, nullptr, this, nullptr);
+        m_currentMenu->hide();
+        m_currentMenu.clear();
+    }
+}
+
 void AppMenuModel::closeMenu()
 {
     if (m_currentMenu && m_currentMenu->isVisible()) {
@@ -399,7 +399,7 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
     if (m_currentIndex == idx && m_currentMenu && m_currentMenu->isVisible()) {
         return;
     }
-    if (!ctx || !ctx->window() || !ctx->window()->screen()) {
+    if (!ctx || !ctx->window()) {
         return;
     }
 
@@ -416,7 +416,7 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
 
     // QTBUG-59044: Qt may miss the mouse release when a non-focus window spawns a grabbing popup
     auto ungrabMouseHack = [ctx]() {
-        if (ctx && ctx->window() && ctx->window()->mouseGrabberItem()) {
+        if (ctx->window() && ctx->window()->mouseGrabberItem()) {
             ctx->window()->mouseGrabberItem()->ungrabMouse();
         }
     };
@@ -448,20 +448,11 @@ void AppMenuModel::trigger(QQuickItem *ctx, int idx)
 
     QTimer::singleShot(0, ctx, ungrabMouseHack);
 
-    const QRect geo = ctx->window()->screen()->availableVirtualGeometry();
-    QPoint pos = ctx->window()->mapToGlobal(ctx->mapToScene(QPointF(0, ctx->height())).toPoint());
-    actionMenu->adjustSize();
-    pos = QPoint(qBound(geo.x(), pos.x(), geo.x() + geo.width() - actionMenu->width()),
-                 qBound(geo.y(), pos.y(), geo.y() + geo.height() - actionMenu->height()));
-
     actionMenu->winId(); // create window handle
     actionMenu->windowHandle()->setTransientParent(ctx->window());
     anchorToItem(actionMenu->windowHandle(), ctx);
-    actionMenu->popup(pos);
-    QTimer::singleShot(300, actionMenu, [actionMenu, idx]() {
-        qWarning() << "GLANCEMENU shown" << idx << "visible" << actionMenu->isVisible() << "actions" << actionMenu->actions().size()
-                   << "parent" << (actionMenu->windowHandle() ? actionMenu->windowHandle()->transientParent() : nullptr);
-    });
+    // Under the button; QMenu keeps it on the screen. On Wayland the anchor above places it.
+    actionMenu->popup(ctx->window()->mapToGlobal(ctx->mapToScene(QPointF(0, ctx->height()))).toPoint());
 
     setCurrentIndex(idx);
 }

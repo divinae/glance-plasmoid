@@ -27,7 +27,7 @@ Item {
     required property QtObject cava
 
     readonly property var player: island.player
-    readonly property bool hasPlayer: player !== null && player !== undefined
+    readonly property bool hasPlayer: island.hasPlayer
     readonly property bool isPlaying: mediaState.playing
     readonly property bool hasVolume: hasPlayer && player.canControl && player.volume >= 0
     property real volumeBeforeMute: 0.5
@@ -155,12 +155,11 @@ Item {
             Item {
                 Layout.fillHeight: true
             }
-            PlasmaComponents.Label {
+            AccentLabel {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: tab.hasPlayer ? (tab.player.track || tab.player.identity || "") : ""
                 textFormat: Text.PlainText
-                color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
                 font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.3
                 font.weight: Font.DemiBold
                 wrapMode: Text.Wrap
@@ -414,8 +413,6 @@ Item {
             onReleased: tab.mediaState.seek(bar.previewValue)
         }
     }
-
-
 
     function formatTime(us: real): string {
         const total = Math.max(0, Math.floor(us / 1000000));

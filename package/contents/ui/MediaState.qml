@@ -17,7 +17,6 @@ Item {
 
     readonly property bool hasPlayer: player !== null && player !== undefined
     readonly property bool playing: hasPlayer && player.playbackStatus === Mpris.PlaybackStatus.Playing
-    readonly property bool paused: hasPlayer && player.playbackStatus === Mpris.PlaybackStatus.Paused
     readonly property real length: hasPlayer ? player.length : 0
     readonly property bool canSeek: hasPlayer && player.canSeek && length > 0
 

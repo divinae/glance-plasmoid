@@ -30,7 +30,6 @@ Item {
     readonly property alias down: downSensor
     readonly property alias up: upSensor
 
-    property var cpuHistory: []
     property var downHistory: []
     property var upHistory: []
     property var diskReadHistory: []
@@ -71,7 +70,6 @@ Item {
         repeat: true
         running: monitor.active
         onTriggered: {
-            monitor.cpuHistory = monitor.push(monitor.cpuHistory, monitor.number(cpuSensor));
             monitor.downHistory = monitor.push(monitor.downHistory, monitor.number(downSensor));
             monitor.upHistory = monitor.push(monitor.upHistory, monitor.number(upSensor));
             monitor.diskReadHistory = monitor.push(monitor.diskReadHistory, monitor.number(diskReadSensor));

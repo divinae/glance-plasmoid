@@ -8,7 +8,7 @@ import QtQuick
 
 import org.kde.kirigami as Kirigami
 
-// Short double flash over the island for a new notification.
+// Short double flash over the panel strip for a new notification.
 Rectangle {
     id: overlay
 

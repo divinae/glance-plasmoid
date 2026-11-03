@@ -34,24 +34,16 @@ ColumnLayout {
         Item {
             Layout.fillWidth: true
         }
-        PlasmaComponents.ToolButton {
+        IconButton {
             icon.name: "edit-clear-history"
             text: i18n("Clear All")
-            display: PlasmaComponents.AbstractButton.IconOnly
             enabled: tab.watcher.count > 0
             onClicked: tab.watcher.clearHistory()
-            PlasmaComponents.ToolTip.text: text
-            PlasmaComponents.ToolTip.visible: hovered
-            PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
-        PlasmaComponents.ToolButton {
+        IconButton {
             icon.name: "configure"
-            display: PlasmaComponents.AbstractButton.IconOnly
             text: i18n("Configure Notifications…")
             onClicked: Qt.openUrlExternally("systemsettings://kcm_notifications")
-            PlasmaComponents.ToolTip.text: text
-            PlasmaComponents.ToolTip.visible: hovered
-            PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
         }
     }
 
@@ -73,7 +65,6 @@ ColumnLayout {
         visible: tab.watcher.count > 0
 
         ListView {
-            id: list
             model: tab.model
             spacing: Kirigami.Units.smallSpacing
             clip: true
@@ -119,13 +110,10 @@ ColumnLayout {
                                 visible: row.model.groupChildrenCount > 2
                                 source: row.model.isGroupExpanded ? "arrow-up" : "arrow-down"
                             }
-                            PlasmaComponents.ToolButton {
+                            IconButton {
                                 icon.name: "window-close"
-                                display: PlasmaComponents.AbstractButton.IconOnly
                                 text: i18n("Clear Group")
                                 onClicked: tab.model.close(tab.model.index(row.index, 0))
-                                PlasmaComponents.ToolTip.text: text
-                                PlasmaComponents.ToolTip.visible: hovered
                             }
                         }
                     }

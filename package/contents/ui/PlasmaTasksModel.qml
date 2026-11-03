@@ -7,7 +7,6 @@
 
 import QtQuick
 
-import org.kde.plasma.plasmoid
 import org.kde.taskmanager as TaskManager
 
 Item {
@@ -16,10 +15,9 @@ Item {
     property rect screenGeometry
     property bool filterByScreen: true
 
-    // Last window that was active. Kept while a Plasma popup (e.g. our own flyout) has focus,
+    // Last window that was active. Kept while a Plasma popup (e.g. our own drawer) has focus,
     // because TasksModel does not list plasmashell windows.
     property Item activeTaskItem: null
-    readonly property bool existsWindowActive: activeTaskItem !== null
 
     TaskManager.ActivityInfo {
         id: activityInfo
@@ -84,7 +82,6 @@ Item {
             readonly property bool isActive: model.IsActive === true
             readonly property bool isKeepAbove: model.IsKeepAbove === true
             readonly property bool isFullScreen: model.IsFullScreen === true
-            readonly property bool isOnAllDesktops: model.IsOnAllVirtualDesktops === true
             readonly property var icon: model.decoration
             readonly property string menuService: model.ApplicationMenuServiceName ?? ""
             readonly property string menuPath: model.ApplicationMenuObjectPath ?? ""
@@ -166,9 +163,6 @@ Item {
             function toggleKeepAbove() {
                 tasksModel.requestToggleKeepAbove(modelIndex());
             }
-            function activate() {
-                tasksModel.requestActivate(modelIndex());
-            }
         }
     }
 
@@ -183,8 +177,5 @@ Item {
     }
     function toggleKeepAbove() {
         activeTaskItem?.toggleKeepAbove();
-    }
-    function activate() {
-        activeTaskItem?.activate();
     }
 }

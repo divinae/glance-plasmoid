@@ -6,7 +6,6 @@
 */
 
 import QtQuick
-import QtQuick.Layouts
 
 import org.kde.plasma.components as PlasmaComponents
 
@@ -17,7 +16,7 @@ Flow {
     readonly property int count: repeater.count
 
     spacing: 0
-    // The dashboard tile and the Window tab each have a bar: the one on show gets the menus
+    // The drawer's menu strip and the Window tab each have a bar: the one on show gets the menus
     Component.onCompleted: if (visible) appMenu.buttonGrid = bar
     onVisibleChanged: if (visible) appMenu.buttonGrid = bar
     Component.onDestruction: {

@@ -30,7 +30,8 @@ MouseArea {
     readonly property bool vertical: island.isVertical
     readonly property string mode: island.stripMode
     readonly property bool barsShown: island.showMediaInPanel && island.cfg.cavaInPanel && cava.available && cava.running
-    // Text and equalizer keep the text colour; an open drawer shows by the indicator below
+    // Under the pointer or while open: the capsule (when on) deepens; text and equalizer keep the
+    // text colour, an open drawer shows by the indicator below
     readonly property bool lit: containsMouse || island.open
     readonly property color foreground: Kirigami.Theme.textColor
     readonly property int barsStyle: island.cfg.cavaStyle
@@ -56,14 +57,11 @@ MouseArea {
     readonly property bool hasLeadIcon: barsMini || (leadIcon !== null && leadIcon !== undefined)
     readonly property int iconLength: hasLeadIcon ? leadIconItem.width + Kirigami.Units.smallSpacing : 0
 
-    // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
-    // The pills go past the text: above the title on a vertical panel (its far end)
-    readonly property int trailLength: privacyLength
-    // Status badges past the title, packed together (macOS's menu bar): solid circles of their
-    // colour (camera green, microphone orange, screen sharing red, Do Not Disturb grey) with a
-    // white icon from one icon set
-    // One pale capsule holding them, icons in their colours with thin dividers between
+    // The status segments past the text, at the strip's end (above the title on a vertical
+    // panel), packed in one capsule as in macOS's menu bar: a light tint of each status's colour
+    // (camera green, microphone orange, screen sharing red, Do Not Disturb grey), icons in the
+    // text colour
     readonly property int pillHeight: Math.min(thickness - 2, 22)
     readonly property int pillIconSize: Math.min(16, pillHeight - 6)
     // A segment per status: the icon with room around it, 2 px between segments
@@ -93,7 +91,7 @@ MouseArea {
     readonly property bool micMuted: PlasmaPa.PreferredDevice.source ? PlasmaPa.PreferredDevice.source.muted : false
     readonly property int capsuleLength: pills.length > 0
         ? pills.length * segmentLength + (pills.length - 1) * pillGap : 0
-    readonly property int privacyLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
+    readonly property int trailLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
@@ -155,7 +153,6 @@ MouseArea {
         }
     }
 
-    // Dragging files onto the strip opens the shelf (hover events stop during a drag)
     // The drawer open: the panel's "expanded" indicator, as every applet shows with its popup
     // (libplasma's CompactApplet: the theme's tab bar, its active tab for this edge)
     KSvg.FrameSvgItem {
@@ -178,7 +175,8 @@ MouseArea {
         }
     }
 
-    // Files dragged onto the strip: open the shelf, or drop them right here
+    // Files dragged onto the strip (hover events stop during a drag): open the shelf, or drop
+    // them right here
     DragDrop.DropArea {
         anchors.fill: parent
         enabled: compact.island.cfg.showShelf
@@ -213,17 +211,15 @@ MouseArea {
             return Plasmoid.location === PlasmaCore.Types.RightEdge ? 90 : -90;
         }
 
-        // ---- the island capsule ---------------------------------------------
+        // ---- the capsule behind the text (Settings: Background) ----------------
         Rectangle {
             id: pill
             anchors.fill: parent
             anchors.margins: compact.inset
             radius: height / 2
-            readonly property bool lit: compact.containsMouse || compact.island.open
-            // No capsule by default: under the pointer or while open the text takes the accent
-            // color instead (see `foreground`), the drawer itself being the feedback
+            // No capsule by default: the open drawer itself is the feedback
             color: compact.island.cfg.showCapsule
-                ? Qt.alpha(Kirigami.Theme.highlightColor, lit ? 0.24 : 0.12)
+                ? Qt.alpha(Kirigami.Theme.highlightColor, compact.lit ? 0.24 : 0.12)
                 : "transparent"
             Behavior on color {
                 ColorAnimation { duration: Kirigami.Units.shortDuration }
@@ -367,14 +363,12 @@ MouseArea {
                     && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
                 color: Kirigami.Theme.highlightColor
             }
-            // The status icons, together in one pale capsule at the strip's end
-            Rectangle {
-                id: statusCapsule
+            // The status segments, together at the strip's end
+            Item {
                 x: Math.round(parent.width - width)
                 y: Math.round((parent.height - height) / 2)
                 width: compact.capsuleLength
                 height: compact.pillHeight
-                color: "transparent"
                 visible: compact.pills.length > 0
 
                 Row {
@@ -384,7 +378,7 @@ MouseArea {
                         // A segment of the capsule: a light tint of its colour, rounded at the
                         // capsule's two ends; the icons all in the text colour
                         delegate: Rectangle {
-                            id: pill
+                            id: segment
                             required property int index
                             required property var modelData
                             readonly property bool first: index === 0
@@ -412,27 +406,26 @@ MouseArea {
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
                                 height: width
-                                source: pill.modelData.action === "mic" && compact.micMuted
-                                    ? "audio-input-microphone-muted-symbolic" : pill.modelData.icon
+                                source: segment.modelData.action === "mic" && compact.micMuted
+                                    ? "audio-input-microphone-muted-symbolic" : segment.modelData.icon
                                 isMask: true
                                 color: Kirigami.Theme.textColor
                             }
-                            scale: pillMouse.pressed && pill.clickable ? 0.88 : 1
+                            scale: pillMouse.pressed && segment.clickable ? 0.88 : 1
                             Behavior on scale {
                                 NumberAnimation { duration: Kirigami.Units.shortDuration }
                             }
-                            // A click does what the native indicator offers; the camera's only says who uses it
                             MouseArea {
                                 id: pillMouse
                                 anchors.fill: parent
                                 anchors.margins: -2
                                 hoverEnabled: true
-                                cursorShape: pill.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                cursorShape: segment.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 // What the native indicators offer: Do Not Disturb off, the
                                 // portal's "End" for screen sharing, Plasma's "Mute" for the
                                 // microphone; the camera's only lists who uses it
                                 onClicked: {
-                                    switch (pill.modelData.action) {
+                                    switch (segment.modelData.action) {
                                     case "dnd":
                                         compact.notifications.toggleDoNotDisturb();
                                         break;
@@ -456,8 +449,8 @@ MouseArea {
                             // inside the narrow, rotated panel and came out turned and cut off
                             PlasmaCore.ToolTipArea {
                                 anchors.fill: parent
-                                mainText: pill.modelData.action === "mic" && compact.micMuted
-                                    ? i18n("Microphone muted. Click to unmute it.") : (pill.modelData.tip || "")
+                                mainText: segment.modelData.action === "mic" && compact.micMuted
+                                    ? i18n("Microphone muted. Click to unmute it.") : (segment.modelData.tip || "")
                                 location: Plasmoid.location
                             }
                         }
@@ -516,7 +509,6 @@ MouseArea {
                 && compact.mediaState.hasPlayer && compact.mediaState.length > 0
                 && compact.mediaState.playing
             fraction: compact.mediaState.fraction
-            playing: compact.mediaState.playing
         }
     }
 }

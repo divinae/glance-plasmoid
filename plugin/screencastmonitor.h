@@ -6,19 +6,17 @@
 
 #pragma once
 
-#include <QHash>
 #include <QObject>
+#include <QStringList>
 #include <QVariantList>
 #include <qqmlregistration.h>
 
-struct pw_thread_loop;
-struct pw_context;
-struct pw_core;
-struct pw_registry;
+#include <memory>
 
-// Screen sharing in progress, from PipeWire: KWin's screencast streams (kwin_wayland,
-// Stream/Output/Video) that are running, and the applications taking them in. KDE's
-// MediaMonitor misses these: they carry no media.role.
+// What's being captured, and by whom: screen sharing (KWin's screencast streams, which KDE's
+// MediaMonitor misses as they carry no media.role), the microphone and the camera. Screen and
+// microphone come from PipeWire's graph, watched on a PipeWire thread; the camera also from the
+// processes holding a /dev/video* open, as browsers and Slack open it past PipeWire.
 class ScreenCastMonitor : public QObject
 {
     Q_OBJECT
@@ -44,40 +42,19 @@ public:
     QStringList micUsers() const;
     QStringList cameraUsers() const;
 
-    struct Node {
-        QString mediaClass;
-        QString name;
-        QString mediaName;
-        QString application;
-        QString binary;
-        QString category;
-        bool captureSink = false;
-        quint32 target = 0;
-        bool running = false;
-    };
-
-    // PipeWire's side (its listeners live in the .cpp)
-    struct Private;
-
-    // From PipeWire's thread
-    void nodeChanged(quint32 id, const Node &node);
-    void nodeRemoved(quint32 id);
-
 Q_SIGNALS:
     void changed();
 
 private:
+    // PipeWire's side and the camera scan (in the .cpp)
+    struct Private;
+
     void recompute();
+    void scanCameras();
+    void camerasScanned(const QStringList &processes);
 
-    pw_thread_loop *m_loop = nullptr;
-    pw_context *m_context = nullptr;
-    pw_core *m_core = nullptr;
-    pw_registry *m_registry = nullptr;
-    Private *d = nullptr;
-
-    QHash<quint32, Node> m_nodes; // on the Qt thread
+    std::unique_ptr<Private> d;
     QVariantList m_casts;
     QStringList m_micUsers;
     QStringList m_cameraUsers;
-    void scanCameras();
 };

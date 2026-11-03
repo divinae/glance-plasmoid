@@ -50,7 +50,7 @@ KCM.SimpleKCM {
             id: drawerEdge
             Kirigami.FormData.label: i18n("Drawer opens:")
             enabled: popupStyle.currentIndex === 0
-            model: [i18n("From the panel, beside the island"), i18n("From the top of the screen")]
+            model: [i18n("From the panel, beside Glance"), i18n("From the top of the screen")]
         }
         QQC2.SpinBox {
             id: drawerWidth
@@ -100,14 +100,14 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Open delay (ms):")
             enabled: openOnHover.checked
             from: 0
-            to: 3000
+            to: 2000
             stepSize: 50
         }
         QQC2.SpinBox {
             id: closeDelay
             Kirigami.FormData.label: i18n("Close delay (ms):")
             from: 0
-            to: 3000
+            to: 2000
             stepSize: 50
         }
         QQC2.SpinBox {
@@ -164,7 +164,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: showSystem
-            text: i18n("System monitor (tab, and CPU and memory under the clock)")
+            text: i18n("System monitor (tab, and CPU, memory and disk on the dashboard)")
         }
     }
 }

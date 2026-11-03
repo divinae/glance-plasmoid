@@ -20,8 +20,6 @@ GridLayout {
     id: tab
 
     required property var island
-    required property Item tasks
-    required property QtObject appMenu
     required property QtObject cava
     required property Item mediaState
     required property Item notifications
@@ -108,5 +106,4 @@ GridLayout {
             onClicked: tab.openTab("shelf")
         }
     }
-
 }

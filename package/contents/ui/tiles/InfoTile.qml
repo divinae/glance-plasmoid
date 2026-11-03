@@ -114,12 +114,11 @@ Tile {
             Layout.alignment: Qt.AlignVCenter
             spacing: Kirigami.Units.smallSpacing / 2
 
-            PlasmaComponents.Label {
+            AccentLabel {
                 Layout.fillWidth: true
                 text: (user.fullName || user.loginName) + "@" + Island.SystemInfo.hostName
                 textFormat: Text.PlainText
                 font.weight: Font.Bold
-                color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.highlightColor, Kirigami.Theme.textColor, 0.4)
                 elide: Text.ElideRight
             }
             Line {

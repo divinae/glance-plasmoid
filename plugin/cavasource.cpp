@@ -6,8 +6,11 @@
 
 #include "cavasource.h"
 
+#include <QProcess>
 #include <QStandardPaths>
+#include <QTemporaryFile>
 #include <QTextStream>
+#include <QTimer>
 
 #include <algorithm>
 
@@ -75,7 +78,15 @@ void CavaSource::setSilent(bool silent)
 
 CavaSource::~CavaSource()
 {
-    stop();
+    // Going (the applet removed, the shell quitting): cava goes now, not later
+    if (m_process) {
+        m_process->disconnect(this);
+        m_process->terminate();
+        if (!m_process->waitForFinished(500)) {
+            m_process->kill();
+            m_process->waitForFinished(200);
+        }
+    }
 }
 
 int CavaSource::bars() const
@@ -213,12 +224,16 @@ void CavaSource::stop()
     if (!m_process) {
         return;
     }
-    auto process = std::move(m_process);
+    // Without waiting for it on the GUI thread (the whole shell would wait): it goes in the
+    // background, killed if it ignores SIGTERM
+    QProcess *process = m_process.release();
     process->disconnect(this);
-    process->terminate();
-    if (!process->waitForFinished(500)) {
-        process->kill();
-        process->waitForFinished(200);
+    if (process->state() == QProcess::NotRunning) {
+        process->deleteLater();
+    } else {
+        connect(process, &QProcess::finished, process, &QObject::deleteLater);
+        process->terminate();
+        QTimer::singleShot(500, process, &QProcess::kill);
     }
     m_config.reset();
     m_buffer.clear();

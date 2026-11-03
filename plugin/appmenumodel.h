@@ -15,13 +15,12 @@
 
 #include <QAbstractListModel>
 #include <QPointer>
-#include <QTimer>
 #include <QQuickItem>
+#include <QTimer>
 #include <qqmlregistration.h>
 
 #include <memory>
 
-class QAction;
 class QDBusServiceWatcher;
 class QMenu;
 class QWindow;
@@ -76,8 +75,6 @@ public:
     Q_INVOKABLE void closeMenu();
 
     bool eventFilter(QObject *watched, QEvent *event) override;
-    static void anchorToItem(QWindow *popup, QQuickItem *item);
-    int buttonAt(const QPointF &globalPos) const;
 
 Q_SIGNALS:
     void enabledChanged();
@@ -92,16 +89,19 @@ Q_SIGNALS:
     void actionTriggered();
     void modelNeedsUpdate();
 
-private Q_SLOTS:
-    void update();
-
 private:
+    void update();
     void scheduleApplicationMenuUpdate();
     void updateApplicationMenu();
     void setMenuAvailable(bool available);
     void setCurrentIndex(int index);
     void onMenuAboutToHide();
+    void deleteDetachedMenus();
     QMenu *menuForIndex(int idx) const;
+    // Stops listening to the shown menu and hides it, silently
+    void releaseCurrentMenu();
+    static void anchorToItem(QWindow *popup, QQuickItem *item);
+    int buttonAt(const QPointF &globalPos) const;
 
     bool m_enabled = true;
     bool m_holdsViewService = false;
@@ -124,7 +124,6 @@ private:
     bool m_switching = false;
     // Menus taken from their parent widget to show (see trigger()): deleted with the importer
     QList<QPointer<QMenu>> m_detachedMenus;
-    void deleteDetachedMenus();
     // Switching menus by pointing waits a moment on the button (eventFilter)
     QTimer m_hoverTimer;
     int m_hoverIndex = -1;

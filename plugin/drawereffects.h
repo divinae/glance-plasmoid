@@ -10,8 +10,10 @@
 #include <QVariantList>
 #include <qqmlregistration.h>
 
-class QRegion;
-class QWindow;
+namespace Plasma
+{
+class Theme;
+}
 
 // Blur and background contrast behind the drawer, the way Plasma does it for panels and popups
 // (KWindowEffects, with the Plasma theme's contrast), limited to the drawer's shape.
@@ -28,5 +30,5 @@ public:
     Q_INVOKABLE void apply(QObject *window, bool enabled, const QVariantList &points);
 
 private:
-    void applyRegion(QWindow *window, bool enabled, const QRegion &region);
+    Plasma::Theme *m_theme;
 };

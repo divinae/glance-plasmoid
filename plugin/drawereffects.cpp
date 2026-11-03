@@ -15,6 +15,7 @@
 
 DrawerEffects::DrawerEffects(QObject *parent)
     : QObject(parent)
+    , m_theme(new Plasma::Theme(this))
 {
 }
 
@@ -32,19 +33,13 @@ void DrawerEffects::apply(QObject *object, bool enabled, const QVariantList &poi
     }
     // An empty region would mean "the whole window": switch the effect off instead
     const bool on = enabled && polygon.size() >= 3;
-    applyRegion(window, on, on ? QRegion(polygon) : QRegion());
-}
+    const QRegion region = on ? QRegion(polygon) : QRegion();
 
-void DrawerEffects::applyRegion(QWindow *window, bool on, const QRegion &region)
-{
     KWindowEffects::enableBlurBehind(window, on, region);
-
-    static Plasma::Theme theme;
-    const bool contrast = on && theme.backgroundContrastEnabled();
     KWindowEffects::enableBackgroundContrast(window,
-                                             contrast,
-                                             theme.backgroundContrast(),
-                                             theme.backgroundIntensity(),
-                                             theme.backgroundSaturation(),
+                                             on && m_theme->backgroundContrastEnabled(),
+                                             m_theme->backgroundContrast(),
+                                             m_theme->backgroundIntensity(),
+                                             m_theme->backgroundSaturation(),
                                              region);
 }
