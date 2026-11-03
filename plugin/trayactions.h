@@ -21,7 +21,8 @@ class TrayActions : public QObject
 public:
     explicit TrayActions(QObject *parent = nullptr);
 
-    // itemId: the icon's StatusNotifierItem Id; label: the menu entry's (without mnemonic).
-    // false when there's no such icon or entry.
-    Q_INVOKABLE bool trigger(const QString &itemId, const QString &label);
+    // itemId: the icon's StatusNotifierItem Id; labels: the menu entry's, translated and
+    // untranslated (without mnemonic). Runs the entry on every such icon; false when there's
+    // no such icon or entry.
+    Q_INVOKABLE bool trigger(const QString &itemId, const QStringList &labels);
 };

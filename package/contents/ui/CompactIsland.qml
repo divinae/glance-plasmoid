@@ -76,11 +76,9 @@ MouseArea {
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
         if (privacy.micActive && island.cfg.pillMicrophone) {
-            const muted = PlasmaPa.PreferredDevice.source ? PlasmaPa.PreferredDevice.source.muted : false;
-            out.push({color: privacy.micColor, action: "mic",
-                icon: muted ? "audio-input-microphone-muted-symbolic" : "audio-input-microphone-symbolic",
-                tip: muted ? i18n("Microphone muted (%1). Click to unmute it.", privacy.micNames.join(", "))
-                    : i18n("Microphone in use: %1. Click to mute it.", privacy.micNames.join(", "))});
+            // The muted look is the segment's own (micMuted below): flipping it rebuilt them all
+            out.push({color: privacy.micColor, action: "mic", icon: "audio-input-microphone-symbolic",
+                tip: i18n("Microphone in use: %1. Click to mute it.", privacy.micNames.join(", "))});
         }
         if (privacy.screenActive && island.cfg.pillScreen) {
             out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "screen",
@@ -92,6 +90,7 @@ MouseArea {
         }
         return out;
     }
+    readonly property bool micMuted: PlasmaPa.PreferredDevice.source ? PlasmaPa.PreferredDevice.source.muted : false
     readonly property int capsuleLength: pills.length > 0
         ? pills.length * segmentLength + (pills.length - 1) * pillGap : 0
     readonly property int privacyLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
@@ -413,7 +412,8 @@ MouseArea {
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
                                 height: width
-                                source: pill.modelData.icon
+                                source: pill.modelData.action === "mic" && compact.micMuted
+                                    ? "audio-input-microphone-muted-symbolic" : pill.modelData.icon
                                 isMask: true
                                 color: Kirigami.Theme.textColor
                             }
@@ -421,7 +421,7 @@ MouseArea {
                             Behavior on scale {
                                 NumberAnimation { duration: Kirigami.Units.shortDuration }
                             }
-                            // A click turns Do Not Disturb off; the others only say who uses them
+                            // A click does what the native indicator offers; the camera's only says who uses it
                             MouseArea {
                                 id: pillMouse
                                 anchors.fill: parent
@@ -437,7 +437,9 @@ MouseArea {
                                         compact.notifications.toggleDoNotDisturb();
                                         break;
                                     case "screen":
-                                        Island.TrayActions.trigger("xdg-desktop-portal-kde", "End");
+                                        // The portal's entry is translated: its own catalogue's word, then English
+                                        Island.TrayActions.trigger("xdg-desktop-portal-kde",
+                                            [i18nd("xdg-desktop-portal-kde", "End"), "End"]);
                                         break;
                                     case "mic":
                                         // As the volume applet: the default microphone's mute.
@@ -454,7 +456,8 @@ MouseArea {
                             // inside the narrow, rotated panel and came out turned and cut off
                             PlasmaCore.ToolTipArea {
                                 anchors.fill: parent
-                                mainText: pill.modelData.tip || ""
+                                mainText: pill.modelData.action === "mic" && compact.micMuted
+                                    ? i18n("Microphone muted. Click to unmute it.") : (pill.modelData.tip || "")
                                 location: Plasmoid.location
                             }
                         }

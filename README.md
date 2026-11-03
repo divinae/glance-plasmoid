@@ -12,6 +12,11 @@ Plasma 6 panel widget for a vertical panel. It replaces a window-title widget.
 - The drawer needs `layer-shell-qt`; without it, or if you prefer, Glance opens Plasma's usual
   popup instead (Settings > Popup > Style).
 
+## Requirements
+
+Plasma 6 with plasma-pa (the volume applet's module, for muting the microphone), layer-shell-qt for the
+drawer, PipeWire, and optionally `cava` for the audio bars.
+
 ## Build and install
 
 ```sh
