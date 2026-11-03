@@ -1,0 +1,889 @@
+# Polish translation of Glance.
+msgid ""
+msgstr ""
+"Project-Id-Version: glance\n"
+"Report-Msgid-Bugs-To: https://gitlab.com/divinae/glance-plasmoid/-/issues\n"
+"Last-Translator: Jakub Lipiński <lipinski.j@pm.me>\n"
+"Language-Team: Polish\n"
+"PO-Revision-Date: 2026-11-03\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+
+#: package/contents/config/config.qml:5
+msgid "General"
+msgstr "Ogólne"
+
+#: package/contents/config/config.qml:10
+msgid "Popup"
+msgstr "Okno"
+
+#: package/contents/config/config.qml:15
+msgid "Media & Bars"
+msgstr "Multimedia i paski"
+
+#: package/contents/config/config.qml:20
+msgid "Activities"
+msgstr "Aktywność"
+
+#: package/contents/ui/AppMenuBar.qml:74
+msgctxt "@info:usagetip"
+msgid "Open a menu"
+msgstr "Otwórz menu"
+
+#: package/contents/ui/CalendarSource.qml:56
+msgctxt "event happening now"
+msgid "%1 · now"
+msgstr "%1 · teraz"
+
+#: package/contents/ui/CalendarSource.qml:59
+msgctxt "event starts in N minutes"
+msgid "%1 · %2 min"
+msgstr "%1 · %2 min"
+
+#: package/contents/ui/CalendarSource.qml:61
+msgctxt "event starts at time"
+msgid "%1 · %2"
+msgstr "%1 · %2"
+
+#: package/contents/ui/CompactIsland.qml:73
+msgid "Camera in use: %1"
+msgstr "Kamera w użyciu: %1"
+
+#: package/contents/ui/CompactIsland.qml:78
+msgid "Microphone in use: %1. Click to mute it."
+msgstr "Mikrofon w użyciu: %1. Kliknij, aby wyciszyć."
+
+#: package/contents/ui/CompactIsland.qml:85
+msgid "Screen is being shared: %1. Click to stop sharing."
+msgstr "Ekran jest udostępniany: %1. Kliknij, aby przestać."
+
+#: package/contents/ui/CompactIsland.qml:86
+msgid "Screen is being shared: %1"
+msgstr "Ekran jest udostępniany: %1"
+
+#: package/contents/ui/CompactIsland.qml:90
+#: package/contents/ui/DndButton.qml:39
+msgid "Do not disturb: %1. Click to turn it off."
+msgstr "Nie przeszkadzać: %1. Kliknij, aby wyłączyć."
+
+#: package/contents/ui/CompactIsland.qml:453
+msgid "Microphone muted. Click to unmute it."
+msgstr "Mikrofon wyciszony. Kliknij, aby włączyć."
+
+#: package/contents/ui/DndButton.qml:23 package/contents/ui/DndButton.qml:24
+#: package/contents/ui/DndButton.qml:40
+msgid "Do not disturb"
+msgstr "Nie przeszkadzać"
+
+#: package/contents/ui/IslandContent.qml:42
+msgid "Dashboard"
+msgstr "Pulpit"
+
+#: package/contents/ui/IslandContent.qml:47
+msgid "Window"
+msgstr "Okno"
+
+#: package/contents/ui/IslandContent.qml:50
+msgid "Media"
+msgstr "Multimedia"
+
+#: package/contents/ui/IslandContent.qml:53
+#: package/contents/ui/tiles/NotificationsTile.qml:53
+msgid "Notifications"
+msgstr "Powiadomienia"
+
+#: package/contents/ui/IslandContent.qml:56
+msgid "Agenda"
+msgstr "Plan dnia"
+
+#: package/contents/ui/IslandContent.qml:59
+#: package/contents/ui/tiles/ShelfTile.qml:55
+msgid "Shelf"
+msgstr "Półka"
+
+#: package/contents/ui/IslandContent.qml:62
+msgid "System"
+msgstr "System"
+
+#: package/contents/ui/NotificationItem.qml:53
+msgctxt "seconds left"
+msgid "%1 s"
+msgstr "%1 s"
+
+#: package/contents/ui/NotificationItem.qml:56
+msgctxt "minutes and seconds left"
+msgid "%1 min %2 s"
+msgstr "%1 min %2 s"
+
+#: package/contents/ui/NotificationItem.qml:58
+msgctxt "hours and minutes left"
+msgid "%1 h %2 min"
+msgstr "%1 godz. %2 min"
+
+#: package/contents/ui/NotificationItem.qml:67
+msgctxt "bytes done of total"
+msgid "%1 of %2"
+msgstr "%1 z %2"
+
+#: package/contents/ui/NotificationItem.qml:69
+msgctxt "files done of total"
+msgid "%1 of %2 files"
+msgstr "%1 z %2 plików"
+
+#: package/contents/ui/NotificationItem.qml:72
+msgctxt "transfer speed"
+msgid "%1/s"
+msgstr "%1/s"
+
+#: package/contents/ui/NotificationItem.qml:74
+msgctxt "time left"
+msgid "%1 left"
+msgstr "zostało %1"
+
+#: package/contents/ui/NotificationItem.qml:78
+msgid "Paused"
+msgstr "Wstrzymano"
+
+#: package/contents/ui/NotificationItem.qml:89
+msgctxt "notification time"
+msgid "now"
+msgstr "teraz"
+
+#: package/contents/ui/NotificationItem.qml:92
+msgctxt "notification time, minutes"
+msgid "%1 min"
+msgstr "%1 min"
+
+#: package/contents/ui/NotificationItem.qml:95
+msgctxt "notification time, hours"
+msgid "%1 h"
+msgstr "%1 godz."
+
+#: package/contents/ui/NotificationItem.qml:250
+msgid "Pause"
+msgstr "Wstrzymaj"
+
+#: package/contents/ui/NotificationItem.qml:250
+msgid "Resume"
+msgstr "Wznów"
+
+#: package/contents/ui/NotificationItem.qml:256
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: package/contents/ui/NotificationItem.qml:263
+msgid "Failed"
+msgstr "Nie powiodło się"
+
+#: package/contents/ui/NotificationItem.qml:277
+msgid "Open"
+msgstr "Otwórz"
+
+#: package/contents/ui/NotificationItem.qml:283
+msgid "Open Folder"
+msgstr "Otwórz katalog"
+
+#: package/contents/ui/NotificationItem.qml:305
+msgctxt "reply to a notification"
+msgid "Reply"
+msgstr "Odpowiedz"
+
+#: package/contents/ui/NotificationItem.qml:319
+msgid "Type a reply…"
+msgstr "Napisz odpowiedź…"
+
+#: package/contents/ui/NotificationItem.qml:326
+msgid "Send"
+msgstr "Wyślij"
+
+#: package/contents/ui/NotificationItem.qml:341
+#: package/contents/ui/WindowButtons.qml:44
+msgid "Close"
+msgstr "Zamknij"
+
+#: package/contents/ui/NotificationWatcher.qml:50
+#: package/contents/ui/NotificationWatcher.qml:83
+msgid "Until turned off"
+msgstr "Do wyłączenia"
+
+#: package/contents/ui/NotificationWatcher.qml:56
+msgctxt "do not disturb until a time today"
+msgid "Until %1"
+msgstr "Do %1"
+
+#: package/contents/ui/NotificationWatcher.qml:59
+msgctxt "do not disturb until a time tomorrow"
+msgid "Until tomorrow, %1"
+msgstr "Do jutra, %1"
+
+#: package/contents/ui/NotificationWatcher.qml:61
+msgctxt "do not disturb until a day and time"
+msgid "Until %1, %2"
+msgstr "Do: %1, %2"
+
+#: package/contents/ui/NotificationWatcher.qml:65
+msgid "Requested by an application"
+msgstr "Na prośbę aplikacji"
+
+#: package/contents/ui/NotificationWatcher.qml:67
+msgid "On"
+msgstr "Włączone"
+
+#: package/contents/ui/NotificationWatcher.qml:74
+msgid "For 1 hour"
+msgstr "Na 1 godzinę"
+
+#: package/contents/ui/NotificationWatcher.qml:75
+msgid "For 4 hours"
+msgstr "Na 4 godziny"
+
+#: package/contents/ui/NotificationWatcher.qml:78
+msgid "Until this evening"
+msgstr "Do wieczora"
+
+#: package/contents/ui/NotificationWatcher.qml:80
+msgid "Until tomorrow morning"
+msgstr "Do jutra rana"
+
+#: package/contents/ui/PrivacyMonitor.qml:51
+msgid "Screen"
+msgstr "Ekran"
+
+#: package/contents/ui/PrivacyMonitor.qml:52
+msgctxt "shared thing → who receives it"
+msgid "%1 → %2"
+msgstr "%1 → %2"
+
+#: package/contents/ui/WindowButtons.qml:24
+msgid "Keep Above Others"
+msgstr "Zawsze na wierzchu"
+
+#: package/contents/ui/WindowButtons.qml:31
+msgid "Minimize"
+msgstr "Minimalizuj"
+
+#: package/contents/ui/WindowButtons.qml:39
+msgid "Maximize"
+msgstr "Maksymalizuj"
+
+#: package/contents/ui/WindowButtons.qml:39
+msgid "Restore"
+msgstr "Przywróć"
+
+#: package/contents/ui/configActivities.qml:25
+msgid "New notification:"
+msgstr "Nowe powiadomienie:"
+
+#: package/contents/ui/configActivities.qml:26
+msgid "Flash Glance in the panel"
+msgstr "Mignij Glance w panelu"
+
+#: package/contents/ui/configActivities.qml:31
+msgid "Also for file transfers and other jobs"
+msgstr "Również przy przesyłaniu plików i innych zadaniach"
+
+#: package/contents/ui/configActivities.qml:36
+msgid "Show its title in the panel for a few seconds"
+msgstr "Pokaż na chwilę jego tytuł w panelu"
+
+#: package/contents/ui/configActivities.qml:39
+msgid "Never flash for:"
+msgstr "Nigdy nie migaj dla:"
+
+#: package/contents/ui/configActivities.qml:42
+msgid "App names, comma separated"
+msgstr "Nazwy aplikacji, rozdzielone przecinkami"
+
+#: package/contents/ui/configActivities.qml:48
+msgid "Unread:"
+msgstr "Nieprzeczytane:"
+
+#: package/contents/ui/configActivities.qml:49
+msgid "Show a dot in the panel"
+msgstr "Pokaż kropkę w panelu"
+
+#: package/contents/ui/configActivities.qml:58
+msgid "Show next event in panel (min before):"
+msgstr "Następne wydarzenie w panelu (min przed):"
+
+#: package/contents/ui/configActivities.qml:64
+msgid "Events come from the Event Calendar widget's cache, so that widget has to be in use."
+msgstr "Wydarzenia pochodzą z pamięci podręcznej widżetu Event Calendar, więc musi on być w użyciu."
+
+#: package/contents/ui/configGeneral.qml:31
+msgid "Panel text:"
+msgstr "Tekst w panelu:"
+
+#: package/contents/ui/configGeneral.qml:32
+msgid "Application name"
+msgstr "Nazwa aplikacji"
+
+#: package/contents/ui/configGeneral.qml:32
+msgid "Application — title"
+msgstr "Aplikacja — tytuł"
+
+#: package/contents/ui/configGeneral.qml:32
+msgid "Window title"
+msgstr "Tytuł okna"
+
+#: package/contents/ui/configGeneral.qml:36
+msgid "Text with no window:"
+msgstr "Tekst bez okna:"
+
+#: package/contents/ui/configGeneral.qml:40
+msgid "Maximum characters:"
+msgstr "Maksymalnie znaków:"
+
+#: package/contents/ui/configGeneral.qml:46
+msgid "Margins:"
+msgstr "Marginesy:"
+
+#: package/contents/ui/configGeneral.qml:52
+msgid "Show in the panel:"
+msgstr "Pokazuj w panelu:"
+
+#: package/contents/ui/configGeneral.qml:53
+msgid "Camera in use"
+msgstr "Kamerę w użyciu"
+
+#: package/contents/ui/configGeneral.qml:57
+msgid "Microphone in use"
+msgstr "Mikrofon w użyciu"
+
+#: package/contents/ui/configGeneral.qml:61
+msgid "Screen being shared"
+msgstr "Udostępnianie ekranu"
+
+#: package/contents/ui/configGeneral.qml:65 package/contents/ui/main.qml:346
+msgid "Do Not Disturb"
+msgstr "Nie przeszkadzać"
+
+#: package/contents/ui/configGeneral.qml:69
+#: package/contents/ui/configPopup.qml:64
+msgid "Background:"
+msgstr "Tło:"
+
+#: package/contents/ui/configGeneral.qml:70
+msgid "Capsule behind the text"
+msgstr "Kapsułka pod tekstem"
+
+#: package/contents/ui/configGeneral.qml:74
+msgid "Icon:"
+msgstr "Ikona:"
+
+#: package/contents/ui/configGeneral.qml:75
+msgid "Show the application's icon"
+msgstr "Pokaż ikonę aplikacji"
+
+#: package/contents/ui/configGeneral.qml:79
+msgid "Font:"
+msgstr "Czcionka:"
+
+#: package/contents/ui/configGeneral.qml:80
+msgid "Bold"
+msgstr "Pogrubiona"
+
+#: package/contents/ui/configGeneral.qml:84
+msgid "Capitalize first letters"
+msgstr "Wielkie pierwsze litery"
+
+#: package/contents/ui/configGeneral.qml:88
+msgid "Windows:"
+msgstr "Okna:"
+
+#: package/contents/ui/configGeneral.qml:89
+msgid "Only windows on this screen"
+msgstr "Tylko okna na tym ekranie"
+
+#: package/contents/ui/configMedia.qml:40
+msgid "While playing:"
+msgstr "Podczas odtwarzania:"
+
+#: package/contents/ui/configMedia.qml:41
+msgid "Show track in panel"
+msgstr "Pokaż utwór w panelu"
+
+#: package/contents/ui/configMedia.qml:45
+msgid "Show progress line along the panel edge"
+msgstr "Pokaż pasek postępu wzdłuż krawędzi panelu"
+
+#: package/contents/ui/configMedia.qml:50
+msgid "Audio bars (cava)"
+msgstr "Paski dźwięku (cava)"
+
+#: package/contents/ui/configMedia.qml:57
+msgid "Install cava to see audio bars."
+msgstr "Zainstaluj cava, aby zobaczyć paski dźwięku."
+
+#: package/contents/ui/configMedia.qml:62
+msgid "Panel:"
+msgstr "Panel:"
+
+#: package/contents/ui/configMedia.qml:64
+msgid "Show bars in panel"
+msgstr "Pokaż paski w panelu"
+
+#: package/contents/ui/configMedia.qml:68
+msgid "Placement:"
+msgstr "Położenie:"
+
+#: package/contents/ui/configMedia.qml:70
+msgid "Along the panel's edge"
+msgstr "Wzdłuż krawędzi panelu"
+
+#: package/contents/ui/configMedia.qml:70
+msgid "Behind the text"
+msgstr "Pod tekstem"
+
+#: package/contents/ui/configMedia.qml:70
+msgid "Beside the text"
+msgstr "Obok tekstu"
+
+#: package/contents/ui/configMedia.qml:70
+msgid "Small equalizer instead of the icon"
+msgstr "Mały korektor zamiast ikony"
+
+#: package/contents/ui/configMedia.qml:74
+msgid "Panel style:"
+msgstr "Styl w panelu:"
+
+#: package/contents/ui/configMedia.qml:76
+#: package/contents/ui/configMedia.qml:109
+msgid "Bars"
+msgstr "Paski"
+
+#: package/contents/ui/configMedia.qml:76
+#: package/contents/ui/configMedia.qml:109
+msgid "Wave"
+msgstr "Fala"
+
+#: package/contents/ui/configMedia.qml:80
+msgid "Edge:"
+msgstr "Krawędź:"
+
+#: package/contents/ui/configMedia.qml:82
+msgid "Inner (the windows' side)"
+msgstr "Wewnętrzna (od strony okien)"
+
+#: package/contents/ui/configMedia.qml:82
+msgid "Outer (the screen's side)"
+msgstr "Zewnętrzna (od strony ekranu)"
+
+#: package/contents/ui/configMedia.qml:85
+msgid "Bars opacity:"
+msgstr "Krycie pasków:"
+
+#: package/contents/ui/configMedia.qml:94
+#: package/contents/ui/configPopup.qml:78
+#, javascript-format
+msgctxt "percent"
+msgid "%1%"
+msgstr "%1%"
+
+#: package/contents/ui/configMedia.qml:99
+msgid "Opacity behind text (%):"
+msgstr "Krycie pod tekstem (%):"
+
+#: package/contents/ui/configMedia.qml:107
+msgid "Popup style:"
+msgstr "Styl w oknie:"
+
+#: package/contents/ui/configMedia.qml:114
+msgid "Rounded bars"
+msgstr "Zaokrąglone paski"
+
+#: package/contents/ui/configMedia.qml:118
+msgid "Number of bars:"
+msgstr "Liczba pasków:"
+
+#: package/contents/ui/configMedia.qml:125
+msgid "Framerate:"
+msgstr "Klatki na sekundę:"
+
+#: package/contents/ui/configMedia.qml:132
+msgid "Smoothing:"
+msgstr "Wygładzanie:"
+
+#: package/contents/ui/configMedia.qml:134
+msgid "Monstercat (softer, connected peaks)"
+msgstr "Monstercat (łagodniejsze, połączone szczyty)"
+
+#: package/contents/ui/configMedia.qml:138
+msgid "Noise reduction:"
+msgstr "Redukcja szumu:"
+
+#: package/contents/ui/configMedia.qml:145
+msgid "Performance:"
+msgstr "Wydajność:"
+
+#: package/contents/ui/configMedia.qml:147
+msgid "Stop bars while a fullscreen window is active"
+msgstr "Zatrzymaj paski przy oknie pełnoekranowym"
+
+#: package/contents/ui/configPopup.qml:38
+msgid "Style:"
+msgstr "Styl:"
+
+#: package/contents/ui/configPopup.qml:39
+msgid "Drawer from the screen edge"
+msgstr "Szuflada z krawędzi ekranu"
+
+#: package/contents/ui/configPopup.qml:39
+msgid "Plasma popup"
+msgstr "Okno Plasmy"
+
+#: package/contents/ui/configPopup.qml:44
+msgid "The drawer needs layer-shell-qt; without it the Plasma popup is used."
+msgstr "Szuflada wymaga layer-shell-qt; bez niego używane jest okno Plasmy."
+
+#: package/contents/ui/configPopup.qml:51
+msgid "Drawer opens:"
+msgstr "Szuflada otwiera się:"
+
+#: package/contents/ui/configPopup.qml:53
+msgid "From the panel, beside Glance"
+msgstr "Z panelu, obok Glance"
+
+#: package/contents/ui/configPopup.qml:53
+msgid "From the top of the screen"
+msgstr "Z górnej krawędzi ekranu"
+
+#: package/contents/ui/configPopup.qml:57
+msgid "Drawer width (grid units):"
+msgstr "Szerokość szuflady (jednostki siatki):"
+
+#: package/contents/ui/configPopup.qml:66
+msgid "Translucent with blur, like the panel"
+msgstr "Półprzezroczysta z rozmyciem, jak panel"
+
+#: package/contents/ui/configPopup.qml:69
+msgid "Opacity:"
+msgstr "Krycie:"
+
+#: package/contents/ui/configPopup.qml:83
+msgid "Corner radius (px):"
+msgstr "Promień rogów (px):"
+
+#: package/contents/ui/configPopup.qml:95
+msgid "Open:"
+msgstr "Otwieranie:"
+
+#: package/contents/ui/configPopup.qml:96
+msgid "On hover"
+msgstr "Po najechaniu"
+
+#: package/contents/ui/configPopup.qml:100
+msgid "Open delay (ms):"
+msgstr "Opóźnienie otwarcia (ms):"
+
+#: package/contents/ui/configPopup.qml:108
+msgid "Close delay (ms):"
+msgstr "Opóźnienie zamknięcia (ms):"
+
+#: package/contents/ui/configPopup.qml:115
+msgid "Height (grid units):"
+msgstr "Wysokość (jednostki siatki):"
+
+#: package/contents/ui/configPopup.qml:121
+msgid "Tabs:"
+msgstr "Karty:"
+
+#: package/contents/ui/configPopup.qml:122
+msgid "Switch on hover"
+msgstr "Przełączaj po najechaniu"
+
+#: package/contents/ui/configPopup.qml:131
+msgid "Show:"
+msgstr "Pokazuj:"
+
+#: package/contents/ui/configPopup.qml:132
+msgid "Dashboard tab"
+msgstr "Kartę Pulpit"
+
+#: package/contents/ui/configPopup.qml:136
+msgid "Window buttons"
+msgstr "Przyciski okna"
+
+#: package/contents/ui/configPopup.qml:140
+msgid "Application menu"
+msgstr "Menu aplikacji"
+
+#: package/contents/ui/configPopup.qml:144
+msgid "Apps that support a global menu hide their own menu bar while this is on."
+msgstr "Aplikacje obsługujące globalne menu ukrywają wtedy własny pasek menu."
+
+#: package/contents/ui/configPopup.qml:151
+msgid "Media tab"
+msgstr "Kartę Multimedia"
+
+#: package/contents/ui/configPopup.qml:155
+msgid "Notifications tab"
+msgstr "Kartę Powiadomienia"
+
+#: package/contents/ui/configPopup.qml:159
+msgid "Agenda tab (from Event Calendar)"
+msgstr "Kartę Plan dnia (z Event Calendar)"
+
+#: package/contents/ui/configPopup.qml:163
+msgid "Shelf tab"
+msgstr "Kartę Półka"
+
+#: package/contents/ui/configPopup.qml:167
+msgid "System monitor (tab, and CPU, memory and disk on the dashboard)"
+msgstr "Monitor systemu (karta oraz procesor, pamięć i dysk na pulpicie)"
+
+#: package/contents/ui/drawer/Drawer.qml:79
+msgid "Glance"
+msgstr "Glance"
+
+#: package/contents/ui/main.qml:354
+msgid "Clear All Notifications"
+msgstr "Wyczyść wszystkie powiadomienia"
+
+#: package/contents/ui/main.qml:365
+msgctxt "media"
+msgid "Pause"
+msgstr "Wstrzymaj"
+
+#: package/contents/ui/main.qml:365
+msgctxt "media"
+msgid "Play"
+msgstr "Odtwarzaj"
+
+#: package/contents/ui/main.qml:372
+msgctxt "media"
+msgid "Previous Track"
+msgstr "Poprzedni utwór"
+
+#: package/contents/ui/main.qml:379
+msgctxt "media"
+msgid "Next Track"
+msgstr "Następny utwór"
+
+#: package/contents/ui/main.qml:389
+msgid "Open Dashboard"
+msgstr "Otwórz Pulpit"
+
+#: package/contents/ui/main.qml:395
+msgid "Open Media"
+msgstr "Otwórz Multimedia"
+
+#: package/contents/ui/main.qml:401
+msgid "Open Notifications"
+msgstr "Otwórz Powiadomienia"
+
+#: package/contents/ui/main.qml:407
+msgid "Open System Monitor"
+msgstr "Otwórz Monitor systemu"
+
+#: package/contents/ui/tabs/AgendaTab.qml:25
+#: package/contents/ui/tiles/AgendaTile.qml:52
+msgid "Today"
+msgstr "Dzisiaj"
+
+#: package/contents/ui/tabs/AgendaTab.qml:36
+#: package/contents/ui/tiles/AgendaTile.qml:91
+msgid "Nothing else today."
+msgstr "Na dziś nic więcej."
+
+#: package/contents/ui/tabs/AgendaTab.qml:43
+msgid "Tomorrow"
+msgstr "Jutro"
+
+#: package/contents/ui/tabs/AgendaTab.qml:89
+#: package/contents/ui/tiles/AgendaTile.qml:27
+msgid "All day"
+msgstr "Cały dzień"
+
+#: package/contents/ui/tabs/AgendaTab.qml:100
+msgid "in %1 min"
+msgstr "za %1 min"
+
+#: package/contents/ui/tabs/AgendaTab.qml:100
+msgid "now"
+msgstr "teraz"
+
+#: package/contents/ui/tabs/MediaTab.qml:56
+#: package/contents/ui/tiles/MediaTile.qml:183
+msgid "Nothing playing"
+msgstr "Nic nie gra"
+
+#: package/contents/ui/tabs/MediaTab.qml:274
+msgid "Shuffle"
+msgstr "Losowo"
+
+#: package/contents/ui/tabs/MediaTab.qml:321
+msgid "Repeat"
+msgstr "Powtarzaj"
+
+#: package/contents/ui/tabs/MediaTab.qml:337
+msgid "Mute"
+msgstr "Wycisz"
+
+#: package/contents/ui/tabs/MediaTab.qml:337
+msgid "Unmute"
+msgstr "Włącz dźwięk"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:39
+#: package/contents/ui/tiles/NotificationsTile.qml:60
+msgid "Clear All"
+msgstr "Wyczyść wszystko"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:45
+msgid "Configure Notifications…"
+msgstr "Konfiguruj powiadomienia…"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:56
+msgid "No notifications"
+msgstr "Brak powiadomień"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:57
+#: package/contents/ui/tiles/NotificationsTile.qml:71
+msgid "Do not disturb: %1"
+msgstr "Nie przeszkadzać: %1"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:102
+msgid "%1 notification"
+msgid_plural "%1 notifications"
+msgstr[0] "%1 powiadomienie"
+msgstr[1] "%1 powiadomienia"
+msgstr[2] "%1 powiadomień"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:103
+msgid "+%1 more"
+msgid_plural "+%1 more"
+msgstr[0] "+%1 więcej"
+msgstr[1] "+%1 więcej"
+msgstr[2] "+%1 więcej"
+
+#: package/contents/ui/tabs/NotificationsTab.qml:115
+msgid "Clear Group"
+msgstr "Wyczyść grupę"
+
+#: package/contents/ui/tabs/ShelfTab.qml:68
+msgid "Drop files here to keep them at hand.\nDrag them out again into any app."
+msgstr "Upuść tu pliki, aby mieć je pod ręką.\nPrzeciągnij je potem do dowolnej aplikacji."
+
+#: package/contents/ui/tabs/ShelfTab.qml:137
+msgid "Clear Shelf"
+msgstr "Wyczyść półkę"
+
+#: package/contents/ui/tabs/SystemTab.qml:55
+msgid "Graphics"
+msgstr "Grafika"
+
+#: package/contents/ui/tabs/SystemTab.qml:67
+#: package/contents/ui/tiles/ResourcesTile.qml:67
+msgid "Processor"
+msgstr "Procesor"
+
+#: package/contents/ui/tabs/SystemTab.qml:68
+msgctxt "temperature"
+msgid "%1 °C"
+msgstr "%1 °C"
+
+#: package/contents/ui/tabs/SystemTab.qml:78
+#: package/contents/ui/tiles/ResourcesTile.qml:72
+msgid "Memory"
+msgstr "Pamięć"
+
+#: package/contents/ui/tabs/SystemTab.qml:79
+msgctxt "of total memory"
+msgid "of %1"
+msgstr "z %1"
+
+#: package/contents/ui/tabs/SystemTab.qml:188
+#: package/contents/ui/tiles/ResourcesTile.qml:77
+msgid "Disk"
+msgstr "Dysk"
+
+#: package/contents/ui/tabs/SystemTab.qml:191
+msgctxt "disk read speed"
+msgid "read %1/s"
+msgstr "odczyt %1/s"
+
+#: package/contents/ui/tabs/SystemTab.qml:192
+msgctxt "disk write speed"
+msgid "write %1/s"
+msgstr "zapis %1/s"
+
+#: package/contents/ui/tabs/SystemTab.qml:198
+msgid "Network"
+msgstr "Sieć"
+
+#: package/contents/ui/tabs/WindowTab.qml:36
+msgid "Application menu is turned off."
+msgstr "Menu aplikacji jest wyłączone."
+
+#: package/contents/ui/tabs/WindowTab.qml:37
+msgid "%1 has no application menu."
+msgstr "%1 nie ma menu aplikacji."
+
+#: package/contents/ui/tabs/WindowTab.qml:37
+msgid "No active window."
+msgstr "Brak aktywnego okna."
+
+#: package/contents/ui/tiles/AgendaTile.qml:31
+msgctxt "event happening now"
+msgid "Now"
+msgstr "Teraz"
+
+#: package/contents/ui/tiles/AgendaTile.qml:34
+msgctxt "event starts in N minutes"
+msgid "in %1 min"
+msgstr "za %1 min"
+
+#: package/contents/ui/tiles/AgendaTile.qml:90
+msgid "Nothing else today. Tomorrow: %1"
+msgstr "Na dziś nic więcej. Jutro: %1"
+
+#: package/contents/ui/tiles/InfoTile.qml:41
+msgctxt "uptime: days and hours"
+msgid "up %1 d %2 h"
+msgstr "działa %1 dni %2 godz."
+
+#: package/contents/ui/tiles/InfoTile.qml:44
+msgctxt "uptime: hours and minutes"
+msgid "up %1 h %2 min"
+msgstr "działa %1 godz. %2 min"
+
+#: package/contents/ui/tiles/InfoTile.qml:46
+msgctxt "uptime: minutes"
+msgid "up %1 min"
+msgstr "działa %1 min"
+
+#: package/contents/ui/tiles/InfoTile.qml:130
+msgctxt "desktop and its version"
+msgid "KDE Plasma %1"
+msgstr "KDE Plasma %1"
+
+#: package/contents/ui/tiles/InfoTile.qml:134
+msgctxt "kernel version"
+msgid "Linux %1"
+msgstr "Linux %1"
+
+#: package/contents/ui/tiles/NotificationsTile.qml:52
+msgid "%1 unread"
+msgid_plural "%1 unread"
+msgstr[0] "%1 nieprzeczytane"
+msgstr[1] "%1 nieprzeczytane"
+msgstr[2] "%1 nieprzeczytanych"
+
+#: package/contents/ui/tiles/NotificationsTile.qml:101
+msgid "All caught up"
+msgstr "Wszystko przeczytane"
+
+#: package/contents/ui/tiles/ShelfTile.qml:62
+msgid "%1 file"
+msgid_plural "%1 files"
+msgstr[0] "%1 plik"
+msgstr[1] "%1 pliki"
+msgstr[2] "%1 plików"
+
+#: package/contents/ui/tiles/ShelfTile.qml:63
+msgid "Drop files here"
+msgstr "Upuść tu pliki"
