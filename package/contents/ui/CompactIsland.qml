@@ -55,18 +55,32 @@ MouseArea {
 
     // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
-    // A standard icon size: recoloured at an odd size it came out blurred and pale
-    readonly property int dndIconSize: Kirigami.Units.iconSizes.small
-    readonly property int dndCapsuleLength: dndIconSize + 2 * Kirigami.Units.smallSpacing
-    readonly property int trailLength: dndShown ? dndCapsuleLength + Kirigami.Units.smallSpacing : 0
-    // Camera and screen sharing in use: pills of their own at the start, as macOS's menu bar
-    readonly property int privacyIconSize: Kirigami.Units.iconSizes.small
-    readonly property int privacyPillLength: Math.round(privacyIconSize * 1.9)
-    readonly property int privacyCount: (privacy.cameraActive ? 1 : 0) + (privacy.screenActive ? 1 : 0)
-    readonly property int privacyLength: privacyCount > 0
-        ? privacyCount * privacyPillLength + (privacyCount - 1) * 2 + Kirigami.Units.smallSpacing : 0
+    // The pills go past the text: above the title on a vertical panel (its far end)
+    readonly property int trailLength: privacyLength
+    // Status pills past the text, all alike (macOS's menu bar): camera (green),
+    // screen sharing (red), Do Not Disturb (grey). A soft fill of the colour, a darker border
+    // and icon
+    readonly property int pillIconSize: Kirigami.Units.iconSizes.small
+    readonly property int pillLength: Math.round(pillIconSize * 1.9)
+    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + Kirigami.Units.smallSpacing)
+    readonly property int pillSpacing: 3
+    readonly property var pills: {
+        const out = [];
+        if (privacy.cameraActive) {
+            out.push({color: privacy.cameraColor, icon: "camera-on-symbolic"});
+        }
+        if (privacy.screenActive) {
+            out.push({color: privacy.screenColor, icon: ""}); // "": the drawn screen glyph
+        }
+        if (dndShown) {
+            out.push({color: Kirigami.Theme.textColor, icon: "notifications-disabled-symbolic"});
+        }
+        return out;
+    }
+    readonly property int privacyLength: pills.length > 0
+        ? pills.length * pillLength + (pills.length - 1) * pillSpacing + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
-        + privacyLength + trailLength + 2 * margin + 2 * inset)
+        + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
     Behavior on animatedLength {
         NumberAnimation {
@@ -280,7 +294,7 @@ MouseArea {
             // Two labels crossfade when the text changes
             Item {
                 id: textBox
-                readonly property int leadLength: compact.privacyLength + compact.barsLength + compact.dotLength + compact.iconLength
+                readonly property int leadLength: compact.barsLength + compact.dotLength + compact.iconLength
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength - compact.trailLength)
                 height: textA.implicitHeight
@@ -335,48 +349,47 @@ MouseArea {
                     && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
                 color: Kirigami.Theme.highlightColor
             }
-            // Camera (green) and screen sharing (red) in use: pills with a white icon at the
-            // start of the strip, as macOS shows them in its menu bar
+            // The status pills, one delegate for all so they stay alike
             Row {
-                anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-                visible: compact.privacyCount > 0
+                spacing: compact.pillSpacing
+                visible: compact.pills.length > 0
                 Repeater {
-                    model: [
-                        {on: compact.privacy.cameraActive, color: compact.privacy.cameraColor, icon: "camera-on-symbolic"},
-                        {on: compact.privacy.screenActive, color: compact.privacy.screenColor, icon: ""},
-                    ]
+                    model: compact.pills
                     delegate: Rectangle {
+                        id: pill
                         required property var modelData
-                        visible: modelData.on
-                        width: compact.privacyPillLength
-                        height: Math.min(compact.thickness - 2, compact.privacyIconSize + Kirigami.Units.smallSpacing)
+                        readonly property color ink: Qt.darker(modelData.color, 1.25)
+                        width: compact.pillLength
+                        height: compact.pillHeight
                         radius: height / 2
-                        color: modelData.color
+                        color: Qt.alpha(modelData.color, 0.2)
+                        border.width: 1.5
+                        border.color: Qt.alpha(ink, 0.85)
                         Kirigami.Icon {
                             anchors.centerIn: parent
-                            width: compact.privacyIconSize
+                            width: compact.pillIconSize
                             height: width
-                            visible: parent.modelData.icon !== ""
-                            source: parent.modelData.icon
+                            visible: pill.modelData.icon !== ""
+                            source: pill.modelData.icon
                             isMask: true
-                            color: "white"
+                            color: pill.ink
                         }
                         // The screen: an outline with its stand (the theme's screen icons fill in
                         // solid as a mask)
                         Item {
                             anchors.centerIn: parent
-                            width: Math.round(compact.privacyIconSize * 0.8)
+                            width: Math.round(compact.pillIconSize * 0.8)
                             height: Math.round(width * 0.8)
-                            visible: parent.modelData.icon === ""
+                            visible: pill.modelData.icon === ""
                             Rectangle {
                                 width: parent.width
                                 height: Math.round(parent.height * 0.75)
                                 radius: 1.5
                                 color: "transparent"
                                 border.width: 1.5
-                                border.color: "white"
+                                border.color: pill.ink
                             }
                             Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -384,31 +397,13 @@ MouseArea {
                                 width: Math.round(parent.width * 0.45)
                                 height: 1.5
                                 radius: 0.75
-                                color: "white"
+                                color: pill.ink
                             }
                         }
                     }
                 }
             }
-            // Do Not Disturb: a crossed-out bell in a little capsule of its own at the end of the
-            // strip, turned with the panel as the text is
-            Rectangle {
-                id: dndCapsule
-                width: compact.dndCapsuleLength
-                height: Math.min(compact.thickness - 2, compact.dndIconSize + Kirigami.Units.smallSpacing)
-                radius: height / 2
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                visible: compact.dndShown
-                color: Qt.alpha(compact.foreground, 0.16)
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    width: compact.dndIconSize
-                    height: width
-                    // The stock Notifications widget's: a solid symbolic icon, coloured by the theme
-                    source: "notifications-disabled-symbolic"
-                }
-            }
+
         }
 
         // The spectrum as a thin strip along the panel's outer edge (top of this frame), beside the
