@@ -60,7 +60,9 @@ Item {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
         }
         if (island.stand) {
-            t.push({key: "stand", label: i18n("Stand"), icon: "go-up"});
+            // The posture you're in, sitting or standing
+            t.push({key: "stand", label: island.stand.cycle.position === "stand" ? i18n("Standing") : i18n("Sitting"),
+                icon: Qt.resolvedUrl(island.stand.cycle.position === "stand" ? "stand/icons/person-stand.svg" : "stand/icons/person-sit.svg")});
         }
         if (island.cfg.showSystem) {
             t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
