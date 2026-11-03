@@ -31,6 +31,8 @@ class ScreenCastMonitor : public QObject
     // The microphone recorded by an application (not audio meters or visualisers)
     Q_PROPERTY(bool micActive READ micActive NOTIFY changed)
     Q_PROPERTY(QStringList micUsers READ micUsers NOTIFY changed)
+    // Applications with a camera (/dev/video*) open themselves, past PipeWire (browsers, Slack…)
+    Q_PROPERTY(QStringList cameraUsers READ cameraUsers NOTIFY changed)
 
 public:
     explicit ScreenCastMonitor(QObject *parent = nullptr);
@@ -40,6 +42,7 @@ public:
     QVariantList casts() const;
     bool micActive() const;
     QStringList micUsers() const;
+    QStringList cameraUsers() const;
 
     struct Node {
         QString mediaClass;
@@ -75,4 +78,6 @@ private:
     QHash<quint32, Node> m_nodes; // on the Qt thread
     QVariantList m_casts;
     QStringList m_micUsers;
+    QStringList m_cameraUsers;
+    void scanCameras();
 };

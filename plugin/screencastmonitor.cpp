@@ -11,7 +11,11 @@
 
 #include <KService>
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QMetaObject>
+#include <QTimer>
 #include <QPointer>
 
 #include <map>
@@ -173,6 +177,56 @@ ScreenCastMonitor::ScreenCastMonitor(QObject *parent)
     s_ctx = new RegistryContext{this, m_registry, d};
     pw_registry_add_listener(m_registry, &d->registryListener, &registryEvents, s_ctx);
     pw_thread_loop_start(m_loop);
+
+    // Cameras opened directly: who has a /dev/video* open, every two seconds
+    auto *timer = new QTimer(this);
+    timer->setInterval(2000);
+    connect(timer, &QTimer::timeout, this, &ScreenCastMonitor::scanCameras);
+    timer->start();
+    scanCameras();
+}
+
+void ScreenCastMonitor::scanCameras()
+{
+    // PipeWire and its session manager keep the devices open for everyone: not "in use"
+    static const QStringList services = {QStringLiteral("pipewire"), QStringLiteral("wireplumber"), QStringLiteral("pipewire-media-session")};
+    QStringList users;
+    const QStringList pids = QDir(QStringLiteral("/proc")).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString &pid : pids) {
+        bool numeric = false;
+        pid.toInt(&numeric);
+        if (!numeric) {
+            continue;
+        }
+        const QString fdDir = QStringLiteral("/proc/") + pid + QStringLiteral("/fd");
+        const QStringList fds = QDir(fdDir).entryList(QDir::Files | QDir::System | QDir::NoDotAndDotDot);
+        bool usesCamera = false;
+        for (const QString &fd : fds) {
+            if (QFileInfo(fdDir + QLatin1Char('/') + fd).symLinkTarget().startsWith(QLatin1String("/dev/video"))) {
+                usesCamera = true;
+                break;
+            }
+        }
+        if (!usesCamera) {
+            continue;
+        }
+        QFile comm(QStringLiteral("/proc/") + pid + QStringLiteral("/comm"));
+        if (!comm.open(QIODevice::ReadOnly)) {
+            continue;
+        }
+        const QString name = QString::fromUtf8(comm.readAll()).trimmed();
+        if (name.isEmpty() || services.contains(name)) {
+            continue;
+        }
+        const QString who = applicationName(name);
+        if (!users.contains(who)) {
+            users << who;
+        }
+    }
+    if (users != m_cameraUsers) {
+        m_cameraUsers = users;
+        Q_EMIT changed();
+    }
 }
 
 ScreenCastMonitor::~ScreenCastMonitor()
@@ -290,4 +344,9 @@ bool ScreenCastMonitor::micActive() const
 QStringList ScreenCastMonitor::micUsers() const
 {
     return m_micUsers;
+}
+
+QStringList ScreenCastMonitor::cameraUsers() const
+{
+    return m_cameraUsers;
 }

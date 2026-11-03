@@ -23,7 +23,8 @@ Item {
     readonly property var micNames: Island.ScreenCastMonitor.micUsers
 
     readonly property bool available: camera.detectionAvailable
-    readonly property bool cameraActive: camera.runningCount > 0
+    // Through PipeWire, or a camera device opened directly
+    readonly property bool cameraActive: camera.runningCount > 0 || Island.ScreenCastMonitor.cameraUsers.length > 0
     // KWin's screencasts carry no media role, so MediaMonitor misses them: ScreenCastMonitor
     // watches PipeWire for those
     readonly property bool screenActive: screen.runningCount > 0 || Island.ScreenCastMonitor.active
@@ -55,7 +56,7 @@ Item {
         return out;
     }
     function refresh() {
-        cameraNames = collect(cameraRows);
+        cameraNames = collect(cameraRows).concat(Island.ScreenCastMonitor.cameraUsers);
         screenNames = collect(screenRows).concat(castNames());
     }
     Connections {

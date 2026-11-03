@@ -62,10 +62,10 @@ MouseArea {
     // and icon
     // A standard icon size, sharp; the room around it comes from the pill's length
     // Whole pixels throughout, or the icons come out soft
-    readonly property int pillIconSize: 12
+    readonly property int pillIconSize: 14
     // Wider than tall, with room around the icon
     readonly property int pillLength: pillHeight + 10
-    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 8)
+    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 6)
     readonly property int pillSpacing: 4
     readonly property var pills: {
         const out = [];
@@ -383,14 +383,14 @@ MouseArea {
                         border.color: modelData.color
                         Kirigami.Icon {
                             // The bell's strokes are thinner: a pixel larger
-                            width: compact.pillIconSize + (pill.modelData.action === "dnd" ? 1 : 0)
+                            width: compact.pillIconSize
                             height: width
                             x: Math.round((parent.width - width) / 2)
                             y: Math.round((parent.height - height) / 2)
                             source: pill.modelData.icon
                             isMask: true
-                            // A deep shade of the fill: faded fills leave white too faint
-                            color: Qt.darker(pill.modelData.color, 2.2)
+                            // Nearly the text colour, a hint of the pill's: dark enough to read
+                            color: Kirigami.ColorUtils.linearInterpolation(pill.modelData.color, Kirigami.Theme.textColor, 0.85)
                         }
                         // A click turns Do Not Disturb off; the camera's and the screen's only say who
                         // uses them, in their tooltip
