@@ -35,6 +35,8 @@ Rectangle {
             id: line
             property color dot
             property string icon
+            // Symbolic icons take the dot's colour; others show as they are
+            property bool mask: true
             property string what
             property var names: []
             Layout.fillWidth: true
@@ -49,8 +51,8 @@ Rectangle {
                 implicitWidth: Kirigami.Units.iconSizes.small
                 implicitHeight: implicitWidth
                 source: line.icon
-                color: line.dot
-                isMask: true
+                color: line.mask ? line.dot : "transparent"
+                isMask: line.mask
             }
             PlasmaComponents.Label {
                 text: line.what
@@ -77,6 +79,7 @@ Rectangle {
             visible: bar.privacy.screenActive
             dot: bar.privacy.screenColor
             icon: "video-display"
+            mask: false
             what: i18n("Screen is being shared")
             names: bar.privacy.screenNames
         }

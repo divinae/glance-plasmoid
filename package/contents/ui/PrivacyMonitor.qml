@@ -8,17 +8,21 @@ import QtQuick
 
 import org.kde.pipewire.monitor as Monitor
 
+import com.dv.island.private as Island
+
 // Camera and screen sharing in use, from PipeWire (as the stock Camera Indicator), for the panel's
-// dots and the drawer's privacy bar. Colours as macOS: green the camera, purple the screen.
+// dots and the drawer's privacy bar. Colours as macOS: green the camera, red the screen.
 Item {
     id: privacy
 
     readonly property color cameraColor: "#34c759"
-    readonly property color screenColor: "#af52de"
+    readonly property color screenColor: "#ff3b30"
 
     readonly property bool available: camera.detectionAvailable
     readonly property bool cameraActive: camera.runningCount > 0
-    readonly property bool screenActive: screen.runningCount > 0
+    // KWin's screencasts carry no media role, so MediaMonitor misses them: ScreenCastMonitor
+    // watches PipeWire for those
+    readonly property bool screenActive: screen.runningCount > 0 || Island.ScreenCastMonitor.active
     readonly property bool anyActive: cameraActive || screenActive
 
     // Names of what's running (the camera's, the shared stream's), from the rows below
@@ -35,9 +39,26 @@ Item {
         }
         return out;
     }
+    // "jetbrains-studio → Slack": what's shared (a window's application, or nothing for the
+    // whole screen) and who takes it
+    function castNames() {
+        const out = [];
+        for (const cast of Island.ScreenCastMonitor.casts) {
+            const viewers = cast.viewers || [];
+            const what = cast.what || i18n("Screen");
+            out.push(viewers.length > 0 ? i18nc("shared thing → who receives it", "%1 → %2", what, viewers.join(", ")) : what);
+        }
+        return out;
+    }
     function refresh() {
         cameraNames = collect(cameraRows);
-        screenNames = collect(screenRows);
+        screenNames = collect(screenRows).concat(castNames());
+    }
+    Connections {
+        target: Island.ScreenCastMonitor
+        function onChanged() {
+            privacy.refresh();
+        }
     }
 
     Monitor.MediaMonitor {

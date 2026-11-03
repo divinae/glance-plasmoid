@@ -10,7 +10,10 @@ find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED
     DBus
 )
 find_package(KF6WindowSystem ${KF6_MIN_VERSION} REQUIRED)
+find_package(KF6Service ${KF6_MIN_VERSION} REQUIRED)
 find_package(Plasma REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PipeWire REQUIRED IMPORTED_TARGET libpipewire-0.3)
 
 # Vendored libdbusmenuqt (static inside plasma-workspace, not installed)
 set(dbusmenu_SRCS
@@ -50,6 +53,8 @@ target_sources(islandplugin PRIVATE
     drawereffects.h
     systeminfo.cpp
     systeminfo.h
+    screencastmonitor.cpp
+    screencastmonitor.h
     shelfhelper.cpp
     shelfhelper.h
 )
@@ -62,7 +67,9 @@ target_link_libraries(islandplugin PRIVATE
     Qt::Widgets
     Qt::DBus
     KF6::WindowSystem
+    KF6::Service
     Plasma::Plasma
+    PkgConfig::PipeWire
     islanddbusmenuqt
 )
 

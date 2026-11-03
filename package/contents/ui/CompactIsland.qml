@@ -59,8 +59,14 @@ MouseArea {
     readonly property int dndIconSize: Kirigami.Units.iconSizes.small
     readonly property int dndCapsuleLength: dndIconSize + 2 * Kirigami.Units.smallSpacing
     readonly property int trailLength: dndShown ? dndCapsuleLength + Kirigami.Units.smallSpacing : 0
+    // Camera and screen sharing in use: pills of their own at the start, as macOS's menu bar
+    readonly property int privacyIconSize: Kirigami.Units.iconSizes.small
+    readonly property int privacyPillLength: Math.round(privacyIconSize * 1.9)
+    readonly property int privacyCount: (privacy.cameraActive ? 1 : 0) + (privacy.screenActive ? 1 : 0)
+    readonly property int privacyLength: privacyCount > 0
+        ? privacyCount * privacyPillLength + (privacyCount - 1) * 2 + Kirigami.Units.smallSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
-        + trailLength + 2 * margin + 2 * inset)
+        + privacyLength + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
     Behavior on animatedLength {
         NumberAnimation {
@@ -274,7 +280,7 @@ MouseArea {
             // Two labels crossfade when the text changes
             Item {
                 id: textBox
-                readonly property int leadLength: compact.barsLength + compact.dotLength + compact.iconLength
+                readonly property int leadLength: compact.privacyLength + compact.barsLength + compact.dotLength + compact.iconLength
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength - compact.trailLength)
                 height: textA.implicitHeight
@@ -329,26 +335,58 @@ MouseArea {
                     && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
                 color: Kirigami.Theme.highlightColor
             }
-            // Camera (green) and screen sharing (purple) in use: dots at the start of the strip,
-            // as macOS's in its menu bar
+            // Camera (green) and screen sharing (red) in use: pills with a white icon at the
+            // start of the strip, as macOS shows them in its menu bar
             Row {
                 anchors.left: parent.left
-                anchors.leftMargin: -compact.margin / 2 - width / 2
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                visible: compact.privacy.anyActive
+                visible: compact.privacyCount > 0
                 Repeater {
                     model: [
-                        {on: compact.privacy.cameraActive, color: compact.privacy.cameraColor},
-                        {on: compact.privacy.screenActive, color: compact.privacy.screenColor},
+                        {on: compact.privacy.cameraActive, color: compact.privacy.cameraColor, icon: "camera-on-symbolic"},
+                        {on: compact.privacy.screenActive, color: compact.privacy.screenColor, icon: ""},
                     ]
                     delegate: Rectangle {
                         required property var modelData
                         visible: modelData.on
-                        width: Math.max(5, Math.round(compact.pillThickness * 0.32))
-                        height: width
-                        radius: width / 2
+                        width: compact.privacyPillLength
+                        height: Math.min(compact.thickness - 2, compact.privacyIconSize + Kirigami.Units.smallSpacing)
+                        radius: height / 2
                         color: modelData.color
+                        Kirigami.Icon {
+                            anchors.centerIn: parent
+                            width: compact.privacyIconSize
+                            height: width
+                            visible: parent.modelData.icon !== ""
+                            source: parent.modelData.icon
+                            isMask: true
+                            color: "white"
+                        }
+                        // The screen: an outline with its stand (the theme's screen icons fill in
+                        // solid as a mask)
+                        Item {
+                            anchors.centerIn: parent
+                            width: Math.round(compact.privacyIconSize * 0.8)
+                            height: Math.round(width * 0.8)
+                            visible: parent.modelData.icon === ""
+                            Rectangle {
+                                width: parent.width
+                                height: Math.round(parent.height * 0.75)
+                                radius: 1.5
+                                color: "transparent"
+                                border.width: 1.5
+                                border.color: "white"
+                            }
+                            Rectangle {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottom: parent.bottom
+                                width: Math.round(parent.width * 0.45)
+                                height: 1.5
+                                radius: 0.75
+                                color: "white"
+                            }
+                        }
                     }
                 }
             }
