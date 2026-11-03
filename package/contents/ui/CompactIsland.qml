@@ -69,19 +69,19 @@ MouseArea {
     readonly property int pillSpacing: 4
     readonly property var pills: {
         const out = [];
-        if (privacy.cameraActive) {
+        if (privacy.cameraActive && island.cfg.pillCamera) {
             out.push({color: privacy.cameraColor, icon: "camera-on-symbolic", action: "privacy",
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
-        if (privacy.micActive) {
+        if (privacy.micActive && island.cfg.pillMicrophone) {
             out.push({color: privacy.micColor, icon: "audio-input-microphone-symbolic", action: "privacy",
                 tip: i18n("Microphone in use: %1", privacy.micNames.join(", "))});
         }
-        if (privacy.screenActive) {
+        if (privacy.screenActive && island.cfg.pillScreen) {
             out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "privacy",
                 tip: i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
-        if (dndShown) {
+        if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
                 tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
         }

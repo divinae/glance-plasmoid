@@ -16,6 +16,10 @@ KCM.SimpleKCM {
     property alias cfg_placeholder: placeholder.text
     property alias cfg_maxTitleLength: maxTitleLength.value
     property alias cfg_showCapsule: showCapsule.checked
+    property alias cfg_pillCamera: pillCamera.checked
+    property alias cfg_pillMicrophone: pillMicrophone.checked
+    property alias cfg_pillScreen: pillScreen.checked
+    property alias cfg_pillDnd: pillDnd.checked
     property alias cfg_showAppIcon: showAppIcon.checked
     property alias cfg_boldFont: boldFont.checked
     property alias cfg_capitalFont: capitalFont.checked
@@ -43,6 +47,23 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Margins:")
             from: 0
             to: 64
+        }
+        QQC2.CheckBox {
+            id: pillCamera
+            Kirigami.FormData.label: i18n("Show in the panel:")
+            text: i18n("Camera in use")
+        }
+        QQC2.CheckBox {
+            id: pillMicrophone
+            text: i18n("Microphone in use")
+        }
+        QQC2.CheckBox {
+            id: pillScreen
+            text: i18n("Screen being shared")
+        }
+        QQC2.CheckBox {
+            id: pillDnd
+            text: i18n("Do Not Disturb")
         }
         QQC2.CheckBox {
             id: showCapsule

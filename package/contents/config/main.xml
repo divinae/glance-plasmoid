@@ -26,6 +26,19 @@
     <entry name="showAppIcon" type="Bool">
       <default>false</default>
     </entry>
+    <!-- Status pills in the panel -->
+    <entry name="pillCamera" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="pillMicrophone" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="pillScreen" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="pillDnd" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="showCapsule" type="Bool">
       <default>false</default>
     </entry>
