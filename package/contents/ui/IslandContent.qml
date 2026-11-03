@@ -149,12 +149,6 @@ Item {
         spacing: content.drawerStyle ? Kirigami.Units.largeSpacing : Kirigami.Units.smallSpacing
         clip: true
 
-        // ---- camera and screen sharing in use, above everything (as macOS) --------
-        PrivacyBar {
-            Layout.fillWidth: true
-            privacy: content.privacy
-        }
-
         // ---- the active window's menu bar, as macOS's: its icon and name, its menus, and the
         // window buttons on the right; on every tab ----------------------------------------
         RowLayout {

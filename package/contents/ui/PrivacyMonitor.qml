@@ -15,8 +15,8 @@ import com.dv.island.private as Island
 Item {
     id: privacy
 
-    readonly property color cameraColor: "#34c759"
-    readonly property color screenColor: "#ff3b30"
+    readonly property color cameraColor: "#4cb26a"
+    readonly property color screenColor: "#e0584f"
 
     readonly property bool available: camera.detectionAvailable
     readonly property bool cameraActive: camera.runningCount > 0

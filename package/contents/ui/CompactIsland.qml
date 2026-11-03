@@ -386,21 +386,20 @@ MouseArea {
                             isMask: true
                             color: "white"
                         }
-                        // A click: Do Not Disturb off, or the drawer open on who's using what
+                        // A click turns Do Not Disturb off; the camera's and the screen's only say who
+                        // uses them, in their tooltip
                         MouseArea {
                             id: pillMouse
                             anchors.fill: parent
                             hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
+                            cursorShape: pill.modelData.action === "dnd" ? Qt.PointingHandCursor : Qt.ArrowCursor
                             onClicked: {
                                 if (pill.modelData.action === "dnd") {
                                     compact.notifications.toggleDoNotDisturb();
-                                } else {
-                                    compact.island.openOn(compact.island.cfg.showDashboard ? "dashboard" : "", true);
                                 }
                             }
                         }
-                        scale: pillMouse.pressed ? 0.92 : 1
+                        scale: pillMouse.pressed && pill.modelData.action === "dnd" ? 0.92 : 1
                         Behavior on scale {
                             NumberAnimation { duration: Kirigami.Units.shortDuration }
                         }
