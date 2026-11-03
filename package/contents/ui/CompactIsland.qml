@@ -60,20 +60,24 @@ MouseArea {
     // Status pills past the text, all alike (macOS's menu bar): camera (green),
     // screen sharing (red), Do Not Disturb (grey). A soft fill of the colour, a darker border
     // and icon
+    // A standard icon size, sharp; the room around it comes from the pill's length
     readonly property int pillIconSize: Kirigami.Units.iconSizes.small
-    readonly property int pillLength: Math.round(pillIconSize * 1.9)
-    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + Kirigami.Units.smallSpacing)
+    readonly property int pillLength: pillIconSize + 2 * Kirigami.Units.largeSpacing - 2
+    readonly property int pillHeight: Math.min(thickness - 2, Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing)
     readonly property int pillSpacing: 3
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive) {
-            out.push({color: privacy.cameraColor, icon: "camera-on-symbolic"});
+            out.push({color: privacy.cameraColor, icon: "camera-on-symbolic", action: "privacy",
+                tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
         if (privacy.screenActive) {
-            out.push({color: privacy.screenColor, icon: ""}); // "": the drawn screen glyph
+            out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "privacy",
+                tip: i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
         if (dndShown) {
-            out.push({color: Kirigami.Theme.textColor, icon: "notifications-disabled-symbolic"});
+            out.push({color: Kirigami.Theme.textColor, icon: "notifications-disabled-symbolic", action: "dnd",
+                tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
         }
         return out;
     }
@@ -361,45 +365,43 @@ MouseArea {
                         id: pill
                         required property var modelData
                         readonly property color ink: Qt.darker(modelData.color, 1.25)
+                        // The icons in the text colour: the pill's colour is its fill and border
+                        readonly property color glyph: Kirigami.Theme.textColor
                         width: compact.pillLength
                         height: compact.pillHeight
                         radius: height / 2
                         color: Qt.alpha(modelData.color, 0.2)
-                        border.width: 1.5
-                        border.color: Qt.alpha(ink, 0.85)
+                        border.width: 1
+                        border.color: Qt.alpha(ink, 0.55)
                         Kirigami.Icon {
                             anchors.centerIn: parent
                             width: compact.pillIconSize
                             height: width
-                            visible: pill.modelData.icon !== ""
                             source: pill.modelData.icon
                             isMask: true
-                            color: pill.ink
+                            color: pill.glyph
                         }
-                        // The screen: an outline with its stand (the theme's screen icons fill in
-                        // solid as a mask)
-                        Item {
-                            anchors.centerIn: parent
-                            width: Math.round(compact.pillIconSize * 0.8)
-                            height: Math.round(width * 0.8)
-                            visible: pill.modelData.icon === ""
-                            Rectangle {
-                                width: parent.width
-                                height: Math.round(parent.height * 0.75)
-                                radius: 1.5
-                                color: "transparent"
-                                border.width: 1.5
-                                border.color: pill.ink
-                            }
-                            Rectangle {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottom: parent.bottom
-                                width: Math.round(parent.width * 0.45)
-                                height: 1.5
-                                radius: 0.75
-                                color: pill.ink
+                        // A click: Do Not Disturb off, or the drawer open on who's using what
+                        MouseArea {
+                            id: pillMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (pill.modelData.action === "dnd") {
+                                    compact.notifications.toggleDoNotDisturb();
+                                } else {
+                                    compact.island.openOn(compact.island.cfg.showDashboard ? "dashboard" : "", true);
+                                }
                             }
                         }
+                        scale: pillMouse.pressed ? 0.92 : 1
+                        Behavior on scale {
+                            NumberAnimation { duration: Kirigami.Units.shortDuration }
+                        }
+                        PlasmaComponents.ToolTip.text: pill.modelData.tip || ""
+                        PlasmaComponents.ToolTip.visible: pillMouse.containsMouse
+                        PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
                     }
                 }
             }
