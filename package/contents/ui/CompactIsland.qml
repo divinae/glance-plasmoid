@@ -60,9 +60,11 @@ MouseArea {
     // Status badges past the title, packed together (macOS's menu bar): solid circles of their
     // colour (camera green, microphone orange, screen sharing red, Do Not Disturb grey) with a
     // white icon from one icon set
-    readonly property int pillHeight: Math.min(thickness - 2, 20)
-    readonly property int pillIconSize: Math.min(14, pillHeight - 6)
-    readonly property int pillSpacing: 2
+    // One pale capsule holding them, icons in their colours with thin dividers between
+    readonly property int pillHeight: Math.min(thickness - 2, 22)
+    readonly property int pillIconSize: Math.min(16, pillHeight - 6)
+    readonly property int pillGap: 11 // between two icons, a divider in its middle
+    readonly property int capsulePadding: 6
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive && island.cfg.pillCamera) {
@@ -84,7 +86,7 @@ MouseArea {
         return out;
     }
     readonly property int capsuleLength: pills.length > 0
-        ? pills.length * pillHeight + (pills.length - 1) * pillSpacing : 0
+        ? pills.length * pillIconSize + (pills.length - 1) * pillGap + 2 * capsulePadding : 0
     readonly property int privacyLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
@@ -364,31 +366,35 @@ MouseArea {
                 y: Math.round((parent.height - height) / 2)
                 width: compact.capsuleLength
                 height: compact.pillHeight
-                color: "transparent"
+                radius: height / 2
+                color: Qt.alpha(Kirigami.Theme.textColor, 0.09)
                 visible: compact.pills.length > 0
 
                 Row {
-                    spacing: compact.pillSpacing
+                    x: compact.capsulePadding
+                    y: Math.round((parent.height - compact.pillIconSize) / 2)
+                    spacing: compact.pillGap
                     Repeater {
                         model: compact.pills
-                        delegate: Rectangle {
+                        delegate: Kirigami.Icon {
                             id: pill
+                            required property int index
                             required property var modelData
-                            width: compact.pillHeight
+                            width: compact.pillIconSize
                             height: width
-                            radius: width / 2
-                            // Do Not Disturb is a choice, not a warning: a quiet light circle with
-                            // a dark bell, so the solid ones (what's recording) stand out
-                            readonly property bool quiet: modelData.action === "dnd"
-                            color: quiet ? Qt.alpha(Kirigami.Theme.textColor, 0.12) : modelData.color
-                            Kirigami.Icon {
-                                x: Math.round((parent.width - width) / 2)
-                                y: Math.round((parent.height - height) / 2)
-                                width: compact.pillIconSize
-                                height: width
-                                source: pill.modelData.icon
-                                isMask: true
-                                color: pill.quiet ? Kirigami.Theme.textColor : "white"
+                            source: modelData.icon
+                            isMask: true
+                            // Its own colour; Do Not Disturb, a choice rather than a warning, in
+                            // the text colour
+                            color: modelData.action === "dnd" ? Kirigami.Theme.textColor : modelData.color
+                            // The divider before it
+                            Rectangle {
+                                visible: pill.index > 0
+                                x: -Math.round(compact.pillGap / 2) - 1
+                                y: Math.round(parent.height * 0.15)
+                                width: 1
+                                height: Math.round(parent.height * 0.7)
+                                color: Qt.alpha(Kirigami.Theme.textColor, 0.25)
                             }
                             scale: pillMouse.pressed && modelData.action === "dnd" ? 0.88 : 1
                             Behavior on scale {
