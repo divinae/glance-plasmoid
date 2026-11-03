@@ -15,6 +15,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 
 import com.dv.island.private as Island
+import org.kde.plasma.private.volume as PlasmaPa
 
 MouseArea {
     id: compact
@@ -75,8 +76,11 @@ MouseArea {
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
         if (privacy.micActive && island.cfg.pillMicrophone) {
-            out.push({color: privacy.micColor, icon: "audio-input-microphone-symbolic", action: "mic",
-                tip: i18n("Microphone in use: %1. Click to mute it.", privacy.micNames.join(", "))});
+            const muted = PlasmaPa.PreferredDevice.source ? PlasmaPa.PreferredDevice.source.muted : false;
+            out.push({color: privacy.micColor, action: "mic",
+                icon: muted ? "audio-input-microphone-muted-symbolic" : "audio-input-microphone-symbolic",
+                tip: muted ? i18n("Microphone muted (%1). Click to unmute it.", privacy.micNames.join(", "))
+                    : i18n("Microphone in use: %1. Click to mute it.", privacy.micNames.join(", "))});
         }
         if (privacy.screenActive && island.cfg.pillScreen) {
             out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "screen",
@@ -434,7 +438,12 @@ MouseArea {
                                         Island.TrayActions.trigger("xdg-desktop-portal-kde", "End");
                                         break;
                                     case "mic":
-                                        Island.TrayActions.trigger("plasmashell_microphone", "Mute");
+                                        // As the volume applet: the default microphone's mute.
+                                        // (Plasma's Microphone icon is in this very process, so
+                                        // calling it over D-Bus doesn't go through.)
+                                        if (PlasmaPa.PreferredDevice.source) {
+                                            PlasmaPa.PreferredDevice.source.muted = !PlasmaPa.PreferredDevice.source.muted;
+                                        }
                                         break;
                                     }
                                 }
