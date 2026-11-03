@@ -14,6 +14,8 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 
+import com.dv.island.private as Island
+
 MouseArea {
     id: compact
 
@@ -73,12 +75,12 @@ MouseArea {
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
         if (privacy.micActive && island.cfg.pillMicrophone) {
-            out.push({color: privacy.micColor, icon: "audio-input-microphone-symbolic", action: "privacy",
-                tip: i18n("Microphone in use: %1", privacy.micNames.join(", "))});
+            out.push({color: privacy.micColor, icon: "audio-input-microphone-symbolic", action: "mic",
+                tip: i18n("Microphone in use: %1. Click to mute it.", privacy.micNames.join(", "))});
         }
         if (privacy.screenActive && island.cfg.pillScreen) {
-            out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "privacy",
-                tip: i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
+            out.push({color: privacy.screenColor, icon: "computer-symbolic", action: "screen",
+                tip: i18n("Screen is being shared: %1. Click to stop sharing.", privacy.screenNames.join(", "))});
         }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
@@ -391,6 +393,7 @@ MouseArea {
                             bottomRightRadius: last ? end : 3
                             // Under the pointer: a deeper tint
                             readonly property bool hot: pillHover.hovered
+                            readonly property bool clickable: modelData.action !== "privacy"
                             color: modelData.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, hot ? 0.2 : 0.1)
                                 : Qt.alpha(modelData.color, hot ? 0.42 : 0.22)
                             Behavior on color {
@@ -408,7 +411,7 @@ MouseArea {
                                 isMask: true
                                 color: Kirigami.Theme.textColor
                             }
-                            scale: pillMouse.pressed && modelData.action === "dnd" ? 0.88 : 1
+                            scale: pillMouse.pressed && pill.clickable ? 0.88 : 1
                             Behavior on scale {
                                 NumberAnimation { duration: Kirigami.Units.shortDuration }
                             }
@@ -418,10 +421,21 @@ MouseArea {
                                 anchors.fill: parent
                                 anchors.margins: -2
                                 hoverEnabled: true
-                                cursorShape: pill.modelData.action === "dnd" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                cursorShape: pill.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                // What the native indicators offer: Do Not Disturb off, the
+                                // portal's "End" for screen sharing, Plasma's "Mute" for the
+                                // microphone; the camera's only lists who uses it
                                 onClicked: {
-                                    if (pill.modelData.action === "dnd") {
+                                    switch (pill.modelData.action) {
+                                    case "dnd":
                                         compact.notifications.toggleDoNotDisturb();
+                                        break;
+                                    case "screen":
+                                        Island.TrayActions.trigger("xdg-desktop-portal-kde", "End");
+                                        break;
+                                    case "mic":
+                                        Island.TrayActions.trigger("plasmashell_microphone", "Mute");
+                                        break;
                                     }
                                 }
                             }

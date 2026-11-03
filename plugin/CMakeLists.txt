@@ -55,6 +55,8 @@ target_sources(islandplugin PRIVATE
     systeminfo.h
     screencastmonitor.cpp
     screencastmonitor.h
+    trayactions.cpp
+    trayactions.h
     shelfhelper.cpp
     shelfhelper.h
 )
