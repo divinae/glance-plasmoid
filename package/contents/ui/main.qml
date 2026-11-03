@@ -62,13 +62,17 @@ PlasmoidItem {
     // ---- panel strip: what the text shows, highest priority first ------------
     property string noticeText: ""
     readonly property var stripEvent: cfg.calendarEnabled ? calendarSource.stripEvent : null
+    // Time to sit down or stand up asks for something: it goes before media and the window
+    readonly property bool standDue: stand !== null && stand !== undefined && stand.switchDue && !stand.pendingPosition
     readonly property string stripMode: noticeText !== "" ? "notice"
+        : standDue ? "stand"
         : showMediaInPanel ? "media"
         : stripEvent ? "event"
         : "window"
     readonly property string stripText: {
         switch (stripMode) {
         case "notice": return noticeText;
+        case "stand": return stand.cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
         case "media": return mediaText;
         case "event": return truncate(calendarSource.label(stripEvent));
         default: return windowText;
@@ -293,6 +297,15 @@ PlasmoidItem {
         }
     }
     signal pulseRequested(color color)
+
+    // While a switch is due, the strip flashes now and then, until it's done or snoozed
+    Timer {
+        interval: 20000
+        repeat: true
+        triggeredOnStart: true
+        running: root.standDue && !root.fullScreen
+        onTriggered: root.pulseRequested("#c9a227")
+    }
 
     Timer {
         id: noticeTimer
