@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.1 — 2026-11-03
+
+**One Work tab.** With Focus and Shift both on, they share a tab: the timer on the left, a
+compact Shift card (where you are, the time to the switch as a line, Sit | Stand, the desk in a
+line) and one stats card that switches between Focus and Posture.
+
+**Dashboard.** The Focus and Shift rows look alike: a badge, one line of text, a progress line
+and a button ("Sit in 11 min"; an empty line during a flow).
+
+**Fixed:** a tab asked for while the drawer was closed (a dashboard row, the shelf after a
+drop) fell back to the dashboard on opening.
+
+**Also:** the Polish translation is gone for now (`make messages` still collects the strings);
+the code shared by Focus and Shift lives once in `ui/common`.
+
 ## 1.1.0 — 2026-11-03
 
 Glance takes in two widgets of its own: Fokus and Shift.
