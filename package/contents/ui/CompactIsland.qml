@@ -66,7 +66,7 @@ MouseArea {
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive && island.cfg.pillCamera) {
-            out.push({color: privacy.cameraColor, icon: "camera-web-symbolic", action: "privacy",
+            out.push({color: privacy.cameraColor, icon: "camera-video-symbolic", action: "privacy",
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
         if (privacy.micActive && island.cfg.pillMicrophone) {
@@ -377,7 +377,10 @@ MouseArea {
                             width: compact.pillHeight
                             height: width
                             radius: width / 2
-                            color: modelData.color
+                            // Do Not Disturb is a choice, not a warning: a quiet light circle with
+                            // a dark bell, so the solid ones (what's recording) stand out
+                            readonly property bool quiet: modelData.action === "dnd"
+                            color: quiet ? Qt.alpha(Kirigami.Theme.textColor, 0.12) : modelData.color
                             Kirigami.Icon {
                                 x: Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
@@ -385,7 +388,7 @@ MouseArea {
                                 height: width
                                 source: pill.modelData.icon
                                 isMask: true
-                                color: "white"
+                                color: pill.quiet ? Kirigami.Theme.textColor : "white"
                             }
                             scale: pillMouse.pressed && modelData.action === "dnd" ? 0.88 : 1
                             Behavior on scale {
