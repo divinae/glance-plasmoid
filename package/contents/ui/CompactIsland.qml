@@ -389,8 +389,16 @@ MouseArea {
                             bottomLeftRadius: first ? end : 3
                             topRightRadius: last ? end : 3
                             bottomRightRadius: last ? end : 3
-                            color: modelData.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, 0.1)
-                                : Qt.alpha(modelData.color, 0.22)
+                            // Under the pointer: a deeper tint
+                            readonly property bool hot: pillHover.hovered
+                            color: modelData.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, hot ? 0.2 : 0.1)
+                                : Qt.alpha(modelData.color, hot ? 0.42 : 0.22)
+                            Behavior on color {
+                                ColorAnimation { duration: Kirigami.Units.shortDuration }
+                            }
+                            HoverHandler {
+                                id: pillHover
+                            }
                             Kirigami.Icon {
                                 x: Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
