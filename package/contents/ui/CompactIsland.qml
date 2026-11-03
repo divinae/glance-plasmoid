@@ -63,8 +63,9 @@ MouseArea {
     // One pale capsule holding them, icons in their colours with thin dividers between
     readonly property int pillHeight: Math.min(thickness - 2, 22)
     readonly property int pillIconSize: Math.min(16, pillHeight - 6)
-    readonly property int pillGap: 11 // between two icons, a divider in its middle
-    readonly property int capsulePadding: 6
+    // A segment per status: the icon with room around it, 2 px between segments
+    readonly property int segmentLength: pillIconSize + 12
+    readonly property int pillGap: 2
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive && island.cfg.pillCamera) {
@@ -86,7 +87,7 @@ MouseArea {
         return out;
     }
     readonly property int capsuleLength: pills.length > 0
-        ? pills.length * pillIconSize + (pills.length - 1) * pillGap + 2 * capsulePadding : 0
+        ? pills.length * segmentLength + (pills.length - 1) * pillGap : 0
     readonly property int privacyLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
@@ -366,35 +367,38 @@ MouseArea {
                 y: Math.round((parent.height - height) / 2)
                 width: compact.capsuleLength
                 height: compact.pillHeight
-                radius: height / 2
-                color: Qt.alpha(Kirigami.Theme.textColor, 0.09)
+                color: "transparent"
                 visible: compact.pills.length > 0
 
                 Row {
-                    x: compact.capsulePadding
-                    y: Math.round((parent.height - compact.pillIconSize) / 2)
                     spacing: compact.pillGap
                     Repeater {
                         model: compact.pills
-                        delegate: Kirigami.Icon {
+                        // A segment of the capsule: a light tint of its colour, rounded at the
+                        // capsule's two ends; the icons all in the text colour
+                        delegate: Rectangle {
                             id: pill
                             required property int index
                             required property var modelData
-                            width: compact.pillIconSize
-                            height: width
-                            source: modelData.icon
-                            isMask: true
-                            // Its own colour; Do Not Disturb, a choice rather than a warning, in
-                            // the text colour
-                            color: modelData.action === "dnd" ? Kirigami.Theme.textColor : modelData.color
-                            // The divider before it
-                            Rectangle {
-                                visible: pill.index > 0
-                                x: -Math.round(compact.pillGap / 2) - 1
-                                y: Math.round(parent.height * 0.15)
-                                width: 1
-                                height: Math.round(parent.height * 0.7)
-                                color: Qt.alpha(Kirigami.Theme.textColor, 0.25)
+                            readonly property bool first: index === 0
+                            readonly property bool last: index === compact.pills.length - 1
+                            readonly property real end: height / 2
+                            width: compact.segmentLength
+                            height: compact.pillHeight
+                            topLeftRadius: first ? end : 3
+                            bottomLeftRadius: first ? end : 3
+                            topRightRadius: last ? end : 3
+                            bottomRightRadius: last ? end : 3
+                            color: modelData.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, 0.1)
+                                : Qt.alpha(modelData.color, 0.22)
+                            Kirigami.Icon {
+                                x: Math.round((parent.width - width) / 2)
+                                y: Math.round((parent.height - height) / 2)
+                                width: compact.pillIconSize
+                                height: width
+                                source: pill.modelData.icon
+                                isMask: true
+                                color: Kirigami.Theme.textColor
                             }
                             scale: pillMouse.pressed && modelData.action === "dnd" ? 0.88 : 1
                             Behavior on scale {
