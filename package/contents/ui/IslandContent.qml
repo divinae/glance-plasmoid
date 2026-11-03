@@ -60,10 +60,12 @@ Item {
         if (island.cfg.showShelf) {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
         }
-        if (island.focusTimer) {
+        if (content.workTab) {
+            // Focus and Shift together, in one tab
+            t.push({key: "work", label: i18n("Work"), icon: "chronometer"});
+        } else if (island.focusTimer) {
             t.push({key: "focus", label: i18n("Focus"), icon: "chronometer"});
-        }
-        if (island.stand) {
+        } else if (island.stand) {
             // The posture you're in, sitting or standing
             t.push({key: "stand", label: island.stand.cycle.position === "stand" ? i18n("Standing") : i18n("Sitting"),
                 icon: Qt.resolvedUrl(island.stand.cycle.position === "stand" ? "stand/icons/person-stand.svg" : "stand/icons/person-sit.svg")});
@@ -72,6 +74,11 @@ Item {
             t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
         }
         return t;
+    }
+    // Both on: Focus and Shift share the "work" tab, and their own keys lead there
+    readonly property bool workTab: !!island.focusTimer && !!island.stand
+    function tabKey(key: string): string {
+        return workTab && (key === "focus" || key === "stand") ? "work" : key;
     }
     readonly property string homeKey: island.cfg.showDashboard ? "dashboard" : "window"
     property string currentKey: homeKey
@@ -102,7 +109,7 @@ Item {
     }
 
     function pickTab() {
-        const k = defaultKey();
+        const k = tabKey(defaultKey());
         currentKey = hasTab(k) ? k : homeKey;
         island.requestedTab = "";
     }
@@ -116,8 +123,10 @@ Item {
                 content.notifications.markRead();
             }
         }
+        // Asked for while open: switch now. While closed, opening picks it (openOn() asks
+        // first and opens after; picking here too would spend the request before that)
         function onRequestedTabChanged() {
-            if (content.island.requestedTab !== "") {
+            if (content.island.requestedTab !== "" && content.island.open) {
                 content.pickTab();
             }
         }
@@ -132,7 +141,9 @@ Item {
             notifications.markRead();
         }
     }
-    Component.onCompleted: pickTab()
+    // Created as the drawer opens: pick now if it already is, else on opening (so a tab asked
+    // for just before isn't spent while it is still closed)
+    Component.onCompleted: if (island.open) pickTab()
 
     Timer {
         id: hoverSwitch
@@ -341,8 +352,9 @@ Item {
                     calendar: content.calendar
                     monitor: content.monitor
                     onOpenTab: key => {
-                        if (content.hasTab(key)) {
-                            content.currentKey = key;
+                        const k = content.tabKey(key);
+                        if (content.hasTab(k)) {
+                            content.currentKey = k;
                         }
                     }
                 }
@@ -385,6 +397,13 @@ Item {
                 key: "stand"
                 sourceComponent: Stand.StandView {
                     root: content.island.stand
+                }
+            }
+            Page {
+                key: "work"
+                sourceComponent: WorkTab {
+                    focusTimer: content.island.focusTimer
+                    stand: content.island.stand
                 }
             }
             Page {

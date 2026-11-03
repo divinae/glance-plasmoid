@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 import org.kde.kirigami as Kirigami
 
 // Panel/tray indicator. Three styles, because the original tomato-timer frame is

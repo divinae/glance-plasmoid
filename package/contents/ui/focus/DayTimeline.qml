@@ -1,5 +1,6 @@
 import "./lib/timer.js" as TimerLogic
 import QtQuick
+import "../common"
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 

@@ -1,4 +1,4 @@
-import "./lib"
+import "../common"
 import "./lib/tasks.js" as Tasks
 import "./lib/timer.js" as TimerLogic
 import QtQml
@@ -996,6 +996,7 @@ Item {
 
     NotificationManager {
         id: notificationManager
+        defaultIcon: "chronometer"
     }
 
     Sfx {

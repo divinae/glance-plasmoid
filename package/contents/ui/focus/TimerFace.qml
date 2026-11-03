@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents

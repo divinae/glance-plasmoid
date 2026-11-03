@@ -1,4 +1,4 @@
-import "./lib/Utils.js" as Utils
+import "./Utils.js" as Utils
 import QtQuick
 import org.kde.kirigamiaddons.formcard as FormCard
 

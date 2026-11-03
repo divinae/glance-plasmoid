@@ -128,7 +128,7 @@ GridLayout {
         WorkTile {
             visible: !!tab.island.focusTimer || !!tab.island.stand
             Layout.fillHeight: true
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 9
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 10.5
             timer: tab.island.focusTimer
             stand: tab.island.stand
             onOpenTab: key => tab.openTab(key)

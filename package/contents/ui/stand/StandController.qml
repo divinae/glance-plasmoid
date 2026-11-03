@@ -1,4 +1,4 @@
-import "./lib"
+import "../common"
 import "./lib/cycle.js" as Cycle
 import QtQml
 import QtQuick

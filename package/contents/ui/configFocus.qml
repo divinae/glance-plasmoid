@@ -5,7 +5,8 @@ import org.kde.kcmutils as KCMUtils
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 import QtQuick.Dialogs
-import "focus/lib/Utils.js" as Utils
+import "common/Utils.js" as Utils
+import "common"
 import "focus"
 import QtQuick.Controls as QQC2
 import QtCore

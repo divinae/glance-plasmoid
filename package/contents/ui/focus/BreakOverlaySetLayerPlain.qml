@@ -15,16 +15,16 @@ QtObject {
     id: root
 
     property var applet: null
-    readonly property alias count: overlays.count
+    readonly property alias count: instantiator.count
 
     signal closeRequested()
 
     function objectAt(index) {
-        return overlays.objectAt(index);
+        return instantiator.objectAt(index);
     }
 
     property Instantiator overlays: Instantiator {
-        id: overlays
+        id: instantiator
 
         // Nothing is built until the applet has been handed over: main.qml assigns it from
         // the Loader's onLoaded, and a window created before that would evaluate every

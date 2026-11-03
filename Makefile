@@ -8,7 +8,7 @@ QMLTESTRUNNER ?= /usr/lib/qt6/bin/qmltestrunner
 QMLLINT_FLAGS = --unqualified disable --missing-property disable \
 	-I $(BUILD_DIR)/bin -I $(PREFIX)/lib/qml
 
-QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml package/contents/ui/stand/*.qml package/contents/ui/stand/lib/*.qml package/contents/ui/focus/*.qml package/contents/ui/focus/lib/*.qml)
+QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml package/contents/ui/common/*.qml package/contents/ui/stand/*.qml package/contents/ui/focus/*.qml)
 
 DOMAIN = plasma_applet_$(PLUGIN_ID)
 PO_FILES = $(wildcard po/*.po)
@@ -52,6 +52,9 @@ test: build
 	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/stand
 	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/focus
 	tests/compile.sh
+	@# Focus and Shift get their settings handed in; none of their code reads the applet's own
+	@! grep -rnE '^[^/]*[pP]lasmoid\.configuration' package/contents/ui/common package/contents/ui/focus package/contents/ui/stand \
+		|| { echo "plasmoid.configuration read under ui/common, ui/focus or ui/stand"; exit 1; }
 	for po in $(PO_FILES); do msgfmt --check -o /dev/null $$po || exit 1; done
 
 restart:

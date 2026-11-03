@@ -1,6 +1,7 @@
 import "./lib/cycle.js" as Cycle
 import QtQml
 import QtQuick
+import "../common"
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents

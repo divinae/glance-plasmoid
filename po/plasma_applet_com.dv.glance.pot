@@ -22,7 +22,7 @@ msgid "General"
 msgstr ""
 
 #: package/contents/config/config.qml:10
-#: package/contents/ui/configFocus.qml:864
+#: package/contents/ui/configFocus.qml:865
 msgid "Popup"
 msgstr ""
 
@@ -35,8 +35,9 @@ msgid "Shift"
 msgstr ""
 
 #: package/contents/config/config.qml:25
-#: package/contents/ui/IslandContent.qml:64
-#: package/contents/ui/tiles/WorkTile.qml:103
+#: package/contents/ui/IslandContent.qml:67
+#: package/contents/ui/tabs/WorkTab.qml:63
+#: package/contents/ui/tiles/WorkTile.qml:125
 msgid "Focus"
 msgstr ""
 
@@ -129,17 +130,21 @@ msgstr ""
 msgid "Shelf"
 msgstr ""
 
-#: package/contents/ui/IslandContent.qml:68
+#: package/contents/ui/IslandContent.qml:65
+msgid "Work"
+msgstr ""
+
+#: package/contents/ui/IslandContent.qml:70
 #: package/contents/ui/stand/StandController.qml:121
 msgid "Sitting"
 msgstr ""
 
-#: package/contents/ui/IslandContent.qml:68
+#: package/contents/ui/IslandContent.qml:70
 #: package/contents/ui/stand/StandController.qml:119
 msgid "Standing"
 msgstr ""
 
-#: package/contents/ui/IslandContent.qml:72
+#: package/contents/ui/IslandContent.qml:74
 msgid "System"
 msgstr ""
 
@@ -203,13 +208,15 @@ msgid "Pause"
 msgstr ""
 
 #: package/contents/ui/NotificationItem.qml:250
-#: package/contents/ui/stand/StandView.qml:157
+#: package/contents/ui/stand/ShiftCard.qml:162
+#: package/contents/ui/stand/StandView.qml:158
 msgid "Resume"
 msgstr ""
 
 #: package/contents/ui/NotificationItem.qml:256
+#: package/contents/ui/stand/ShiftCard.qml:118
 #: package/contents/ui/stand/StandController.qml:189
-#: package/contents/ui/stand/StandView.qml:111
+#: package/contents/ui/stand/StandView.qml:112
 msgid "Cancel"
 msgstr ""
 
@@ -272,7 +279,8 @@ msgid "On"
 msgstr ""
 
 #: package/contents/ui/NotificationWatcher.qml:74
-#: package/contents/ui/stand/StandView.qml:181
+#: package/contents/ui/stand/ShiftCard.qml:187
+#: package/contents/ui/stand/StandView.qml:182
 msgid "For 1 hour"
 msgstr ""
 
@@ -356,326 +364,326 @@ msgid ""
 "in use."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:73
+#: package/contents/ui/configFocus.qml:74
 msgid "Choose the timer font"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:112
-#: package/contents/ui/configFocus.qml:266
+#: package/contents/ui/configFocus.qml:113
+#: package/contents/ui/configFocus.qml:267
 #: package/contents/ui/configStand.qml:212
 msgid "All files (*)"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:112
+#: package/contents/ui/configFocus.qml:113
 msgid "Sound files (*.wav *.mp3 *.oga *.ogg)"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:154
-#: package/contents/ui/configFocus.qml:245
+#: package/contents/ui/configFocus.qml:155
+#: package/contents/ui/configFocus.qml:246
 msgid "Choose a sound file"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:235
+#: package/contents/ui/configFocus.qml:236
 msgid "Choose…"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:255
-#: package/contents/ui/configFocus.qml:1009
+#: package/contents/ui/configFocus.qml:256
+#: package/contents/ui/configFocus.qml:1010
 msgid "Preview"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:266
+#: package/contents/ui/configFocus.qml:267
 msgid "Shell script (*.sh)"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:297
+#: package/contents/ui/configFocus.qml:298
 msgid "Pomodoro and flowmodoro timer"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:298
+#: package/contents/ui/configFocus.qml:299
 msgid ""
 "A Focus tab in the drawer, the countdown in the panel while a session runs, "
 "and its break overlay."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:303
+#: package/contents/ui/configFocus.qml:304
 msgid "Timer mode"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:313
-#: package/contents/ui/configFocus.qml:335
+#: package/contents/ui/configFocus.qml:314
+#: package/contents/ui/configFocus.qml:336
 msgid "Pomodoro"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:317
-#: package/contents/ui/configFocus.qml:453
+#: package/contents/ui/configFocus.qml:318
+#: package/contents/ui/configFocus.qml:454
 msgid "Flowmodoro"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:331
+#: package/contents/ui/configFocus.qml:332
 msgid ""
 "Fixed focus sessions separated by short breaks, with a long break at the end "
 "of each cycle."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:331
+#: package/contents/ui/configFocus.qml:332
 msgid ""
 "Focus for as long as you like. The timer counts up, and the break you earn "
 "is worked out from how long you focused."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:351
+#: package/contents/ui/configFocus.qml:352
 msgid "Classic"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:355
+#: package/contents/ui/configFocus.qml:356
 msgid "Deep work"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:359
+#: package/contents/ui/configFocus.qml:360
 msgid "90/20"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:363
+#: package/contents/ui/configFocus.qml:364
 msgid "Custom"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:385
+#: package/contents/ui/configFocus.qml:386
 msgid "Focus sessions per cycle"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:386
+#: package/contents/ui/configFocus.qml:387
 msgid "How many focus sessions to run before the long break."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:396
+#: package/contents/ui/configFocus.qml:397
 msgid "Focus session"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:400
-#: package/contents/ui/configFocus.qml:418
-#: package/contents/ui/configFocus.qml:435
-#: package/contents/ui/configFocus.qml:495
-#: package/contents/ui/configFocus.qml:599
+#: package/contents/ui/configFocus.qml:401
+#: package/contents/ui/configFocus.qml:419
+#: package/contents/ui/configFocus.qml:436
+#: package/contents/ui/configFocus.qml:496
+#: package/contents/ui/configFocus.qml:600
 msgid "%1 min"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:412
+#: package/contents/ui/configFocus.qml:413
 msgid "Short break"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:413
+#: package/contents/ui/configFocus.qml:414
 msgid "Set to zero to skip short breaks entirely."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:418
-#: package/contents/ui/configFocus.qml:435
+#: package/contents/ui/configFocus.qml:419
+#: package/contents/ui/configFocus.qml:436
 msgid "Skipped"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:430
+#: package/contents/ui/configFocus.qml:431
 msgid "Long break"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:431
+#: package/contents/ui/configFocus.qml:432
 msgid "Runs after the last focus session of a cycle. Set to zero to skip it."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:447
+#: package/contents/ui/configFocus.qml:448
 msgid "Change the time with the scroll wheel"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:448
+#: package/contents/ui/configFocus.qml:449
 msgid ""
 "Scrolling over the timer adds or removes minutes. Turn it off if the wheel "
 "is meant for something else there, such as switching desktops."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:463
+#: package/contents/ui/configFocus.qml:464
 msgid "Break divisor"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:464
+#: package/contents/ui/configFocus.qml:465
 msgid ""
 "The break is the length of the flow divided by this. At 5, a 50 minute flow "
 "earns a 10 minute break."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:479
+#: package/contents/ui/configFocus.qml:480
 msgid "Ask if the flow is still going"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:480
+#: package/contents/ui/configFocus.qml:481
 msgid ""
 "A notification offering the break, so a flow left running is not counted as "
 "work."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:491
+#: package/contents/ui/configFocus.qml:492
 msgid "Ask every"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:506
-#: package/contents/ui/configFocus.qml:872
-#: package/contents/ui/configFocus.qml:919
+#: package/contents/ui/configFocus.qml:507
+#: package/contents/ui/configFocus.qml:873
+#: package/contents/ui/configFocus.qml:920
 #: package/contents/ui/configStand.qml:209
 msgid "Sound"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:516
+#: package/contents/ui/configFocus.qml:517
 msgid "Ticking starts at"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:517
+#: package/contents/ui/configFocus.qml:518
 msgid "Plays the ticking sound over the final seconds of a focus session."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:521
+#: package/contents/ui/configFocus.qml:522
 msgid "%1 s"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:521
+#: package/contents/ui/configFocus.qml:522
 msgid "Never"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:532
+#: package/contents/ui/configFocus.qml:533
 msgid "Starting and stopping"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:539
+#: package/contents/ui/configFocus.qml:540
 msgid "Start the timer when Plasma starts"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:547
+#: package/contents/ui/configFocus.qml:548
 #: package/contents/ui/configStand.qml:235
 msgid "Pause while the screen is locked"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:548
+#: package/contents/ui/configFocus.qml:549
 msgid ""
 "A focus session pauses when you lock the screen and picks up again when you "
 "unlock it. Breaks keep running."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:556
+#: package/contents/ui/configFocus.qml:557
 msgid "Start the next focus session automatically"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:557
+#: package/contents/ui/configFocus.qml:558
 msgid "When off, a break that runs out keeps counting past its end."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:565
+#: package/contents/ui/configFocus.qml:566
 msgid "Start breaks automatically"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:573
+#: package/contents/ui/configFocus.qml:574
 msgid "Silence notifications while focusing"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:574
+#: package/contents/ui/configFocus.qml:575
 msgid ""
 "Suppresses other applications' notifications for the length of a focus "
 "session."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:582
+#: package/contents/ui/configFocus.qml:583
 msgid "Pause media when a break begins"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:583
+#: package/contents/ui/configFocus.qml:584
 msgid ""
 "Pauses every media player on this computer when focus time ends. Phones "
 "connected through KDE Connect are left alone."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:588
+#: package/contents/ui/configFocus.qml:589
 msgid "What gets recorded"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:595
+#: package/contents/ui/configFocus.qml:596
 msgid "Ignore sessions shorter than"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:599
+#: package/contents/ui/configFocus.qml:600
 msgid "Record everything"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:607
+#: package/contents/ui/configFocus.qml:608
 msgid ""
 "Keeps the totals free of fragments left by switching task or skipping. "
 "Breaks are always recorded."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:615
+#: package/contents/ui/configFocus.qml:616
 msgid "Working day"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:619
+#: package/contents/ui/configFocus.qml:620
 msgid "%1 h"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:619
+#: package/contents/ui/configFocus.qml:620
 msgid "No target"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:627
+#: package/contents/ui/configFocus.qml:628
 msgid ""
 "Used in the stats, to say how much of a working day the timer accounted for."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:634
+#: package/contents/ui/configFocus.qml:635
 msgid "Dial"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:641
+#: package/contents/ui/configFocus.qml:642
 msgid "Show the countdown in the dial"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:642
+#: package/contents/ui/configFocus.qml:643
 msgid ""
 "Off leaves only the ring. Applies to the Focus tab and the break overlay."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:650
+#: package/contents/ui/configFocus.qml:651
 msgid "Bold countdown"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:658
+#: package/contents/ui/configFocus.qml:659
 msgid "Flash when a session ends"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:659
+#: package/contents/ui/configFocus.qml:660
 msgid ""
 "Fades the break overlay as a session finishes, and keeps pulsing while a "
 "break runs over."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:664
+#: package/contents/ui/configFocus.qml:665
 msgid "Font"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:671
+#: package/contents/ui/configFocus.qml:672
 msgid "Timer font"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:673
+#: package/contents/ui/configFocus.qml:674
 msgid "Default"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:682
+#: package/contents/ui/configFocus.qml:683
 msgid "Choose from installed fonts…"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:690
+#: package/contents/ui/configFocus.qml:691
 msgid "Use the default font"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:707
+#: package/contents/ui/configFocus.qml:708
 msgid "Cover the screen during a break"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:714
+#: package/contents/ui/configFocus.qml:715
 msgid ""
 "The overlay covers every screen but cannot follow a switch to another "
 "virtual desktop: that needs the optional LayerShellQt module. Install layer-"
@@ -683,191 +691,191 @@ msgid ""
 "Plasma."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:719
+#: package/contents/ui/configFocus.qml:720
 msgid "Appearance"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:732
+#: package/contents/ui/configFocus.qml:733
 msgid "Follow Plasma"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:735
+#: package/contents/ui/configFocus.qml:736
 msgid "Dark"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:738
+#: package/contents/ui/configFocus.qml:739
 msgid "Light"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:749
+#: package/contents/ui/configFocus.qml:750
 msgid ""
 "A dark overlay over a light desktop is much less of a jolt when a break "
 "starts."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:757
+#: package/contents/ui/configFocus.qml:758
 msgid "Background opacity"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:765
-#: package/contents/ui/configFocus.qml:947
+#: package/contents/ui/configFocus.qml:766
+#: package/contents/ui/configFocus.qml:948
 #, javascript-format
 msgid "%1%"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:777
+#: package/contents/ui/configFocus.qml:778
 msgid "Blur the desktop behind the overlay"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:778
+#: package/contents/ui/configFocus.qml:779
 msgid ""
 "Turn off if you see jagged shadows around the buttons: blur comes with "
 "Plasma's background-contrast effect, which frays soft edges at a low opacity."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:783
+#: package/contents/ui/configFocus.qml:784
 msgid "Buttons"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:793
+#: package/contents/ui/configFocus.qml:794
 msgid "Reveal the buttons only on hover"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:806
+#: package/contents/ui/configFocus.qml:807
 msgid "Offer Postpone"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:807
+#: package/contents/ui/configFocus.qml:808
 msgid "Puts the break off by five minutes."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:815
+#: package/contents/ui/configFocus.qml:816
 msgid "Offer Skip"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:823
+#: package/contents/ui/configFocus.qml:824
 msgid "Offer Close"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:824
+#: package/contents/ui/configFocus.qml:825
 msgid "Dismisses the overlay without ending the break."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:832
+#: package/contents/ui/configFocus.qml:833
 msgid "Offer End for today"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:833
+#: package/contents/ui/configFocus.qml:834
 msgid ""
 "Ends the break and starts nothing after it, where Skip carries on into the "
 "next session."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:840
+#: package/contents/ui/configFocus.qml:841
 msgid "Events"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:880
+#: package/contents/ui/configFocus.qml:881
 msgid "File"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:894
+#: package/contents/ui/configFocus.qml:895
 msgid "Focus starts"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:900
+#: package/contents/ui/configFocus.qml:901
 msgid "Focus ends"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:906
+#: package/contents/ui/configFocus.qml:907
 msgid "Break starts"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:912
+#: package/contents/ui/configFocus.qml:913
 msgid "Break ends"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:930
+#: package/contents/ui/configFocus.qml:931
 msgid "Volume"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:957
+#: package/contents/ui/configFocus.qml:958
 msgid "Repeat the sound while a break runs over"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:958
+#: package/contents/ui/configFocus.qml:959
 msgid "One sound at the moment a break ends is easy to miss."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:967
+#: package/contents/ui/configFocus.qml:968
 msgid "Repeat every"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:972
+#: package/contents/ui/configFocus.qml:973
 msgid "%1 second"
 msgid_plural "%1 seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: package/contents/ui/configFocus.qml:984
+#: package/contents/ui/configFocus.qml:985
 msgid "Ticking"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:991
+#: package/contents/ui/configFocus.qml:992
 msgid "Tick as a focus session runs out"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:992
+#: package/contents/ui/configFocus.qml:993
 msgid ""
 "Begins at the point set under the timer above and grows louder as the end "
 "approaches."
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1000
+#: package/contents/ui/configFocus.qml:1001
 msgid "Sound file"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1019
+#: package/contents/ui/configFocus.qml:1020
 msgid "Focus sessions"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1026
+#: package/contents/ui/configFocus.qml:1027
 msgid "Run a script when focus starts"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1034
-#: package/contents/ui/configFocus.qml:1053
-#: package/contents/ui/configFocus.qml:1076
-#: package/contents/ui/configFocus.qml:1095
-#: package/contents/ui/configFocus.qml:1118
+#: package/contents/ui/configFocus.qml:1035
+#: package/contents/ui/configFocus.qml:1054
+#: package/contents/ui/configFocus.qml:1077
+#: package/contents/ui/configFocus.qml:1096
+#: package/contents/ui/configFocus.qml:1119
 msgid "Script"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1045
+#: package/contents/ui/configFocus.qml:1046
 msgid "Run a script when focus ends"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1061
+#: package/contents/ui/configFocus.qml:1062
 msgid "Breaks"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1068
+#: package/contents/ui/configFocus.qml:1069
 msgid "Run a script when a break starts"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1087
+#: package/contents/ui/configFocus.qml:1088
 msgid "Run a script when a break ends"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1103
+#: package/contents/ui/configFocus.qml:1104
 msgid "Stopping the timer"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1110
+#: package/contents/ui/configFocus.qml:1111
 msgid "Run a script when the timer is stopped"
 msgstr ""
 
-#: package/contents/ui/configFocus.qml:1126
+#: package/contents/ui/configFocus.qml:1127
 msgid ""
 "Each script is run with sh. Paths containing spaces are handled, so no "
 "quoting is needed."
@@ -1345,7 +1353,7 @@ msgid "Monday to Friday only"
 msgstr ""
 
 #: package/contents/ui/configStand.qml:300
-#: package/contents/ui/stand/StandView.qml:245
+#: package/contents/ui/stand/StandView.qml:246
 msgid "Desk"
 msgstr ""
 
@@ -1362,12 +1370,14 @@ msgid "Commands"
 msgstr ""
 
 #: package/contents/ui/configStand.qml:323
-#: package/contents/ui/stand/StandView.qml:126
+#: package/contents/ui/stand/ShiftCard.qml:134
+#: package/contents/ui/stand/StandView.qml:127
 msgid "Sit"
 msgstr ""
 
 #: package/contents/ui/configStand.qml:331
-#: package/contents/ui/stand/StandView.qml:136
+#: package/contents/ui/stand/ShiftCard.qml:143
+#: package/contents/ui/stand/StandView.qml:137
 msgid "Stand"
 msgstr ""
 
@@ -1456,7 +1466,7 @@ msgid "Sk&ip"
 msgstr ""
 
 #: package/contents/ui/focus/BreakOverlayContent.qml:152
-#: package/contents/ui/focus/FocusView.qml:97
+#: package/contents/ui/focus/FocusTimerCard.qml:85
 msgid "&End for today"
 msgstr ""
 
@@ -1473,25 +1483,25 @@ msgstr ""
 msgid "St&art"
 msgstr ""
 
-#: package/contents/ui/focus/DayTimeline.qml:102
+#: package/contents/ui/focus/DayTimeline.qml:103
 msgid "Break, %1 to %2 (%3)"
 msgstr ""
 
-#: package/contents/ui/focus/DayTimeline.qml:103
+#: package/contents/ui/focus/DayTimeline.qml:104
 msgid "%1, %2 to %3 (%4)"
 msgstr ""
 
-#: package/contents/ui/focus/DayTimeline.qml:104
+#: package/contents/ui/focus/DayTimeline.qml:105
 #: package/contents/ui/focus/FocusController.qml:647
-#: package/contents/ui/focus/StatsView.qml:129
-#: package/contents/ui/focus/StatsView.qml:516
+#: package/contents/ui/focus/StatsView.qml:130
+#: package/contents/ui/focus/StatsView.qml:520
 msgid "No task"
 msgstr ""
 
 #: package/contents/ui/focus/FocusController.qml:46
 #: package/contents/ui/focus/FocusController.qml:329
 #: package/contents/ui/focus/FocusController.qml:369
-#: package/contents/ui/focus/StatsView.qml:243
+#: package/contents/ui/focus/StatsView.qml:247
 msgid "focus"
 msgstr ""
 
@@ -1599,126 +1609,128 @@ msgstr ""
 msgid "%1 / %2 min"
 msgstr ""
 
-#: package/contents/ui/focus/FocusController.qml:1051
+#: package/contents/ui/focus/FocusController.qml:1052
 msgid "Still in flow? %1 so far."
 msgstr ""
 
-#: package/contents/ui/focus/FocusController.qml:1053
+#: package/contents/ui/focus/FocusController.qml:1054
 msgid "Take a break"
 msgstr ""
 
-#: package/contents/ui/focus/FocusController.qml:1060
+#: package/contents/ui/focus/FocusController.qml:1061
 msgid "Keep going"
 msgstr ""
 
-#: package/contents/ui/focus/FocusView.qml:85 package/contents/ui/main.qml:423
+#: package/contents/ui/focus/FocusTimerCard.qml:73
+#: package/contents/ui/main.qml:423
 msgid "Skip Break"
 msgstr ""
 
-#: package/contents/ui/focus/FocusView.qml:85 package/contents/ui/main.qml:423
+#: package/contents/ui/focus/FocusTimerCard.qml:73
+#: package/contents/ui/main.qml:423
 msgid "Skip to Break"
 msgstr ""
 
-#: package/contents/ui/focus/FocusView.qml:97
+#: package/contents/ui/focus/FocusTimerCard.qml:85
 msgid "St&op"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:41
-#: package/contents/ui/stand/StandView.qml:202
+#: package/contents/ui/focus/StatsView.qml:42
+#: package/contents/ui/stand/StandView.qml:203
 #: package/contents/ui/tabs/AgendaTab.qml:25
 #: package/contents/ui/tiles/AgendaTile.qml:52
 msgid "Today"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:42
+#: package/contents/ui/focus/StatsView.qml:43
 msgid "7 days"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:43
+#: package/contents/ui/focus/StatsView.qml:44
 msgid "14 days"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:44
+#: package/contents/ui/focus/StatsView.qml:45
 msgid "30 days"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:121
+#: package/contents/ui/focus/StatsView.qml:122
 msgid "%1: nothing"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:124
+#: package/contents/ui/focus/StatsView.qml:125
 msgid "%1 - breaks %2"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:128
+#: package/contents/ui/focus/StatsView.qml:129
 msgctxt "task: 2 sessions, 50m"
 msgid "%1: %2 (%3)"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:130
-#: package/contents/ui/focus/StatsView.qml:161
+#: package/contents/ui/focus/StatsView.qml:131
+#: package/contents/ui/focus/StatsView.qml:162
 msgid "%1 session"
 msgid_plural "%1 sessions"
 msgstr[0] ""
 msgstr[1] ""
 
-#: package/contents/ui/focus/StatsView.qml:154
+#: package/contents/ui/focus/StatsView.qml:155
 msgid "%1 focused"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:227
+#: package/contents/ui/focus/StatsView.qml:231
 msgid ""
 "Working window %1 to %2.\n"
 "Idle is the time between recorded sessions. Sessions you skip, and focus "
 "stretches below the minimum length, are not recorded and count as idle."
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:230
+#: package/contents/ui/focus/StatsView.qml:234
 msgid ""
 "Idle is the time between recorded sessions, counted within each day. "
 "Sessions you skip, and focus stretches below the minimum length, are not "
 "recorded and count as idle."
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:244
+#: package/contents/ui/focus/StatsView.qml:248
 msgid "breaks"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:245
+#: package/contents/ui/focus/StatsView.qml:249
 msgid "idle"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:262
+#: package/contents/ui/focus/StatsView.qml:266
 msgctxt "focus 5h20"
 msgid "%1 %2"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:278
+#: package/contents/ui/focus/StatsView.qml:282
 msgid "%1 of %2 accounted for"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:352
+#: package/contents/ui/focus/StatsView.qml:356
 msgctxt "8 hours, the working day"
 msgid "%1h"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:485
+#: package/contents/ui/focus/StatsView.qml:489
 msgid "By task"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:533
+#: package/contents/ui/focus/StatsView.qml:537
 #, javascript-format
 msgctxt "percentage of focus time"
 msgid "%1%"
 msgstr ""
 
-#: package/contents/ui/focus/StatsView.qml:544
+#: package/contents/ui/focus/StatsView.qml:548
 msgid "+%1 more task"
 msgid_plural "+%1 more tasks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: package/contents/ui/focus/StatsView.qml:554
+#: package/contents/ui/focus/StatsView.qml:558
 msgid "Nothing recorded in this period yet."
 msgstr ""
 
@@ -1820,11 +1832,11 @@ msgstr ""
 msgid "Flowmodoro Mode"
 msgstr ""
 
-#: package/contents/ui/main.qml:448 package/contents/ui/tiles/WorkTile.qml:166
+#: package/contents/ui/main.qml:448 package/contents/ui/tiles/WorkTile.qml:188
 msgid "Sit Down"
 msgstr ""
 
-#: package/contents/ui/main.qml:448 package/contents/ui/tiles/WorkTile.qml:166
+#: package/contents/ui/main.qml:448 package/contents/ui/tiles/WorkTile.qml:188
 msgid "Stand Up"
 msgstr ""
 
@@ -1870,6 +1882,136 @@ msgstr ""
 
 #: package/contents/ui/stand/Desk.qml:186
 msgid "The command exited with code %1."
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:58
+msgid "Switches at the next break"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:109
+#: package/contents/ui/stand/StandView.qml:103
+msgid "The desk is not reachable. Raise it with its own buttons, then confirm."
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:110
+#: package/contents/ui/stand/StandView.qml:104
+msgid "The desk is not reachable. Lower it with its own buttons, then confirm."
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:113
+#: package/contents/ui/stand/StandController.qml:188
+#: package/contents/ui/stand/StandView.qml:107
+#: package/contents/ui/tiles/WorkTile.qml:188
+msgid "Done"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:134
+#: package/contents/ui/stand/StandView.qml:127
+msgid "I'm sitting"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:143
+#: package/contents/ui/stand/StandView.qml:137
+msgid "I'm standing"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:152
+#: package/contents/ui/stand/StandController.qml:277
+#: package/contents/ui/stand/StandView.qml:150
+msgid "Snooze %1 min"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:173
+#: package/contents/ui/stand/StandView.qml:168
+msgid "Pause…"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:183
+#: package/contents/ui/stand/StandView.qml:177
+msgid "For 30 minutes"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:191
+#: package/contents/ui/stand/StandView.qml:187
+msgid "For 2 hours"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:195
+#: package/contents/ui/stand/StandView.qml:192
+msgid "Until I resume"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:229
+#: package/contents/ui/stand/StandView.qml:266
+msgctxt "desk height"
+msgid "%1 cm"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:234
+#: package/contents/ui/stand/StandView.qml:272
+msgid "Not reachable"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:235
+#: package/contents/ui/stand/StandView.qml:377
+msgid "Stopped short, trying again (%1 of %2)"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:236
+#: package/contents/ui/stand/StandView.qml:273
+msgid "Lowering to sitting…"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:236
+#: package/contents/ui/stand/StandView.qml:273
+msgid "Rising to standing…"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:237
+#: package/contents/ui/stand/StandView.qml:274
+msgid "At sitting height"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:238
+#: package/contents/ui/stand/StandView.qml:275
+msgid "At standing height"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:239
+#: package/contents/ui/stand/StandView.qml:276
+msgid "Between the two heights"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:240
+#: package/contents/ui/stand/StandView.qml:277
+msgid "Height not read yet"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:250
+#: package/contents/ui/stand/StandView.qml:285
+msgid "Read the height again"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:250
+#: package/contents/ui/stand/StandView.qml:389
+msgid "Try again"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftCard.qml:260
+#: package/contents/ui/stand/StandView.qml:395
+msgid "Stop retrying"
+msgstr ""
+
+#: package/contents/ui/stand/ShiftHistory.qml:31
+#: package/contents/ui/stand/StandView.qml:219
+msgid "Goal met %1 day in a row"
+msgid_plural "Goal met %1 days in a row"
+msgstr[0] ""
+msgstr[1] ""
+
+#: package/contents/ui/stand/ShiftHistory.qml:38
+#: package/contents/ui/stand/StandView.qml:227
+msgid "This week"
 msgstr ""
 
 #: package/contents/ui/stand/StandController.qml:114
@@ -1946,12 +2088,6 @@ msgid ""
 "The desk is not reachable. Lower it with its own buttons, then press Done."
 msgstr ""
 
-#: package/contents/ui/stand/StandController.qml:188
-#: package/contents/ui/stand/StandView.qml:106
-#: package/contents/ui/tiles/WorkTile.qml:166
-msgid "Done"
-msgstr ""
-
 #: package/contents/ui/stand/StandController.qml:275
 msgid "Time to sit down."
 msgstr ""
@@ -1966,11 +2102,6 @@ msgstr ""
 
 #: package/contents/ui/stand/StandController.qml:276
 msgid "Stand now"
-msgstr ""
-
-#: package/contents/ui/stand/StandController.qml:277
-#: package/contents/ui/stand/StandView.qml:149
-msgid "Snooze %1 min"
 msgstr ""
 
 #: package/contents/ui/stand/StandController.qml:342
@@ -1989,118 +2120,27 @@ msgstr ""
 msgid "Desk not reachable"
 msgstr ""
 
-#: package/contents/ui/stand/StandView.qml:102
-msgid "The desk is not reachable. Raise it with its own buttons, then confirm."
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:103
-msgid "The desk is not reachable. Lower it with its own buttons, then confirm."
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:126
-msgid "I'm sitting"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:136
-msgid "I'm standing"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:167
-msgid "Pause…"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:176
-msgid "For 30 minutes"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:186
-msgid "For 2 hours"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:191
-msgid "Until I resume"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:218
-msgid "Goal met %1 day in a row"
-msgid_plural "Goal met %1 days in a row"
-msgstr[0] ""
-msgstr[1] ""
-
-#: package/contents/ui/stand/StandView.qml:226
-msgid "This week"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:265
-msgctxt "desk height"
-msgid "%1 cm"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:271
-msgid "Not reachable"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:272
-msgid "Lowering to sitting…"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:272
-msgid "Rising to standing…"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:273
-msgid "At sitting height"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:274
-msgid "At standing height"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:275
-msgid "Between the two heights"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:276
-msgid "Height not read yet"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:284
-msgid "Read the height again"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:320
+#: package/contents/ui/stand/StandView.qml:321
 msgctxt "sitting height mark"
 msgid "Sit %1"
 msgstr ""
 
-#: package/contents/ui/stand/StandView.qml:321
+#: package/contents/ui/stand/StandView.qml:322
 msgctxt "standing height mark"
 msgid "Stand %1"
 msgstr ""
 
-#: package/contents/ui/stand/StandView.qml:375
+#: package/contents/ui/stand/StandView.qml:376
 msgid "Switches wait for you to confirm them."
 msgstr ""
 
-#: package/contents/ui/stand/StandView.qml:376
-msgid "Stopped short, trying again (%1 of %2)"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:378
+#: package/contents/ui/stand/StandView.qml:379
 msgctxt "desk move from → to"
 msgid "%1 → %2 cm"
 msgstr ""
 
-#: package/contents/ui/stand/StandView.qml:379
+#: package/contents/ui/stand/StandView.qml:380
 msgid "Moving…"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:388
-msgid "Try again"
-msgstr ""
-
-#: package/contents/ui/stand/StandView.qml:394
-msgid "Stop retrying"
 msgstr ""
 
 #: package/contents/ui/tabs/AgendaTab.qml:36
@@ -2245,6 +2285,10 @@ msgstr ""
 msgid "No active window."
 msgstr ""
 
+#: package/contents/ui/tabs/WorkTab.qml:70
+msgid "Posture"
+msgstr ""
+
 #: package/contents/ui/tiles/AgendaTile.qml:31
 msgctxt "event happening now"
 msgid "Now"
@@ -2304,6 +2348,6 @@ msgstr[1] ""
 msgid "Drop files here"
 msgstr ""
 
-#: package/contents/ui/tiles/WorkTile.qml:105
+#: package/contents/ui/tiles/WorkTile.qml:127
 msgid "%1 · ready"
 msgstr ""

@@ -53,7 +53,7 @@ separate [Fokus](https://gitlab.com/divinae/focus-plasmoid) and
 [Shift](https://gitlab.com/divinae/shift-plasmoid) widgets (their settings aren't imported).
 
 The drawer resizes from its corner. Without `layer-shell-qt`, or if you prefer, Glance opens
-Plasma's usual popup instead (Settings > Popup > Style). Translated into Polish.
+Plasma's usual popup instead (Settings > Popup > Style).
 
 ## Requirements
 

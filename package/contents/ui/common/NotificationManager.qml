@@ -9,6 +9,8 @@ QtObject {
     // What the notification's buttons should do, for the lifetime of one
     // notification. Held here because the action objects are reused.
     property var pendingAction: null
+    // The icon of a notification sent without one (Focus: its chronometer)
+    property string defaultIcon: "dialog-information"
     property var pendingSecondaryAction: null
 
     property NotificationAction primaryAction: NotificationAction {
@@ -18,8 +20,8 @@ QtObject {
         }
     }
 
-    // Two slots, because a reminder offers a choice - switch now, or snooze - rather
-    // than a single next step. KNotification takes any number of actions;
+    // Two slots, because a reminder offers a choice - switch now or snooze, take the break
+    // or carry on - rather than a single next step. KNotification takes any number of actions;
     // two is where the popup stops being readable.
     property NotificationAction secondaryAction: NotificationAction {
         onActivated: {
@@ -32,14 +34,14 @@ QtObject {
         // This applet ships no .notifyrc, and KNotification silently sends
         // nothing at all for a componentName it cannot resolve, so it borrows
         // the generic workspace event. The cost is that the notification is
-        // attributed to "System Notifications" rather than to Shift, which is
+        // attributed to "System Notifications" rather than to Glance, which is
         // why the title carries the name instead.
         componentName: "plasma_workspace"
         eventId: "notification"
         title: "Glance"
         // Set per message by notifyActions; a fixed "go-up" put an up arrow on "Time to sit
         // down".
-        iconName: "dialog-information"
+        iconName: notificationManager.defaultIcon
         autoDelete: false
     }
 
@@ -71,7 +73,7 @@ QtObject {
             buttons.push(secondaryAction);
         }
         note.actions = buttons;
-        note.iconName = icon || "dialog-information";
+        note.iconName = icon || defaultIcon;
         note.text = summary;
         note.sendEvent();
     }

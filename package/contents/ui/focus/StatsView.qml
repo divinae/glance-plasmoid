@@ -1,5 +1,6 @@
 import "./lib/timer.js" as TimerLogic
 import QtQuick
+import "../common"
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -169,6 +170,9 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 model: root.periods
                 textRole: "label"
+                // A fixed width, room for the longest period ("Dzisiaj", "30 days"): sizing
+                // to its text inside this row looped on implicitWidth on every layout
+                implicitWidth: Kirigami.Units.gridUnit * 6
                 // Set once rather than bound to dayCount: binding currentIndex to a
                 // value the control itself writes is the recursion hazard the task
                 // picker in main.qml documents, and one segfault was seen with it.

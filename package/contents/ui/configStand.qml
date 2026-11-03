@@ -3,7 +3,7 @@ import "stand"
 import QtQuick.Layouts
 import org.kde.kcmutils as KCMUtils
 import org.kde.kirigamiaddons.formcard as FormCard
-import "stand/lib"
+import "common"
 import "stand/lib/desk.js" as DeskLogic
 import org.kde.kirigami as Kirigami
 

@@ -1,4 +1,4 @@
-import "./lib"
+import "../common"
 import "./lib/desk.js" as DeskLogic
 import QtQuick
 
