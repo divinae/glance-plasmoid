@@ -57,16 +57,12 @@ MouseArea {
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
     // The pills go past the text: above the title on a vertical panel (its far end)
     readonly property int trailLength: privacyLength
-    // Status pills past the text, all alike (macOS's menu bar): camera (green),
-    // screen sharing (red), Do Not Disturb (grey). A soft fill of the colour, a darker border
-    // and icon
-    // A standard icon size, sharp; the room around it comes from the pill's length
-    // Whole pixels throughout, or the icons come out soft
+    // Status icons (camera green, microphone orange, screen sharing red, Do Not Disturb) in one
+    // pale capsule past the title: coloured icons only, so the title still leads
     readonly property int pillIconSize: 14
-    // Wider than tall, with room around the icon
-    readonly property int pillLength: pillHeight + 10
-    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 6)
     readonly property int pillSpacing: 4
+    readonly property int capsulePadding: Kirigami.Units.smallSpacing + 2
+    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 6)
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive && island.cfg.pillCamera) {
@@ -82,13 +78,14 @@ MouseArea {
                 tip: i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
         if (dndShown && island.cfg.pillDnd) {
-            out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
+            out.push({color: Kirigami.Theme.textColor, icon: "notifications-disabled-symbolic", action: "dnd",
                 tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
         }
         return out;
     }
-    readonly property int privacyLength: pills.length > 0
-        ? pills.length * pillLength + (pills.length - 1) * pillSpacing + Kirigami.Units.largeSpacing : 0
+    readonly property int capsuleLength: pills.length > 0
+        ? pills.length * pillIconSize + (pills.length - 1) * pillSpacing + 2 * capsulePadding : 0
+    readonly property int privacyLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
@@ -327,7 +324,8 @@ MouseArea {
                     wrapMode: Text.NoWrap
                     textFormat: Text.PlainText
                     horizontalAlignment: Text.AlignHCenter
-                    font.bold: compact.island.cfg.boldFont
+                    // Semibold at least, so it holds its own beside the status icons
+                    font.weight: compact.island.cfg.boldFont ? Font.Bold : Font.DemiBold
                     font.capitalization: compact.island.cfg.capitalFont ? Font.Capitalize : Font.MixedCase
                     color: compact.foreground
                     visible: opacity > 0
@@ -359,57 +357,53 @@ MouseArea {
                     && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
                 color: Kirigami.Theme.highlightColor
             }
-            // The status pills, one delegate for all so they stay alike
-            Row {
+            // The status icons, together in one pale capsule at the strip's end
+            Rectangle {
+                id: statusCapsule
                 x: Math.round(parent.width - width)
                 y: Math.round((parent.height - height) / 2)
-                spacing: compact.pillSpacing
+                width: compact.capsuleLength
+                height: compact.pillHeight
+                radius: height / 2
+                color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
                 visible: compact.pills.length > 0
-                Repeater {
-                    model: compact.pills
-                    delegate: Rectangle {
-                        id: pill
-                        required property var modelData
-                        // A solid circle of its colour with a white icon, turned with the panel as the text
-                        width: compact.pillLength
-                        height: compact.pillHeight
-                        radius: height / 2
-                        // A pale tint of the colour, its rim in the colour itself, and the icon
-                        // in a deep shade of it: soft, but the icon reads clearly
-                        color: Kirigami.ColorUtils.linearInterpolation(modelData.color, "white", 0.6)
-                        border.width: 1
-                        border.color: modelData.color
-                        Kirigami.Icon {
-                            // The bell's strokes are thinner: a pixel larger
+
+                Row {
+                    x: compact.capsulePadding
+                    y: Math.round((parent.height - compact.pillIconSize) / 2)
+                    spacing: compact.pillSpacing
+                    Repeater {
+                        model: compact.pills
+                        delegate: Kirigami.Icon {
+                            id: pill
+                            required property var modelData
                             width: compact.pillIconSize
                             height: width
-                            x: Math.round((parent.width - width) / 2)
-                            y: Math.round((parent.height - height) / 2)
-                            source: pill.modelData.icon
+                            source: modelData.icon
                             isMask: true
-                            // Nearly the text colour, a hint of the pill's: dark enough to read
-                            color: Kirigami.ColorUtils.linearInterpolation(pill.modelData.color, Kirigami.Theme.textColor, 0.85)
-                        }
-                        // A click turns Do Not Disturb off; the camera's and the screen's only say who
-                        // uses them, in their tooltip
-                        MouseArea {
-                            id: pillMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: pill.modelData.action === "dnd" ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: {
-                                if (pill.modelData.action === "dnd") {
-                                    compact.notifications.toggleDoNotDisturb();
+                            // Its colour, deepened to read on the pale capsule; the bell in the text colour
+                            color: modelData.action === "dnd" ? modelData.color : Qt.darker(modelData.color, 1.7)
+                            scale: pillMouse.pressed && modelData.action === "dnd" ? 0.88 : 1
+                            Behavior on scale {
+                                NumberAnimation { duration: Kirigami.Units.shortDuration }
+                            }
+                            // A click turns Do Not Disturb off; the others only say who uses them
+                            MouseArea {
+                                id: pillMouse
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                hoverEnabled: true
+                                cursorShape: pill.modelData.action === "dnd" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: {
+                                    if (pill.modelData.action === "dnd") {
+                                        compact.notifications.toggleDoNotDisturb();
+                                    }
                                 }
                             }
+                            PlasmaComponents.ToolTip.text: modelData.tip || ""
+                            PlasmaComponents.ToolTip.visible: pillMouse.containsMouse
+                            PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
                         }
-                        scale: pillMouse.pressed && pill.modelData.action === "dnd" ? 0.92 : 1
-                        Behavior on scale {
-                            NumberAnimation { duration: Kirigami.Units.shortDuration }
-                        }
-                        PlasmaComponents.ToolTip.text: pill.modelData.tip || ""
-                        PlasmaComponents.ToolTip.visible: pillMouse.containsMouse
-                        PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
                     }
                 }
             }
