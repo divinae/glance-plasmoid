@@ -62,7 +62,8 @@ MouseArea {
     // and icon
     // A standard icon size, sharp; the room around it comes from the pill's length
     readonly property int pillIconSize: Kirigami.Units.iconSizes.small
-    readonly property int pillLength: pillIconSize + 2 * Kirigami.Units.largeSpacing - 2
+    // Circles, as wide as the strip allows
+    readonly property int pillLength: pillHeight
     readonly property int pillHeight: Math.min(thickness - 2, Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing)
     readonly property int pillSpacing: 3
     readonly property var pills: {
@@ -76,7 +77,7 @@ MouseArea {
                 tip: i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
         if (dndShown) {
-            out.push({color: Kirigami.Theme.textColor, icon: "notifications-disabled-symbolic", action: "dnd",
+            out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
                 tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
         }
         return out;
@@ -364,22 +365,19 @@ MouseArea {
                     delegate: Rectangle {
                         id: pill
                         required property var modelData
-                        readonly property color ink: Qt.darker(modelData.color, 1.25)
-                        // The icons in the text colour: the pill's colour is its fill and border
-                        readonly property color glyph: Kirigami.Theme.textColor
+                        // A solid circle of its colour with a white icon, upright whatever the panel
                         width: compact.pillLength
                         height: compact.pillHeight
                         radius: height / 2
-                        color: Qt.alpha(modelData.color, 0.2)
-                        border.width: 1
-                        border.color: Qt.alpha(ink, 0.55)
+                        color: modelData.color
                         Kirigami.Icon {
                             anchors.centerIn: parent
-                            width: compact.pillIconSize
+                            width: Math.round(compact.pillHeight * 0.62)
                             height: width
+                            rotation: -content.rotation
                             source: pill.modelData.icon
                             isMask: true
-                            color: pill.glyph
+                            color: "white"
                         }
                         // A click: Do Not Disturb off, or the drawer open on who's using what
                         MouseArea {
