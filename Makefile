@@ -8,7 +8,7 @@ QMLTESTRUNNER ?= /usr/lib/qt6/bin/qmltestrunner
 QMLLINT_FLAGS = --unqualified disable --missing-property disable \
 	-I $(BUILD_DIR)/bin -I $(PREFIX)/lib/qml
 
-QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml package/contents/ui/stand/*.qml package/contents/ui/stand/lib/*.qml)
+QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml package/contents/ui/stand/*.qml package/contents/ui/stand/lib/*.qml package/contents/ui/focus/*.qml package/contents/ui/focus/lib/*.qml)
 
 DOMAIN = plasma_applet_$(PLUGIN_ID)
 PO_FILES = $(wildcard po/*.po)
@@ -50,6 +50,7 @@ lint: build
 test: build
 	node --test tests/
 	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/stand
+	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/focus
 	tests/compile.sh
 	for po in $(PO_FILES); do msgfmt --check -o /dev/null $$po || exit 1; done
 

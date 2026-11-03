@@ -1,0 +1,465 @@
+import QtQuick
+import QtTest
+import "../../package/contents/ui/focus/lib/timer.js" as TimerLogic
+
+TestCase {
+    name: "History"
+
+    // Fixed reference point so nothing here depends on the wall clock.
+    readonly property date noon: new Date(2026, 6, 28, 12, 0, 0)
+
+    function daysAgo(n) {
+        return new Date(noon.getTime() - n * 24 * 60 * 60 * 1000);
+    }
+
+    function test_parseHistory_survivesRubbish_data() {
+        return [
+            { tag: "empty string", json: "" },
+            { tag: "undefined", json: undefined },
+            { tag: "truncated json", json: '[{"kind":"foc' },
+            { tag: "not json at all", json: "nonsense" },
+            // A config key holding the wrong shape must not be treated as history.
+            { tag: "object not array", json: '{"kind":"focus"}' },
+            { tag: "number", json: "42" }
+        ];
+    }
+
+    function test_parseHistory_survivesRubbish(data) {
+        var entries = TimerLogic.parseHistory(data.json);
+        verify(Array.isArray(entries));
+        compare(entries.length, 0);
+    }
+
+    function test_parseHistory_readsBackWhatWasWritten() {
+        var json = TimerLogic.appendHistory("", TimerLogic.makeEntry("focus", 1500, 1500, noon, "writing"), noon);
+        var entries = TimerLogic.parseHistory(json);
+        compare(entries.length, 1);
+        compare(entries[0].kind, "focus");
+        compare(entries[0].planned, 1500);
+        compare(entries[0].actual, 1500);
+        compare(entries[0].task, "writing");
+    }
+
+    function test_dayKey_isLocalNotUtc() {
+        // 23:30 local must file under its own local day. toISOString() would roll
+        // this into the next day for any timezone east of UTC.
+        compare(TimerLogic.dayKey(new Date(2026, 0, 5, 23, 30, 0)), "2026-01-05");
+        compare(TimerLogic.dayKey(new Date(2026, 0, 5, 0, 30, 0)), "2026-01-05");
+        // Months and days are zero padded so string comparison sorts correctly.
+        compare(TimerLogic.dayKey(new Date(2026, 8, 9, 12, 0, 0)), "2026-09-09");
+    }
+
+    function test_makeEntry_clampsAndRounds() {
+        // A break overrun means the counter went negative; the recorded actual
+        // length must never be negative.
+        var entry = TimerLogic.makeEntry("shortBreak", 300.4, -12, noon, "");
+        compare(entry.planned, 300);
+        compare(entry.actual, 0);
+        compare(entry.task, "");
+        // The kind and day travel with the entry so summaries need no recompute.
+        compare(entry.kind, "shortBreak");
+        compare(entry.day, "2026-07-28");
+    }
+
+    function test_appendHistory_accumulates() {
+        var json = "";
+        for (var i = 0; i < 5; i++)
+            json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("focus", 1500, 1500, noon, ""), noon);
+        compare(TimerLogic.parseHistory(json).length, 5);
+    }
+
+    function test_pruneHistory_dropsOldEntriesOnWrite() {
+        var json = TimerLogic.appendHistory("", TimerLogic.makeEntry("focus", 1500, 1500, daysAgo(40), ""), noon);
+        // The 40-day-old entry is already outside the window, so writing again
+        // must not carry it forward.
+        json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("focus", 1500, 1500, noon, ""), noon);
+        var entries = TimerLogic.parseHistory(json);
+        compare(entries.length, 1);
+        compare(entries[0].day, TimerLogic.dayKey(noon));
+    }
+
+    function test_pruneHistory_keepsInsideWindow() {
+        var json = TimerLogic.appendHistory("", TimerLogic.makeEntry("focus", 1500, 1500, daysAgo(5), ""), noon);
+        json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("focus", 1500, 1500, noon, ""), noon);
+        compare(TimerLogic.parseHistory(json).length, 2);
+    }
+
+    function test_pruneHistory_ignoresEntriesWithNoTimestamp() {
+        // Hand-edited or half-written config must not survive as undateable junk.
+        var entries = TimerLogic.pruneHistory([{ kind: "focus" }, { kind: "focus", at: noon.getTime() }], noon);
+        compare(entries.length, 1);
+    }
+
+    function test_countFocusOn_countsOnlyFocusOnThatDay() {
+        var json = "";
+        json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("focus", 1500, 1500, noon, ""), noon);
+        json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("focus", 1500, 1400, noon, ""), noon);
+        json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("shortBreak", 300, 300, noon, ""), noon);
+        json = TimerLogic.appendHistory(json, TimerLogic.makeEntry("focus", 1500, 1500, daysAgo(1), ""), noon);
+        var entries = TimerLogic.parseHistory(json);
+        compare(TimerLogic.countFocusOn(entries, TimerLogic.dayKey(noon)), 2);
+        compare(TimerLogic.countFocusOn(entries, TimerLogic.dayKey(daysAgo(1))), 1);
+        compare(TimerLogic.countFocusOn(entries, "2000-01-01"), 0);
+        // Breaks are recorded but never counted as focus.
+        compare(TimerLogic.focusSecondsOn(entries, TimerLogic.dayKey(noon)), 1500 + 1400);
+    }
+
+    function test_summaries_onEmptyHistory() {
+        compare(TimerLogic.countFocusOn([], TimerLogic.dayKey(noon)), 0);
+        compare(TimerLogic.focusSecondsOn([], TimerLogic.dayKey(noon)), 0);
+    }
+
+    function test_flowSessions_countAsFocus() {
+        // Flowmodoro records its working sessions as "flow". They are focus by any
+        // reading, and counting only "focus" left that mode's users looking at zeroes.
+        var entries = [
+            { kind: "flow", day: "2026-07-28", at: 1, planned: 0, actual: 1800, task: "Report" },
+            { kind: "focus", day: "2026-07-28", at: 2, planned: 1500, actual: 1500, task: "Report" },
+            { kind: "flowBreak", day: "2026-07-28", at: 3, planned: 300, actual: 300, task: "" },
+            { kind: "shortBreak", day: "2026-07-28", at: 4, planned: 300, actual: 300, task: "" }
+        ];
+        compare(TimerLogic.countFocusOn(entries, "2026-07-28"), 2);
+        compare(TimerLogic.focusSecondsOn(entries, "2026-07-28"), 3300);
+        // Breaks of either mode still do not count.
+        verify(!TimerLogic.isFocusKind("flowBreak"));
+        verify(!TimerLogic.isFocusKind("shortBreak"));
+        verify(!TimerLogic.isFocusKind("longBreak"));
+
+        var byTask = TimerLogic.focusByTask(entries, 7, new Date(2026, 6, 28));
+        compare(byTask.length, 1);
+        compare(byTask[0].task, "Report");
+        compare(byTask[0].count, 2);
+        compare(byTask[0].seconds, 3300);
+    }
+
+    function test_countsAsSession_dropsShortFocusButNeverBreaks() {
+        // Default floor is five minutes.
+        verify(!TimerLogic.countsAsSession("focus", 120, 300));
+        verify(TimerLogic.countsAsSession("focus", 300, 300));
+        verify(TimerLogic.countsAsSession("focus", 1500, 300));
+        // A flow is focus, so the floor applies to it too.
+        verify(!TimerLogic.countsAsSession("flow", 90, 300));
+        // Breaks are never dropped - a five minute break is a normal break.
+        verify(TimerLogic.countsAsSession("shortBreak", 60, 300));
+        verify(TimerLogic.countsAsSession("flowBreak", 30, 300));
+        // A floor of zero records everything.
+        verify(TimerLogic.countsAsSession("focus", 1, 0));
+        verify(TimerLogic.countsAsSession("focus", 1, undefined));
+    }
+
+    function test_renameTaskInHistory_followsTheRename() {
+        var entries = [
+            { kind: "focus", day: "2026-07-29", at: 1, planned: 1500, actual: 1500, task: "Alpha" },
+            { kind: "flow", day: "2026-07-29", at: 2, planned: 0, actual: 600, task: "Alpha" },
+            { kind: "focus", day: "2026-07-29", at: 3, planned: 1500, actual: 1500, task: "Beta" },
+            { kind: "shortBreak", day: "2026-07-29", at: 4, planned: 300, actual: 300, task: "" }
+        ];
+        var renamed = TimerLogic.parseHistory(
+            TimerLogic.renameTaskInHistory(JSON.stringify(entries), "Alpha", "Gamma"));
+
+        compare(renamed.length, 4);
+        compare(renamed[0].task, "Gamma");
+        compare(renamed[1].task, "Gamma");
+        // Everything else is untouched, including the empty task on the break.
+        compare(renamed[2].task, "Beta");
+        compare(renamed[3].task, "");
+        // The rest of each entry survives, or the totals would change.
+        compare(renamed[0].actual, 1500);
+        compare(renamed[1].kind, "flow");
+
+        // Grouping now sees one task where it saw two.
+        var byTask = TimerLogic.focusByTask(renamed, 7, new Date(2026, 6, 29));
+        compare(byTask.length, 2);
+        compare(byTask[0].task, "Gamma");
+        compare(byTask[0].seconds, 2100);
+    }
+
+    function test_renameTaskInHistory_survivesRubbish() {
+        // Nothing to rename to or from: return something the caller can store.
+        compare(TimerLogic.parseHistory(TimerLogic.renameTaskInHistory("", "Alpha", "Beta")).length, 0);
+        compare(TimerLogic.parseHistory(TimerLogic.renameTaskInHistory("not json", "Alpha", "Beta")).length, 0);
+        // A no-op rename must not rewrite the value at all.
+        var json = '[{"kind":"focus","day":"2026-07-29","at":1,"planned":60,"actual":60,"task":"Alpha"}]';
+        compare(TimerLogic.renameTaskInHistory(json, "Alpha", "Alpha"), json);
+        compare(TimerLogic.renameTaskInHistory(json, "", "Beta"), json);
+        // Renaming onto a title already in use merges them, deliberately.
+        var merged = TimerLogic.parseHistory(TimerLogic.renameTaskInHistory(
+            '[{"task":"A","kind":"focus","day":"d","at":1,"planned":60,"actual":60},' +
+            '{"task":"B","kind":"focus","day":"d","at":2,"planned":60,"actual":60}]', "A", "B"));
+        compare(merged[0].task, "B");
+        compare(merged[1].task, "B");
+    }
+
+    function test_focusSegmentsOn_splitsADayByTask() {
+        var entries = [
+            { kind: "focus", day: "2026-07-29", at: 1, planned: 1500, actual: 1500, task: "Alpha" },
+            { kind: "focus", day: "2026-07-29", at: 2, planned: 1500, actual: 1500, task: "Alpha" },
+            { kind: "flow", day: "2026-07-29", at: 3, planned: 0, actual: 600, task: "Beta" },
+            { kind: "focus", day: "2026-07-29", at: 4, planned: 900, actual: 900, task: "" },
+            { kind: "shortBreak", day: "2026-07-29", at: 5, planned: 300, actual: 300, task: "Alpha" },
+            { kind: "focus", day: "2026-07-28", at: 6, planned: 1500, actual: 1500, task: "Alpha" }
+        ];
+        var segments = TimerLogic.focusSegmentsOn(entries, "2026-07-29");
+        // Three tasks that day, heaviest first; the break is not one of them and
+        // yesterday's session is not either.
+        compare(segments.length, 3);
+        compare(segments[0].task, "Alpha");
+        compare(segments[0].count, 2);
+        compare(segments[0].seconds, 3000);
+        compare(segments[1].task, "");
+        compare(segments[1].seconds, 900);
+        compare(segments[2].task, "Beta");
+        compare(segments[2].seconds, 600);
+        // The segments account for the whole bar.
+        var total = 0;
+        for (var i = 0; i < segments.length; i++)
+            total += segments[i].count;
+        compare(total, TimerLogic.countFocusOn(entries, "2026-07-29"));
+        compare(TimerLogic.focusSegmentsOn(entries, "2020-01-01").length, 0);
+    }
+
+    function test_focusPerDay_carriesSegments() {
+        var entries = [
+            { kind: "focus", day: TimerLogic.dayKey(new Date(2026, 6, 29)), at: 1, planned: 60, actual: 60, task: "Alpha" },
+            { kind: "focus", day: TimerLogic.dayKey(new Date(2026, 6, 29)), at: 2, planned: 60, actual: 60, task: "Beta" }
+        ];
+        var buckets = TimerLogic.focusPerDay(entries, 2, new Date(2026, 6, 29));
+        compare(buckets.length, 2);
+        compare(buckets[1].segments.length, 2);
+        // A day with nothing still reports an empty split rather than no property.
+        compare(buckets[0].segments.length, 0);
+    }
+
+    function test_taskHue_isStableAndSpread() {
+        // Same name, same hue - the colour must not move between repaints.
+        compare(TimerLogic.taskHue("Alpha"), TimerLogic.taskHue("Alpha"));
+        // In range.
+        var names = ["Alpha", "Beta", "Task 1", "Task 2", "Report", "z"];
+        for (var i = 0; i < names.length; i++) {
+            var hue = TimerLogic.taskHue(names[i]);
+            verify(hue >= 0 && hue < 360);
+        }
+        // Names that differ by one character must not land on the same colour, which
+        // is what the spreading multiplier is for.
+        verify(Math.abs(TimerLogic.taskHue("Task 1") - TimerLogic.taskHue("Task 2")) > 10);
+        // No task is not a hue at all; the caller uses a neutral colour.
+        compare(TimerLogic.taskHue(""), -1);
+        compare(TimerLogic.taskHue(undefined), -1);
+    }
+
+    // Sessions are laid out from a fixed clock so nothing here depends on the wall time.
+    // at is when a session FINISHED, so a session of `secs` starting at `startMs` is
+    // recorded with at = startMs + secs * 1000.
+    function session(kind, startMs, secs) {
+        return {
+            "kind": kind,
+            "day": TimerLogic.dayKey(new Date(startMs)),
+            "at": startMs + secs * 1000,
+            "planned": secs,
+            "actual": secs,
+            "task": ""
+        };
+    }
+
+    readonly property real nineAm: new Date(2026, 6, 29, 9, 0, 0).getTime()
+
+    function test_isBreakKind_andBreakSeconds() {
+        verify(TimerLogic.isBreakKind("shortBreak"));
+        verify(TimerLogic.isBreakKind("longBreak"));
+        verify(TimerLogic.isBreakKind("flowBreak"));
+        // Focus kinds are not breaks, in both directions.
+        verify(!TimerLogic.isBreakKind("focus"));
+        verify(!TimerLogic.isBreakKind("flow"));
+        verify(!TimerLogic.isFocusKind("shortBreak"));
+
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        var entries = [
+            session("focus", nineAm, 1500),
+            session("shortBreak", nineAm + 1500 * 1000, 300),
+            session("flow", nineAm + 1800 * 1000, 600),
+            session("flowBreak", nineAm + 2400 * 1000, 120)
+        ];
+        compare(TimerLogic.breakSecondsOn(entries, day), 420);
+        compare(TimerLogic.focusSecondsOn(entries, day), 2100);
+    }
+
+    function test_dayBreakdown_idleIsTheGapBetweenSessions() {
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        // 25 min focus, 10 min of nothing, 5 min break.
+        var entries = [
+            session("focus", nineAm, 1500),
+            session("shortBreak", nineAm + (1500 + 600) * 1000, 300)
+        ];
+        var b = TimerLogic.dayBreakdown(entries, day);
+        compare(b.focusSeconds, 1500);
+        compare(b.breakSeconds, 300);
+        compare(b.idleSeconds, 600);
+        compare(b.spanSeconds, 2400);
+        compare(b.sessions, 2);
+        compare(b.firstStart, nineAm);
+        compare(b.lastEnd, nineAm + 2400 * 1000);
+    }
+
+    function test_dayBreakdown_adjacentSessionsHaveNoIdle() {
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        // A task switch records a segment, then the remainder is recorded at the end:
+        // contiguous, so there is no gap between them.
+        var entries = [
+            session("focus", nineAm, 600),
+            session("focus", nineAm + 600 * 1000, 900)
+        ];
+        var b = TimerLogic.dayBreakdown(entries, day);
+        compare(b.focusSeconds, 1500);
+        compare(b.idleSeconds, 0);
+        compare(b.spanSeconds, 1500);
+    }
+
+    function test_dayBreakdown_overlappingEntriesCannotGoNegative() {
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        // A duplicated or hand-edited entry: summing would exceed the span and make idle
+        // negative, which is what merging the intervals prevents.
+        var entries = [
+            session("focus", nineAm, 1500),
+            session("focus", nineAm, 1500),
+            session("focus", nineAm + 300 * 1000, 600)
+        ];
+        var b = TimerLogic.dayBreakdown(entries, day);
+        compare(b.idleSeconds, 0);
+        compare(b.spanSeconds, 1500);
+        // The focus total still counts every entry - only the timeline is merged.
+        compare(b.focusSeconds, 3600);
+    }
+
+    function test_dayBreakdown_singleSessionAndEmptyDay() {
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        var one = TimerLogic.dayBreakdown([session("focus", nineAm, 1500)], day);
+        compare(one.spanSeconds, 1500);
+        compare(one.idleSeconds, 0);
+        compare(one.sessions, 1);
+
+        var none = TimerLogic.dayBreakdown([], day);
+        compare(none.sessions, 0);
+        compare(none.focusSeconds, 0);
+        compare(none.idleSeconds, 0);
+        compare(none.spanSeconds, 0);
+        compare(none.firstStart, 0);
+        // A day with entries, none of them that day, reads the same way.
+        compare(TimerLogic.dayBreakdown([session("focus", nineAm, 60)], "2020-01-01").sessions, 0);
+    }
+
+    function test_periodBreakdown_sumsPerDayAndSkipsDaysOff() {
+        var today = new Date(2026, 6, 29, 18, 0, 0);
+        var yesterdayNine = new Date(2026, 6, 28, 9, 0, 0).getTime();
+        var entries = [
+            // Yesterday: 25 min focus, 10 min gap, 5 min break.
+            session("focus", yesterdayNine, 1500),
+            session("shortBreak", yesterdayNine + (1500 + 600) * 1000, 300),
+            // Today: one 20 min focus, no gap.
+            session("focus", nineAm, 1200)
+        ];
+        var b = TimerLogic.periodBreakdown(entries, 3, today);
+        compare(b.focusSeconds, 2700);
+        compare(b.breakSeconds, 300);
+        // Only yesterday had a gap; the overnight stretch between the two days is not one.
+        compare(b.idleSeconds, 600);
+        compare(b.sessions, 3);
+        // Two days recorded something out of the three asked for.
+        compare(b.daysWorked, 2);
+
+        // Today alone.
+        var justToday = TimerLogic.periodBreakdown(entries, 1, today);
+        compare(justToday.focusSeconds, 1200);
+        compare(justToday.daysWorked, 1);
+        compare(justToday.idleSeconds, 0);
+    }
+
+    function test_dateFromDayKey_isLocalNotUtc() {
+        // 2026-07-29 is a Wednesday. new Date("2026-07-29") is UTC midnight, which is
+        // Tuesday evening west of Greenwich - that shift would mislabel a bar's weekday.
+        var d = TimerLogic.dateFromDayKey("2026-07-29");
+        compare(d.getFullYear(), 2026);
+        compare(d.getMonth(), 6);
+        compare(d.getDate(), 29);
+        compare(d.getDay(), 3);
+        // Round trip through dayKey(), which is local for the same reason.
+        compare(TimerLogic.dayKey(d), "2026-07-29");
+        compare(TimerLogic.dayKey(TimerLogic.dateFromDayKey("2026-01-01")), "2026-01-01");
+    }
+
+    function test_dayTimeline_ordersBlocksAndSnapsTheWindow() {
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        var hour = 60 * 60 * 1000;
+        // Deliberately out of order in the history: 9:20 focus, then a break at 9:00.
+        var entries = [
+            session("focus", nineAm + 20 * 60 * 1000, 1500),
+            session("shortBreak", nineAm, 300)
+        ];
+        entries[0].task = "Report";
+        var line = TimerLogic.dayTimeline(entries, day);
+
+        compare(line.blocks.length, 2);
+        // Sorted by start, whatever order they were recorded in.
+        compare(line.blocks[0].kind, "shortBreak");
+        compare(line.blocks[1].kind, "focus");
+        compare(line.blocks[1].task, "Report");
+        compare(line.blocks[1].startMs, nineAm + 20 * 60 * 1000);
+        compare(line.blocks[1].endMs, nineAm + 20 * 60 * 1000 + 1500 * 1000);
+
+        // The window starts on the hour containing the first block.
+        compare(line.windowStart, nineAm);
+        // Real span is 1h05, so it snaps up - and then out to the four hour minimum.
+        compare(line.windowEnd, nineAm + 4 * hour);
+        compare(line.windowEnd - line.windowStart, 4 * hour);
+    }
+
+    function test_dayTimeline_longDaySnapsToTheHourNotTheMinimum() {
+        var day = TimerLogic.dayKey(new Date(nineAm));
+        var hour = 60 * 60 * 1000;
+        // 9:00 to 14:30 - past the minimum, so the end rounds up to 15:00.
+        var entries = [
+            session("focus", nineAm, 1800),
+            session("focus", nineAm + 5 * hour, 1800)
+        ];
+        var line = TimerLogic.dayTimeline(entries, day);
+        compare(line.windowStart, nineAm);
+        compare(line.windowEnd, nineAm + 6 * hour);
+    }
+
+    function test_dayTimeline_emptyDay() {
+        var line = TimerLogic.dayTimeline([], "2026-07-29");
+        compare(line.blocks.length, 0);
+        compare(line.windowStart, 0);
+        compare(line.windowEnd, 0);
+        // Entries exist, but not on that day.
+        compare(TimerLogic.dayTimeline([session("focus", nineAm, 60)], "2020-01-01").blocks.length, 0);
+    }
+
+    function test_peakSeconds_scalesByTimeAndIsFlooredByTheWorkday() {
+        var buckets = [
+            { day: "2026-07-27", count: 1, seconds: 1800, breakSeconds: 300, segments: [] },
+            { day: "2026-07-28", count: 2, seconds: 3600, breakSeconds: 600, segments: [] },
+            { day: "2026-07-29", count: 0, seconds: 0, breakSeconds: 0, segments: [] }
+        ];
+        // Tallest day counts focus and break together: 3600 + 600.
+        compare(TimerLogic.peakSeconds(buckets, 0), 4200);
+        // The workday floors it, so a reference line at 8h stays inside the plot.
+        compare(TimerLogic.peakSeconds(buckets, 8 * 3600), 8 * 3600);
+        // A busy day above the target still sets the scale.
+        compare(TimerLogic.peakSeconds([{ day: "d", count: 1, seconds: 9 * 3600, breakSeconds: 0, segments: [] }], 8 * 3600), 9 * 3600);
+        // Never zero: it divides.
+        compare(TimerLogic.peakSeconds([], 0), 1);
+    }
+
+    function test_focusPerDay_carriesBreakSeconds() {
+        var today = new Date(2026, 6, 29, 18, 0, 0);
+        var day = TimerLogic.dayKey(today);
+        var entries = [
+            session("focus", nineAm, 1500),
+            session("shortBreak", nineAm + 1500 * 1000, 300)
+        ];
+        var buckets = TimerLogic.focusPerDay(entries, 1, today);
+        compare(buckets[0].breakSeconds, TimerLogic.breakSecondsOn(entries, day));
+        compare(buckets[0].breakSeconds, 300);
+        compare(buckets[0].seconds, 1500);
+    }
+}

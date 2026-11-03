@@ -16,6 +16,7 @@ import org.kde.plasma.plasmoid
 
 import "tabs"
 import "stand" as Stand
+import "focus" as Focus
 
 // What Glance opens: the tabs and their pages. Shared by the classic Plasma popup
 // (Flyout.qml) and the drawer that slides out of the screen edge (drawer/Drawer.qml).
@@ -58,6 +59,9 @@ Item {
         }
         if (island.cfg.showShelf) {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
+        }
+        if (island.focusTimer) {
+            t.push({key: "focus", label: i18n("Focus"), icon: "chronometer"});
         }
         if (island.stand) {
             // The posture you're in, sitting or standing
@@ -369,6 +373,12 @@ Item {
                 key: "agenda"
                 sourceComponent: AgendaTab {
                     calendar: content.calendar
+                }
+            }
+            Page {
+                key: "focus"
+                sourceComponent: Focus.FocusView {
+                    root: content.island.focusTimer
                 }
             }
             Page {

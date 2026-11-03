@@ -49,6 +49,7 @@ MouseArea {
         switch (mode) {
         case "media": return null; // no cover in the panel: the track's text (and its bars) say it
         case "notice": return "notifications";
+        case "focus": return "chronometer";
         case "window": return island.cfg.showAppIcon && island.activeTask && island.activeTask.icon ? island.activeTask.icon : null;
         default: return null;
         }

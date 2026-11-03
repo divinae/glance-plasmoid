@@ -13,6 +13,7 @@ import org.kde.plasma.private.mpris as Mpris
 import com.dv.glance.private as Island
 
 import "stand" as Stand
+import "focus" as Focus
 
 PlasmoidItem {
     id: root
@@ -64,14 +65,21 @@ PlasmoidItem {
     readonly property var stripEvent: cfg.calendarEnabled ? calendarSource.stripEvent : null
     // Time to sit down or stand up asks for something: it goes before media and the window
     readonly property bool standDue: stand !== null && stand !== undefined && stand.switchDue && !stand.pendingPosition
+    readonly property bool focusActive: focusTimer !== null && focusTimer !== undefined && focusTimer.active
     readonly property string stripMode: noticeText !== "" ? "notice"
         : standDue ? "stand"
+        : focusActive ? "focus"
         : showMediaInPanel ? "media"
         : stripEvent ? "event"
         : "window"
     readonly property string stripText: {
         switch (stripMode) {
         case "notice": return noticeText;
+        case "focus": {
+            // "24:31 · task", or the kind of session ("focus", "short break") without a task
+            const task = cfg.focus_task_label || "";
+            return focusTimer.panelTimeText + " · " + truncate(task !== "" && !focusTimer.isBreak() ? task : focusTimer.statusText);
+        }
         case "stand": return stand.cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
         case "media": return mediaText;
         case "event": return truncate(calendarSource.label(stripEvent));
@@ -329,6 +337,19 @@ PlasmoidItem {
     }
     readonly property var stand: standLoader.item
 
+    // Focus (from Fokus): the timer, only while turned on
+    Loader {
+        id: focusLoader
+        active: root.cfg.focusEnabled
+        sourceComponent: Component {
+            Focus.FocusController {
+                settings: root.cfg
+                expanded: root.open
+            }
+        }
+    }
+    readonly property var focusTimer: focusLoader.item
+
     SystemMonitor {
         id: systemMonitor
         active: root.open && root.cfg.showSystem
@@ -369,6 +390,36 @@ PlasmoidItem {
 
     // ---- the widget's right-click menu ---------------------------------------------------------
     Plasmoid.contextualActions: [
+        // Focus (from Fokus): what its own menu offered
+        PlasmaCore.Action {
+            text: root.focusTimer ? root.focusTimer.sessionBtnText.replace("&", "") : ""
+            icon.name: root.focusTimer ? root.focusTimer.sessionBtnIconSource : ""
+            visible: !!root.focusTimer
+            onTriggered: root.focusTimer.toggleSession()
+        },
+        PlasmaCore.Action {
+            text: i18n("Skip")
+            icon.name: "media-skip-forward"
+            visible: !!root.focusTimer && !root.focusTimer.flowmodoroModeEnabled
+            onTriggered: root.focusTimer.skip()
+        },
+        PlasmaCore.Action {
+            text: root.focusTimer && (root.focusTimer.isBreak() || root.focusTimer.breakOvertime) ? i18n("End for today") : i18n("Stop")
+            icon.name: "media-playback-stop"
+            visible: !!root.focusTimer
+            onTriggered: root.focusTimer.endForToday()
+        },
+        PlasmaCore.Action {
+            text: i18n("Flowmodoro")
+            checkable: true
+            checked: root.cfg.focus_flowmodoro_mode_enabled
+            visible: !!root.focusTimer
+            onTriggered: root.cfg.focus_flowmodoro_mode_enabled = !root.cfg.focus_flowmodoro_mode_enabled
+        },
+        PlasmaCore.Action {
+            isSeparator: true
+            visible: !!root.focusTimer
+        },
         PlasmaCore.Action {
             text: i18n("Do Not Disturb")
             icon.name: "notifications-disabled-symbolic"

@@ -83,7 +83,7 @@ GridLayout {
     }
     // Notifications get most of the room, the shelf what it needs
     RowLayout {
-        visible: tab.showNotifications || tab.showShelf || !!tab.island.stand
+        visible: tab.showNotifications || tab.showShelf || !!tab.island.stand || !!tab.island.focusTimer
         Layout.fillWidth: true
         Layout.preferredHeight: Kirigami.Units.gridUnit * 7
         Layout.columnSpan: 3
@@ -96,6 +96,13 @@ GridLayout {
             Layout.preferredWidth: 3
             watcher: tab.notifications
             onClicked: tab.openTab("notifications")
+        }
+        FocusTile {
+            visible: !!tab.island.focusTimer
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+            timer: tab.island.focusTimer
+            onClicked: tab.openTab("focus")
         }
         StandTile {
             visible: !!tab.island.stand
