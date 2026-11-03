@@ -61,11 +61,12 @@ MouseArea {
     // screen sharing (red), Do Not Disturb (grey). A soft fill of the colour, a darker border
     // and icon
     // A standard icon size, sharp; the room around it comes from the pill's length
-    readonly property int pillIconSize: Kirigami.Units.iconSizes.small
+    // Whole pixels throughout, or the icons come out soft
+    readonly property int pillIconSize: 12
     // Circles, as wide as the strip allows
     readonly property int pillLength: pillHeight
-    readonly property int pillHeight: Math.min(thickness - 2, Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing)
-    readonly property int pillSpacing: 3
+    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 8)
+    readonly property int pillSpacing: 4
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive) {
@@ -356,8 +357,8 @@ MouseArea {
             }
             // The status pills, one delegate for all so they stay alike
             Row {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+                x: Math.round(parent.width - width)
+                y: Math.round((parent.height - height) / 2)
                 spacing: compact.pillSpacing
                 visible: compact.pills.length > 0
                 Repeater {
@@ -370,10 +371,15 @@ MouseArea {
                         height: compact.pillHeight
                         radius: height / 2
                         color: modelData.color
+                        // A thin darker rim, so the grey one doesn't melt into the panel
+                        border.width: 1
+                        border.color: Qt.darker(modelData.color, 1.15)
                         Kirigami.Icon {
-                            anchors.centerIn: parent
-                            width: Math.round(compact.pillHeight * 0.62)
+                            // The bell's strokes are thinner: a pixel larger
+                            width: compact.pillIconSize + (pill.modelData.action === "dnd" ? 1 : 0)
                             height: width
+                            x: Math.round((parent.width - width) / 2)
+                            y: Math.round((parent.height - height) / 2)
                             source: pill.modelData.icon
                             isMask: true
                             color: "white"
