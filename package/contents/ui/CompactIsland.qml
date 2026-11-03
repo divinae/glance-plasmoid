@@ -9,7 +9,6 @@ import QtQuick.Layouts
 
 import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
-import org.kde.ksvg as KSvg
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
@@ -160,21 +159,12 @@ MouseArea {
         }
     }
 
-    // The drawer open: the panel's "expanded" indicator, as every applet shows with its popup
-    // (libplasma's CompactApplet: the theme's tab bar, its active tab for this edge)
-    KSvg.FrameSvgItem {
+    // The drawer open: a soft accent capsule behind the strip (a theme tab line read as a stray mark)
+    Rectangle {
         anchors.fill: parent
-        imagePath: "widgets/tabbar"
-        prefix: {
-            let p;
-            switch (Plasmoid.location) {
-            case PlasmaCore.Types.LeftEdge: p = "west-active-tab"; break;
-            case PlasmaCore.Types.TopEdge: p = "north-active-tab"; break;
-            case PlasmaCore.Types.RightEdge: p = "east-active-tab"; break;
-            default: p = "south-active-tab";
-            }
-            return hasElementPrefix(p) ? p : "active-tab";
-        }
+        anchors.margins: 1
+        radius: Math.min(width, height) / 2
+        color: Qt.alpha(Kirigami.Theme.highlightColor, 0.18)
         opacity: compact.island.open ? 1 : 0
         visible: opacity > 0
         Behavior on opacity {
