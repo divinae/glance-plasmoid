@@ -55,8 +55,7 @@ MouseArea {
 
     // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
-    // A standard icon size, drawn as the theme draws it: a mask recoloured at an odd size came
-    // out blurred and pale beside the tray's
+    // A standard icon size: recoloured at an odd size it came out blurred and pale
     readonly property int dndIconSize: Kirigami.Units.iconSizes.small
     readonly property int dndCapsuleLength: dndIconSize + 2 * Kirigami.Units.smallSpacing
     readonly property int trailLength: dndShown ? dndCapsuleLength + Kirigami.Units.smallSpacing : 0
@@ -369,6 +368,9 @@ MouseArea {
                     width: compact.dndIconSize
                     height: width
                     source: "notifications-disabled"
+                    // Solid in the text colour, as the tray's (the icon's own colours are softer)
+                    isMask: true
+                    color: compact.foreground
                 }
             }
         }
