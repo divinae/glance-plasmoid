@@ -12,6 +12,8 @@ import org.kde.plasma.private.mpris as Mpris
 
 import com.dv.glance.private as Island
 
+import "stand" as Stand
+
 PlasmoidItem {
     id: root
 
@@ -301,6 +303,18 @@ PlasmoidItem {
     PrivacyMonitor {
         id: privacyMonitor
     }
+
+    // Stand (from Shift): the sit/stand cycle, only while turned on
+    Loader {
+        id: standLoader
+        active: root.cfg.standEnabled
+        sourceComponent: Component {
+            Stand.StandController {
+                settings: root.cfg
+            }
+        }
+    }
+    readonly property var stand: standLoader.item
 
     SystemMonitor {
         id: systemMonitor

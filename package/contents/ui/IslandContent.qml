@@ -15,6 +15,7 @@ import org.kde.plasma.extras as PlasmaExtras
 import org.kde.plasma.plasmoid
 
 import "tabs"
+import "stand" as Stand
 
 // What Glance opens: the tabs and their pages. Shared by the classic Plasma popup
 // (Flyout.qml) and the drawer that slides out of the screen edge (drawer/Drawer.qml).
@@ -57,6 +58,9 @@ Item {
         }
         if (island.cfg.showShelf) {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
+        }
+        if (island.stand) {
+            t.push({key: "stand", label: i18n("Stand"), icon: "go-up"});
         }
         if (island.cfg.showSystem) {
             t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
@@ -363,6 +367,12 @@ Item {
                 key: "agenda"
                 sourceComponent: AgendaTab {
                     calendar: content.calendar
+                }
+            }
+            Page {
+                key: "stand"
+                sourceComponent: Stand.StandView {
+                    root: content.island.stand
                 }
             }
             Page {

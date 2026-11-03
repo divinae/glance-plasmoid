@@ -17,6 +17,16 @@ ConfigModel {
         source: "configMedia.qml"
     }
     ConfigCategory {
+        name: i18n("Stand")
+        icon: "go-up"
+        source: "configStand.qml"
+    }
+    ConfigCategory {
+        name: i18n("Desk")
+        icon: "transform-move-vertical"
+        source: "configStandDesk.qml"
+    }
+    ConfigCategory {
         name: i18n("Activities")
         icon: "notifications"
         source: "configActivities.qml"

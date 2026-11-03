@@ -235,5 +235,130 @@
     <entry name="pauseOnFullscreen" type="Bool">
       <default>true</default>
     </entry>
+    <!-- Stand (from Shift): the sit/stand cycle, reminders and the desk; stand_ + Shift's keys -->
+    <entry name="standEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+
+        <entry name="stand_sit_minutes" type="Int">
+            <min>1</min>
+            <max>600</max>
+            <default>45</default>
+        </entry>
+
+        <entry name="stand_stand_minutes" type="Int">
+            <min>1</min>
+            <max>600</max>
+            <default>15</default>
+        </entry>
+
+        <entry name="stand_daily_goal_minutes" type="Int">
+            <!-- 0 turns the goal and the streak off. -->
+            <min>0</min>
+            <max>1440</max>
+            <default>120</default>
+        </entry>
+
+        <entry name="stand_snooze_minutes" type="Int">
+            <min>1</min>
+            <max>120</max>
+            <default>10</default>
+        </entry>
+
+
+        <entry name="stand_notification_enabled" type="Bool">
+            <default>true</default>
+        </entry>
+
+        <entry name="stand_sfx_enabled" type="Bool">
+            <default>true</default>
+        </entry>
+
+        <entry name="stand_sfx_filepath" type="String">
+            <default>/usr/share/sounds/ocean/stereo/dialog-information.oga</default>
+        </entry>
+
+        <entry name="stand_sound_volume" type="Int">
+            <min>0</min>
+            <max>100</max>
+            <default>80</default>
+        </entry>
+
+        <entry name="stand_desk_enabled" type="Bool">
+            <default>false</default>
+        </entry>
+
+        <entry name="stand_desk_sit_cmd" type="String">
+            <default>idasen sit</default>
+        </entry>
+
+        <entry name="stand_desk_stand_cmd" type="String">
+            <default>idasen stand</default>
+        </entry>
+
+        <entry name="stand_desk_height_cmd" type="String">
+            <default>idasen height</default>
+        </entry>
+
+        <entry name="stand_desk_save_cmd" type="String">
+            <default>idasen save {position}</default>
+        </entry>
+
+        <entry name="stand_sit_height_cm" type="Double">
+            <min>40</min>
+            <max>160</max>
+            <default>72</default>
+        </entry>
+
+        <entry name="stand_stand_height_cm" type="Double">
+            <min>40</min>
+            <max>160</max>
+            <default>110</default>
+        </entry>
+
+        <entry name="stand_desk_poll_seconds" type="Int">
+            <!-- Each read is a Bluetooth connection, so not too often. A minute is soon
+                 enough to notice the desk's own buttons for the stats. -->
+            <min>10</min>
+            <max>3600</max>
+            <default>60</default>
+        </entry>
+
+        <entry name="stand_auto_move_enabled" type="Bool">
+            <default>false</default>
+        </entry>
+
+
+        <entry name="stand_away_on_lock_enabled" type="Bool">
+            <default>true</default>
+        </entry>
+
+        <entry name="stand_work_hours_enabled" type="Bool">
+            <default>false</default>
+        </entry>
+
+        <entry name="stand_work_start_minutes" type="Int">
+            <min>0</min>
+            <max>1439</max>
+            <default>540</default>
+        </entry>
+
+        <entry name="stand_work_end_minutes" type="Int">
+            <min>0</min>
+            <max>1439</max>
+            <default>1020</default>
+        </entry>
+
+        <entry name="stand_work_weekdays_only" type="Bool">
+            <default>true</default>
+        </entry>
+
+        <entry name="stand_cycle_state" type="String">
+            <default></default>
+        </entry>
+
+        <entry name="stand_stand_history" type="String">
+            <default>{}</default>
+        </entry>
   </group>
 </kcfg>

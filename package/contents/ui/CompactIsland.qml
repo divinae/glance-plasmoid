@@ -14,6 +14,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 
 import com.dv.glance.private as Island
+import "stand/lib/cycle.js" as Cycle
 
 MouseArea {
     id: compact
@@ -83,6 +84,12 @@ MouseArea {
             out.push({color: privacy.screenColor, icon: "computer-symbolic", action: stoppable ? "screen" : "privacy",
                 tip: stoppable ? i18n("Screen is being shared: %1. Click to stop sharing.", privacy.screenNames.join(", "))
                     : i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
+        }
+        // Stand: time to switch (or a switch waiting to be confirmed); click switches
+        if (island.stand && (island.stand.switchDue || island.stand.pendingPosition)) {
+            out.push({color: "#c9a227", action: "stand",
+                icon: Qt.resolvedUrl(island.stand.cycle.position === "stand" ? "stand/icons/person-sit.svg" : "stand/icons/person-stand.svg"),
+                tip: island.stand.tooltipText + "\n" + i18n("Click to switch now.")});
         }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
@@ -423,6 +430,13 @@ MouseArea {
                                     switch (segment.modelData.action) {
                                     case "dnd":
                                         compact.notifications.toggleDoNotDisturb();
+                                        break;
+                                    case "stand":
+                                        if (compact.island.stand.pendingPosition) {
+                                            compact.island.stand.confirmPending();
+                                        } else {
+                                            compact.island.stand.goTo(Cycle.opposite(compact.island.stand.cycle.position));
+                                        }
                                         break;
                                     case "screen":
                                         // The portal's entry is translated: its own catalogue's word, then English

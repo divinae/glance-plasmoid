@@ -3,11 +3,12 @@ PREFIX ?= $(HOME)/.local
 BUILD_DIR ?= build
 
 QMLLINT ?= /usr/lib/qt6/bin/qmllint
+QMLTESTRUNNER ?= /usr/lib/qt6/bin/qmltestrunner
 # plasmoid.configuration and Plasma attached properties are not resolvable outside plasmashell
 QMLLINT_FLAGS = --unqualified disable --missing-property disable \
 	-I $(BUILD_DIR)/bin -I $(PREFIX)/lib/qml
 
-QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml)
+QML_SOURCES = $(wildcard package/contents/ui/*.qml package/contents/ui/tabs/*.qml package/contents/ui/tiles/*.qml package/contents/ui/drawer/*.qml package/contents/ui/stand/*.qml package/contents/ui/stand/lib/*.qml)
 
 DOMAIN = plasma_applet_$(PLUGIN_ID)
 PO_FILES = $(wildcard po/*.po)
@@ -48,6 +49,7 @@ lint: build
 # and the translations checked
 test: build
 	node --test tests/
+	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/stand
 	tests/compile.sh
 	for po in $(PO_FILES); do msgfmt --check -o /dev/null $$po || exit 1; done
 
