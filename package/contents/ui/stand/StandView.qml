@@ -238,36 +238,161 @@ GridLayout {
         }
     }
 
-    // ---- the desk -------------------------------------------------------------------------------
+    // ---- the desk: its height on a scale between the two positions, where it's going ------
     Card {
+        id: deskCard
         visible: view.root.deskEnabled
         title: i18n("Desk")
+
+        readonly property var d: root.deskDriver
+        readonly property real sit: settings.stand_sit_height_cm
+        readonly property real standH: settings.stand_stand_height_cm
+        readonly property bool known: !isNaN(d.heightCm)
+        // Within 2 cm of a position counts as there
+        readonly property string at: !known ? ""
+            : Math.abs(d.heightCm - sit) <= 2 ? "sit"
+            : Math.abs(d.heightCm - standH) <= 2 ? "stand" : "between"
+        readonly property real lo: Math.min(sit, standH) - 5
+        readonly property real hi: Math.max(sit, standH) + 5
+        function frac(cm) {
+            return Math.max(0, Math.min(1, (cm - lo) / (hi - lo)));
+        }
+
         RowLayout {
             Layout.fillWidth: true
-
+            spacing: Kirigami.Units.largeSpacing
+            PlasmaComponents.Label {
+                text: deskCard.known ? i18nc("desk height", "%1 cm", Math.round(deskCard.d.heightCm)) : "—"
+                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.6
+                font.weight: Font.Bold
+            }
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: !root.deskDriver.moving && !root.deskDriver.reachable ? i18n("Desk not reachable. Switches wait for you to confirm them.")
-                    : !root.deskDriver.moving ? root.heightText()
-                    : root.deskDriver.attempt > 1 ? i18n("Desk stopped short, trying again (%1 of %2)…", root.deskDriver.attempt, root.deskDriver.maxAttempts)
-                    : isNaN(root.deskDriver.startCm) ? i18n("Desk moving…")
-                    : i18n("Moving %1 → %2 cm…", Math.round(root.deskDriver.startCm), Math.round(root.deskDriver.targetCm))
+                text: !deskCard.d.reachable && !deskCard.d.moving ? i18n("Not reachable")
+                    : deskCard.d.moving ? (deskCard.d.target === "stand" ? i18n("Rising to standing…") : i18n("Lowering to sitting…"))
+                    : deskCard.at === "sit" ? i18n("At sitting height")
+                    : deskCard.at === "stand" ? i18n("At standing height")
+                    : deskCard.at === "between" ? i18n("Between the two heights")
+                    : i18n("Height not read yet")
+                color: !deskCard.d.reachable && !deskCard.d.moving ? Kirigami.Theme.negativeTextColor : root.themeDimColor
                 wrapMode: Text.Wrap
             }
+            PlasmaComponents.ToolButton {
+                icon.name: "view-refresh"
+                visible: !deskCard.d.moving
+                enabled: !deskCard.d.reading
+                text: i18n("Read the height again")
+                display: PlasmaComponents.AbstractButton.IconOnly
+                onClicked: deskCard.d.readHeight()
+                PlasmaComponents.ToolTip.text: text
+                PlasmaComponents.ToolTip.visible: hovered
+            }
+        }
 
+        // The scale: sitting and standing marked, the desk's height on it, the target while moving
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Kirigami.Units.gridUnit * 2
+            Rectangle {
+                id: track
+                anchors.left: parent.left
+                anchors.right: parent.right
+                y: Kirigami.Units.smallSpacing
+                height: 6
+                radius: 3
+                color: root.themeTrackColor
+            }
+            // From where the move started to the desk now
+            Rectangle {
+                visible: deskCard.d.moving && !isNaN(deskCard.d.startCm) && deskCard.known
+                readonly property real a: deskCard.frac(Math.min(deskCard.d.startCm, deskCard.d.heightCm))
+                readonly property real b: deskCard.frac(Math.max(deskCard.d.startCm, deskCard.d.heightCm))
+                x: track.width * a
+                y: track.y
+                width: Math.max(2, track.width * (b - a))
+                height: track.height
+                radius: 3
+                color: root.themeAccentColor
+                opacity: 0.5
+            }
+            Repeater {
+                model: [
+                    {cm: deskCard.sit, label: i18nc("sitting height mark", "Sit %1", Math.round(deskCard.sit))},
+                    {cm: deskCard.standH, label: i18nc("standing height mark", "Stand %1", Math.round(deskCard.standH))},
+                ]
+                delegate: Item {
+                    required property var modelData
+                    x: track.width * deskCard.frac(modelData.cm)
+                    Rectangle {
+                        x: -1
+                        y: track.y - 3
+                        width: 2
+                        height: track.height + 6
+                        color: root.themeDimColor
+                    }
+                    PlasmaComponents.Label {
+                        x: -width / 2
+                        y: track.y + track.height + 4
+                        text: modelData.label
+                        font: Kirigami.Theme.smallFont
+                        color: root.themeDimColor
+                    }
+                }
+            }
+            // The target, while moving
+            Rectangle {
+                visible: deskCard.d.moving && !isNaN(deskCard.d.targetCm)
+                x: track.width * deskCard.frac(deskCard.d.targetCm) - width / 2
+                y: track.y - 3
+                width: 12
+                height: 12
+                radius: 6
+                color: "transparent"
+                border.width: 2
+                border.color: root.themeAccentColor
+            }
+            // The desk now
+            Rectangle {
+                visible: deskCard.known
+                x: track.width * deskCard.frac(deskCard.d.heightCm) - width / 2
+                y: track.y - 3
+                width: 12
+                height: 12
+                radius: 6
+                color: root.themeAccentColor
+                Behavior on x {
+                    NumberAnimation { duration: Kirigami.Units.longDuration }
+                }
+            }
+        }
+
+        // Moving or retrying: from and to, the attempt; or how to bring it back
+        RowLayout {
+            Layout.fillWidth: true
+            visible: deskCard.d.moving || !deskCard.d.reachable
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: !deskCard.d.reachable && !deskCard.d.moving ? i18n("Switches wait for you to confirm them.")
+                    : deskCard.d.attempt > 1 ? i18n("Stopped short, trying again (%1 of %2)", deskCard.d.attempt, deskCard.d.maxAttempts)
+                    : !isNaN(deskCard.d.startCm) && !isNaN(deskCard.d.targetCm)
+                        ? i18nc("desk move from → to", "%1 → %2 cm", Math.round(deskCard.d.startCm), Math.round(deskCard.d.targetCm))
+                    : i18n("Moving…")
+                font: Kirigami.Theme.smallFont
+                color: root.themeDimColor
+                wrapMode: Text.Wrap
+            }
             PlasmaComponents.Button {
-                visible: !root.deskDriver.reachable && !root.deskDriver.moving
-                enabled: !root.deskDriver.reading
+                visible: !deskCard.d.reachable && !deskCard.d.moving
+                enabled: !deskCard.d.reading
                 icon.name: "view-refresh"
                 text: i18n("Try again")
-                onClicked: root.deskDriver.readHeight()
+                onClicked: deskCard.d.readHeight()
             }
-
             PlasmaComponents.Button {
-                visible: root.deskDriver.moving && root.deskDriver.attempt > 1
+                visible: deskCard.d.moving && deskCard.d.attempt > 1
                 icon.name: "process-stop"
                 text: i18n("Stop retrying")
-                onClicked: root.deskDriver.cancel()
+                onClicked: deskCard.d.cancel()
             }
         }
     }
