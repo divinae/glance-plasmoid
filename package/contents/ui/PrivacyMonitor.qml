@@ -15,10 +15,10 @@ import com.dv.island.private as Island
 Item {
     id: privacy
 
-    readonly property color cameraColor: "#6fb383"
-    readonly property color screenColor: "#d77a72"
+    readonly property color cameraColor: "#3fae5d"
+    readonly property color screenColor: "#e5554b"
     // The microphone in macOS's orange, faded as the others
-    readonly property color micColor: "#e0a35c"
+    readonly property color micColor: "#ef9a2e"
     readonly property bool micActive: Island.ScreenCastMonitor.micActive
     readonly property var micNames: Island.ScreenCastMonitor.micUsers
 

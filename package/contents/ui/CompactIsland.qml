@@ -57,16 +57,16 @@ MouseArea {
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
     // The pills go past the text: above the title on a vertical panel (its far end)
     readonly property int trailLength: privacyLength
-    // Status icons (camera green, microphone orange, screen sharing red, Do Not Disturb) in one
-    // pale capsule past the title: coloured icons only, so the title still leads
-    readonly property int pillIconSize: 14
-    readonly property int pillSpacing: 4
-    readonly property int capsulePadding: Kirigami.Units.smallSpacing + 2
-    readonly property int pillHeight: Math.min(thickness - 2, pillIconSize + 6)
+    // Status badges past the title, packed together (macOS's menu bar): solid circles of their
+    // colour (camera green, microphone orange, screen sharing red, Do Not Disturb grey) with a
+    // white icon from one icon set
+    readonly property int pillHeight: Math.min(thickness - 2, 20)
+    readonly property int pillIconSize: Math.min(14, pillHeight - 6)
+    readonly property int pillSpacing: 2
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive && island.cfg.pillCamera) {
-            out.push({color: privacy.cameraColor, icon: "camera-on-symbolic", action: "privacy",
+            out.push({color: privacy.cameraColor, icon: "camera-web-symbolic", action: "privacy",
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
         }
         if (privacy.micActive && island.cfg.pillMicrophone) {
@@ -78,13 +78,13 @@ MouseArea {
                 tip: i18n("Screen is being shared: %1", privacy.screenNames.join(", "))});
         }
         if (dndShown && island.cfg.pillDnd) {
-            out.push({color: Kirigami.Theme.textColor, icon: "notifications-disabled-symbolic", action: "dnd",
+            out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
                 tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
         }
         return out;
     }
     readonly property int capsuleLength: pills.length > 0
-        ? pills.length * pillIconSize + (pills.length - 1) * pillSpacing + 2 * capsulePadding : 0
+        ? pills.length * pillHeight + (pills.length - 1) * pillSpacing : 0
     readonly property int privacyLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
@@ -364,25 +364,29 @@ MouseArea {
                 y: Math.round((parent.height - height) / 2)
                 width: compact.capsuleLength
                 height: compact.pillHeight
-                radius: height / 2
-                color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
+                color: "transparent"
                 visible: compact.pills.length > 0
 
                 Row {
-                    x: compact.capsulePadding
-                    y: Math.round((parent.height - compact.pillIconSize) / 2)
                     spacing: compact.pillSpacing
                     Repeater {
                         model: compact.pills
-                        delegate: Kirigami.Icon {
+                        delegate: Rectangle {
                             id: pill
                             required property var modelData
-                            width: compact.pillIconSize
+                            width: compact.pillHeight
                             height: width
-                            source: modelData.icon
-                            isMask: true
-                            // Its colour, deepened to read on the pale capsule; the bell in the text colour
-                            color: modelData.action === "dnd" ? modelData.color : Qt.darker(modelData.color, 1.7)
+                            radius: width / 2
+                            color: modelData.color
+                            Kirigami.Icon {
+                                x: Math.round((parent.width - width) / 2)
+                                y: Math.round((parent.height - height) / 2)
+                                width: compact.pillIconSize
+                                height: width
+                                source: pill.modelData.icon
+                                isMask: true
+                                color: "white"
+                            }
                             scale: pillMouse.pressed && modelData.action === "dnd" ? 0.88 : 1
                             Behavior on scale {
                                 NumberAnimation { duration: Kirigami.Units.shortDuration }
