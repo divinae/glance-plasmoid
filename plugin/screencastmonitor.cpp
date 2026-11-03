@@ -58,6 +58,8 @@ bool isWatched(const QString &mediaClass)
 struct BoundNode {
     ScreenCastMonitor *monitor = nullptr;
     quint32 id = 0;
+    // What's known so far: PipeWire sends only what changed after the first info
+    ScreenCastMonitor::Node node;
     pw_proxy *proxy = nullptr;
     spa_hook listener{};
     spa_hook proxyListener{};
@@ -71,7 +73,14 @@ struct ScreenCastMonitor::Private {
 static void nodeInfo(void *data, const pw_node_info *info)
 {
     auto *node = static_cast<BoundNode *>(data);
-    ScreenCastMonitor::Node n;
+    ScreenCastMonitor::Node &n = node->node;
+    if (info->change_mask & PW_NODE_CHANGE_MASK_STATE) {
+        n.running = info->state == PW_NODE_STATE_RUNNING;
+    }
+    if (!(info->change_mask & PW_NODE_CHANGE_MASK_PROPS) || !info->props) {
+        node->monitor->nodeChanged(node->id, n);
+        return;
+    }
     n.mediaClass = prop(info->props, PW_KEY_MEDIA_CLASS);
     n.name = prop(info->props, PW_KEY_NODE_NAME);
     n.mediaName = prop(info->props, PW_KEY_MEDIA_NAME);
@@ -87,7 +96,6 @@ static void nodeInfo(void *data, const pw_node_info *info)
     if (!ok) {
         n.target = prop(info->props, "node.driver-id").toUInt();
     }
-    n.running = info->state == PW_NODE_STATE_RUNNING;
     node->monitor->nodeChanged(node->id, n);
 }
 
