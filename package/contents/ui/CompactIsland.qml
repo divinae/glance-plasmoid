@@ -86,7 +86,7 @@ MouseArea {
     readonly property int privacyLength: pills.length > 0
         ? pills.length * pillLength + (pills.length - 1) * pillSpacing + Kirigami.Units.largeSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
-        + trailLength + 2 * margin + 2 * inset)
+        + 2 * trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
     Behavior on animatedLength {
         NumberAnimation {
@@ -302,9 +302,10 @@ MouseArea {
                 id: textBox
                 readonly property int leadLength: compact.barsLength + compact.dotLength + compact.iconLength
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength - compact.trailLength)
+                // Centred in the strip, the pills beside it: the strip keeps their room on both sides
+                width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength - 2 * compact.trailLength)
                 height: textA.implicitHeight
-                x: leadLength + Math.max(0, (parent.width - leadLength - compact.trailLength - width) / 2)
+                x: compact.trailLength + leadLength + Math.max(0, (parent.width - leadLength - 2 * compact.trailLength - width) / 2)
 
                 property bool showA: true
                 property string current: compact.island.stripText
@@ -357,7 +358,8 @@ MouseArea {
             }
             // The status pills, one delegate for all so they stay alike
             Row {
-                x: Math.round(parent.width - width)
+                // Right after the title
+                x: Math.round(Math.min(parent.width - width, textBox.x + textBox.width + Kirigami.Units.largeSpacing))
                 y: Math.round((parent.height - height) / 2)
                 spacing: compact.pillSpacing
                 visible: compact.pills.length > 0
