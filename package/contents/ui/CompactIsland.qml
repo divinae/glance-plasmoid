@@ -55,8 +55,10 @@ MouseArea {
 
     // Do Not Disturb gets its own place at the end, past a divider, instead of hanging off the text
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
-    readonly property int dndIconSize: Math.round(pillThickness * 0.8)
-    readonly property int dndCapsuleLength: dndIconSize + 3 * Kirigami.Units.smallSpacing
+    // A standard icon size, drawn as the theme draws it: a mask recoloured at an odd size came
+    // out blurred and pale beside the tray's
+    readonly property int dndIconSize: Kirigami.Units.iconSizes.small
+    readonly property int dndCapsuleLength: dndIconSize + 2 * Kirigami.Units.smallSpacing
     readonly property int trailLength: dndShown ? dndCapsuleLength + Kirigami.Units.smallSpacing : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
@@ -356,7 +358,7 @@ MouseArea {
             Rectangle {
                 id: dndCapsule
                 width: compact.dndCapsuleLength
-                height: compact.pillThickness
+                height: Math.min(compact.thickness - 2, compact.dndIconSize + Kirigami.Units.smallSpacing)
                 radius: height / 2
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
@@ -367,8 +369,6 @@ MouseArea {
                     width: compact.dndIconSize
                     height: width
                     source: "notifications-disabled"
-                    color: compact.foreground
-                    isMask: true
                 }
             }
         }

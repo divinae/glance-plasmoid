@@ -344,6 +344,77 @@ PlasmoidItem {
             && (root.open || (root.cfg.cavaInPanel && root.cfg.mediaInPanel))
     }
 
+    // ---- the widget's right-click menu ---------------------------------------------------------
+    Plasmoid.contextualActions: [
+        PlasmaCore.Action {
+            text: i18n("Do Not Disturb")
+            icon.name: "notifications-disabled"
+            checkable: true
+            checked: notificationWatcher.doNotDisturb
+            visible: root.cfg.showNotifications
+            onTriggered: notificationWatcher.toggleDoNotDisturb()
+        },
+        PlasmaCore.Action {
+            text: i18n("Clear All Notifications")
+            icon.name: "edit-clear-history"
+            visible: root.cfg.showNotifications
+            enabled: notificationWatcher.count > 0
+            onTriggered: notificationWatcher.clearHistory()
+        },
+        PlasmaCore.Action {
+            isSeparator: true
+            visible: root.cfg.showMedia && root.hasPlayer
+        },
+        PlasmaCore.Action {
+            text: root.playing ? i18nc("media", "Pause") : i18nc("media", "Play")
+            icon.name: root.playing ? "media-playback-pause" : "media-playback-start"
+            visible: root.cfg.showMedia && root.hasPlayer
+            enabled: root.hasPlayer && (root.playing ? root.player.canPause : root.player.canPlay)
+            onTriggered: root.player.PlayPause()
+        },
+        PlasmaCore.Action {
+            text: i18nc("media", "Previous Track")
+            icon.name: "media-skip-backward"
+            visible: root.cfg.showMedia && root.hasPlayer
+            enabled: root.hasPlayer && root.player.canGoPrevious
+            onTriggered: root.player.Previous()
+        },
+        PlasmaCore.Action {
+            text: i18nc("media", "Next Track")
+            icon.name: "media-skip-forward"
+            visible: root.cfg.showMedia && root.hasPlayer
+            enabled: root.hasPlayer && root.player.canGoNext
+            onTriggered: root.player.Next()
+        },
+        PlasmaCore.Action {
+            isSeparator: true
+        },
+        PlasmaCore.Action {
+            text: i18n("Open Dashboard")
+            icon.name: "view-grid"
+            visible: root.cfg.showDashboard
+            onTriggered: root.openOn("dashboard", true)
+        },
+        PlasmaCore.Action {
+            text: i18n("Open Media")
+            icon.name: "media-playback-start"
+            visible: root.cfg.showMedia && root.hasPlayer
+            onTriggered: root.openOn("media", true)
+        },
+        PlasmaCore.Action {
+            text: i18n("Open Notifications")
+            icon.name: "notifications"
+            visible: root.cfg.showNotifications
+            onTriggered: root.openOn("notifications", true)
+        },
+        PlasmaCore.Action {
+            text: i18n("Open System Monitor")
+            icon.name: "view-statistics"
+            visible: root.cfg.showSystem
+            onTriggered: root.openOn("system", true)
+        }
+    ]
+
     compactRepresentation: CompactIsland {
         island: root
         cava: cavaSource
