@@ -417,9 +417,13 @@ MouseArea {
                                     }
                                 }
                             }
-                            PlasmaComponents.ToolTip.text: modelData.tip || ""
-                            PlasmaComponents.ToolTip.visible: pillMouse.containsMouse
-                            PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
+                            // Plasma's own tooltip window, as the tray's: a Controls tooltip is drawn
+                            // inside the narrow, rotated panel and came out turned and cut off
+                            PlasmaCore.ToolTipArea {
+                                anchors.fill: parent
+                                mainText: pill.modelData.tip || ""
+                                location: Plasmoid.location
+                            }
                         }
                     }
                 }
