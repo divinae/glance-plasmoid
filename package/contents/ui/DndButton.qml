@@ -17,7 +17,7 @@ PlasmaComponents.ToolButton {
     // With the text ("Do not disturb" / "Until 14:00") or the icon alone
     property bool showText: false
 
-    icon.name: watcher.doNotDisturb ? "notifications-disabled" : "notifications"
+    icon.name: watcher.doNotDisturb ? "notifications-disabled-symbolic" : "notification-inactive-symbolic"
     checkable: true
     checked: watcher.doNotDisturb
     text: !showText ? i18n("Do not disturb")

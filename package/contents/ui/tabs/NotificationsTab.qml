@@ -60,7 +60,7 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.margins: Kirigami.Units.largeSpacing
         visible: tab.watcher.count === 0
-        iconName: tab.watcher.doNotDisturb ? "notifications-disabled" : "checkmark"
+        iconName: tab.watcher.doNotDisturb ? "notifications-disabled-symbolic" : "checkmark"
         text: i18n("No notifications")
         explanation: tab.watcher.doNotDisturb ? i18n("Do not disturb: %1", tab.watcher.dndText) : ""
     }

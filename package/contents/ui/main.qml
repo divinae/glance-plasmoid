@@ -348,7 +348,7 @@ PlasmoidItem {
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
             text: i18n("Do Not Disturb")
-            icon.name: "notifications-disabled"
+            icon.name: "notifications-disabled-symbolic"
             checkable: true
             checked: notificationWatcher.doNotDisturb
             visible: root.cfg.showNotifications

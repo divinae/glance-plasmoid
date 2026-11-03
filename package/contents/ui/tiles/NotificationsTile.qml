@@ -44,7 +44,7 @@ Tile {
             Kirigami.Icon {
                 implicitWidth: Kirigami.Units.iconSizes.small
                 implicitHeight: implicitWidth
-                source: tile.watcher.doNotDisturb ? "notifications-disabled" : "notifications"
+                source: tile.watcher.doNotDisturb ? "notifications-disabled-symbolic" : "notification-inactive-symbolic"
             }
             PlasmaComponents.Label {
                 Layout.fillWidth: true

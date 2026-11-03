@@ -367,10 +367,8 @@ MouseArea {
                     anchors.centerIn: parent
                     width: compact.dndIconSize
                     height: width
-                    source: "notifications-disabled"
-                    // Solid in the text colour, as the tray's (the icon's own colours are softer)
-                    isMask: true
-                    color: compact.foreground
+                    // The stock Notifications widget's: a solid symbolic icon, coloured by the theme
+                    source: "notifications-disabled-symbolic"
                 }
             }
         }
