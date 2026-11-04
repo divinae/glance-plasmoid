@@ -68,7 +68,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: pillMeeting
-            text: i18n("Meeting on now, with Join")
+            text: i18n("Meeting on now (a click shows it in Event Calendar)")
         }
         QQC2.CheckBox {
             id: pillDnd

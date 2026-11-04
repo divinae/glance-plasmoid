@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.3.0 — 2026-11-04
+
+**Music.** The cover, blurred, behind the Media tab and lighter behind the dashboard's card; the
+controls take a colour from it. The last cover stays until the next has loaded, then they
+crossfade (no more placeholder flashing between tracks). Scroll on the cover for the volume
+(with Plasma's volume display), on the seek bar for 5 s on or back. Keys in the Media tab, as
+Plasma's own player: Space or K, P and N, J and L (or the arrows), Home and End, 0–9. A tap on
+the track's length shows the time left. A browser's empty player is "nothing playing", not a
+player called Vivaldi; with more than one player, "Choose a player". Shuffle works (it never
+did), the player menu doesn't list one twice, and the player chip shows only when there is a
+choice or a name to add.
+
+**Panel.** Unread notifications: a bell pill in place of the dot. A meeting on now: its pill
+shows the time left ("20 min"; the end in its tooltip), and a click opens it in Event Calendar
+(it joins when there's none). Focus: its pill is Fokus's wedge emptying as the session runs (the
+stopwatch during a flow or a break past its end). The pills sit evenly in the capsule's
+rounded end.
+
+**Drawer.** One button style across the cards: rounded and tinted, the main or chosen one in
+the accent (Start, Sit | Stand, the player, the period). Focus | Posture are tabs. A click on
+the window's icon in the menu bar opens KWin's window menu (as Alt+F3). Picking from a menu in
+the drawer (the player, the period, Shift's pause, Do Not Disturb) no longer closes it.
+
+**Focus.** "Start the timer when Plasma starts" means after a reboot: a Plasma restart leaves a
+timer you stopped stopped.
+
+**Also:** no bell twice on the dashboard's notifications card.
+
 ## 1.2.0 — 2026-11-04
 
 Glance and [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar) work

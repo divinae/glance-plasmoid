@@ -26,6 +26,17 @@ Tile {
 
     signal openMedia()
 
+    // The cover, blurred and light, under the whole card (as on the Media tab, fainter)
+    CoverBackdrop {
+        anchors.fill: parent
+        anchors.margins: -tile.padding
+        z: -1
+        radius: tile.radius
+        source: cover.ready ? cover.front.source : ""
+        shown: tile.hasPlayer
+        strength: 0.3
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.topMargin: Kirigami.Units.smallSpacing
@@ -63,7 +74,7 @@ Tile {
                     anchors.fill: parent
                     radius: width / 2
                     color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
-                    visible: cover.status !== Image.Ready
+                    visible: !cover.ready
                     Kirigami.Icon {
                         anchors.centerIn: parent
                         width: parent.width * 0.45
@@ -72,10 +83,10 @@ Tile {
                         opacity: 0.6
                     }
                 }
-                RoundedImage {
+                // Keeps the last cover until the next has loaded
+                CoverArt {
                     id: cover
                     anchors.fill: parent
-                    radius: width / 2
                     source: tile.player ? tile.player.artUrl : ""
                     sourceSize: Qt.size(256, 256)
                 }

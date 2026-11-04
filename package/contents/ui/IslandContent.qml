@@ -17,6 +17,7 @@ import org.kde.plasma.plasmoid
 import "tabs"
 import "stand" as Stand
 import "focus" as Focus
+import "common" as Common
 
 // What Glance opens: the tabs and their pages. Shared by the classic Plasma popup
 // (Flyout.qml) and the drawer that slides out of the screen edge (drawer/Drawer.qml).
@@ -36,13 +37,16 @@ Item {
     property bool drawerStyle: false
 
     readonly property Item task: island.activeTask
+    // Menus open inside (DrawerMenu): the drawer stays while any is
+    property int menusOpen: 0
+    onMenusOpenChanged: island.menusOpen = Math.max(0, menusOpen)
 
     // ---- tabs ----------------------------------------------------------------
     readonly property var tabs: {
         const t = [];
         // The dashboard always; the window's menus and buttons are in the strip on top
         t.push({key: "dashboard", label: i18n("Dashboard"), icon: "view-grid"});
-        if (island.cfg.showMedia && island.hasPlayer) {
+        if (island.cfg.showMedia && (island.hasPlayer || island.playerCount > 1)) {
             t.push({key: "media", label: i18n("Media"), icon: "media-playback-start"});
         }
         if (island.cfg.showNotifications) {
@@ -98,8 +102,12 @@ Item {
         function onOpenChanged() {
             if (content.island.open) {
                 content.pickTab();
-            } else if (content.currentKey === "notifications") {
-                content.notifications.markRead();
+            } else {
+                // Its menus went with it
+                content.menusOpen = 0;
+                if (content.currentKey === "notifications") {
+                    content.notifications.markRead();
+                }
             }
         }
         // Asked for while open: switch now. While closed, opening picks it (openOn() asks
@@ -123,6 +131,37 @@ Item {
     // Created as the drawer opens: pick now if it already is, else on opening (so a tab asked
     // for just before isn't spent while it is still closed)
     Component.onCompleted: if (island.open) pickTab()
+
+    // KWin's shortcut acts on its active window. Opened by hover, the drawer never took the focus,
+    // so that's the app; opened by a click it has the focus, so it closes first and the app gets
+    // it back (else the menu would be for plasmashell)
+    function showWindowMenu() {
+        if (island.pinnedByClick) {
+            island.setOpen(false);
+            windowMenuLater.restart();
+            return;
+        }
+        island.windowMenuOpen = true;
+        invokeWindowMenu();
+    }
+    function invokeWindowMenu() {
+        windowMenuExec.exec(["gdbus", "call", "--session", "--dest", "org.kde.kglobalaccel",
+            "--object-path", "/component/kwin", "--method", "org.kde.kglobalaccel.Component.invokeShortcut",
+            "Window Operations Menu"], (cmd, exitCode) => {
+            // No menu came: don't hold the drawer for one
+            if (exitCode !== 0) {
+                island.windowMenuOpen = false;
+            }
+        });
+    }
+    Timer {
+        id: windowMenuLater
+        interval: 150
+        onTriggered: content.invokeWindowMenu()
+    }
+    Common.ExecUtil {
+        id: windowMenuExec
+    }
 
     Timer {
         id: hoverSwitch
@@ -158,10 +197,27 @@ Item {
                 && (content.island.cfg.showAppMenu || content.island.cfg.showWindowButtons)
             spacing: Kirigami.Units.smallSpacing
 
+            // A click: KWin's menu for the window (Desktops, Activities, Keep Above…), as Alt+F3,
+            // at the pointer; the drawer stays open under it
             Kirigami.Icon {
                 Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
                 Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
                 source: content.task && content.task.icon ? content.task.icon : "preferences-desktop"
+                scale: windowMenuTap.pressed ? 0.85 : 1
+                Behavior on scale {
+                    NumberAnimation { duration: Kirigami.Units.shortDuration }
+                }
+                HoverHandler {
+                    id: windowMenuHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+                TapHandler {
+                    id: windowMenuTap
+                    onTapped: content.showWindowMenu()
+                }
+                PlasmaComponents.ToolTip.text: i18n("Window menu")
+                PlasmaComponents.ToolTip.visible: windowMenuHover.hovered
+                PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
             // The whole name when there are no menus beside it; capped when there are
             PlasmaComponents.Label {

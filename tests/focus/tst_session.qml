@@ -279,4 +279,17 @@ TestCase {
         }));
         verify(TimerLogic.sessionIsStale(oldSave, now, ""));
     }
+
+    function test_savedThisBoot_onlyForTheSameKnownBoot() {
+        var session = TimerLogic.parseSession(TimerLogic.serializeSession({
+            "stateVal": 0, "initialSeconds": 1500, "running": false,
+            "remainingMs": 1500 * 1000, "savedAt": now, "bootId": boot
+        }));
+        // Plasma restarted: a timer stopped before it stays stopped (no autostart)
+        verify(TimerLogic.savedThisBoot(session, boot));
+        // Rebooted, or nothing to tell by: autostart may run
+        verify(!TimerLogic.savedThisBoot(session, "another-boot"));
+        verify(!TimerLogic.savedThisBoot(session, ""));
+        verify(!TimerLogic.savedThisBoot(null, boot));
+    }
 }

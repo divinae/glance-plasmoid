@@ -176,6 +176,13 @@ function sessionIsStale(session, nowMs, bootId) {
     return nowMs - session.savedAt > SESSION_STALE_AFTER_MS;
 }
 
+// Whether a stored session was written on the boot the machine is on now: Plasma restarted (an
+// update, a crash, a new login) rather than the machine. Autostart is for a fresh boot only, so a
+// timer stopped on purpose stays stopped however long ago. Unknown on either side: no.
+function savedThisBoot(session, bootId) {
+    return !!session && !!session.bootId && !!bootId && session.bootId === bootId;
+}
+
 // The counter value to restore, in milliseconds. Negative is legitimate: a break
 // that ran over while Plasma was down comes back still overrunning.
 function restoredCounterMs(session, nowMs) {

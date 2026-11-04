@@ -49,7 +49,13 @@ PlasmoidItem {
 
     // ---- media ---------------------------------------------------------------
     readonly property var player: mprisModel.currentPlayer
+    // A player with something to show: a track, an artist or album, or playing. A browser keeps
+    // one registered for as long as it's open, with nothing in it: that's "nothing playing"
     readonly property bool hasPlayer: player !== null && player !== undefined
+        && (!!player.track || !!player.artist || !!player.album
+            || player.playbackStatus === Mpris.PlaybackStatus.Playing)
+    // More than one: the Media tab stays even when this one is empty, to switch to another
+    readonly property int playerCount: mprisModel.count
     readonly property bool playing: mediaStateItem.playing
     readonly property bool showMediaInPanel: cfg.showMedia && cfg.mediaInPanel && playing
     readonly property string mediaText: {
@@ -98,25 +104,33 @@ PlasmoidItem {
     readonly property var meetingSoon: meeting !== null && meeting !== meetingOn ? meeting : null
     readonly property bool meetingInStrip: meetingSoon !== null && cfg.meetingInStrip
     readonly property bool meetingPill: meetingOn !== null && cfg.pillMeeting
+    // The pill's text, while the meeting is on: the time left in it ("25 min", "1h05")
     readonly property string meetingCountdown: {
-        if (!meeting) {
+        if (!meetingOn) {
             return "";
         }
-        const m = calendarSource.minutesUntil(meeting);
-        return m <= 0 ? i18nc("meeting on now", "now")
-            : m < 60 ? i18nc("meeting in N minutes", "%1 min", m)
-            : Qt.formatTime(meeting.start, Qt.locale().timeFormat(Locale.ShortFormat));
+        const m = calendarSource.minutesLeft(meetingOn);
+        return m < 60 ? i18nc("minutes left in the meeting", "%1 min", m)
+            : i18nc("hours and minutes left in the meeting", "%1h%2", Math.floor(m / 60), String(m % 60).padStart(2, "0"));
     }
     // Event Calendar's popup, in place of Glance's drawer: on an event's details when given one
-    function openEventCalendar(ev) {
+    // False when there's no Event Calendar in the shell (Glance then stays as it was)
+    // Glance closes first: closing after, its focus going back could hide Event Calendar's popup
+    function openEventCalendar(ev): bool {
         setOpen(false);
-        Island.CalendarBus.openEventCalendar(Plasmoid, ev ? ev.calendarId : "", ev ? ev.id : "");
+        return Island.CalendarBus.openEventCalendar(Plasmoid, ev ? ev.calendarId : "", ev ? ev.id : "");
     }
-    function joinMeeting() {
-        calendarSource.join(meeting);
+    // Event Calendar is there to show an event (its events come over D-Bus, from the widget itself)
+    readonly property bool eventCalendarLinked: calendarSource.origin === "bus"
+    // The meeting given, else the one on now or next
+    function joinMeeting(ev) {
+        calendarSource.join(ev || meeting);
     }
-    // "Standup · 5 min", for the pill's tooltip
-    readonly property string meetingLabel: meeting ? calendarSource.label(meeting) : ""
+    // The pill's tooltip: "Standup, until 14:30 (25 min left)"
+    readonly property string meetingLabel: meetingOn
+        ? i18nc("meeting on now: its name, end time and minutes left", "%1, until %2 (%3 left)", meetingOn.summary,
+            Qt.formatTime(meetingOn.end, Qt.locale().timeFormat(Locale.ShortFormat)), meetingCountdown)
+        : ""
     readonly property var stripEvent: !cfg.calendarEnabled ? null
         : meetingInStrip ? meetingSoon
         : meetingPill && calendarSource.stripEvent && calendarSource.stripEvent.id === meetingOn.id ? null
@@ -144,6 +158,20 @@ PlasmoidItem {
     property bool pinnedByClick: false
     property bool compactHovered: false
     property bool flyoutHovered: false
+    // KWin's window menu (from the drawer's app icon) is up: the drawer stays under it. KWin
+    // doesn't say when it closes, so this ends when the pointer comes back to the drawer, another
+    // window becomes active, or after a while
+    property bool windowMenuOpen: false
+    // Glance's own menus open in the drawer (DrawerMenu, counted by IslandContent)
+    property int menusOpen: 0
+    // Something over the drawer that's part of it: it doesn't close under it
+    readonly property bool holdOpen: menuModel.menuOpen || windowMenuOpen || menusOpen > 0
+    onWindowMenuOpenChanged: if (windowMenuOpen) windowMenuTimeout.restart()
+    Timer {
+        id: windowMenuTimeout
+        interval: 30000
+        onTriggered: root.windowMenuOpen = false
+    }
     // Tab to show next time the popup opens (e.g. "shelf" after a drag onto the strip)
     property string requestedTab: ""
 
@@ -229,15 +257,16 @@ PlasmoidItem {
     switchHeight: 0
     // Hover-opened popup must survive the app menu popup taking focus;
     // a click-pinned popup behaves like a normal applet popup.
-    hideOnWindowDeactivate: pinnedByClick && !menuModel.menuOpen
+    hideOnWindowDeactivate: pinnedByClick && !holdOpen
 
     // Another window became active (a click into an app or on the desktop): close, as a popup
     // does on losing focus. The drawer opened by hover never has the focus to lose.
     // Only another application counts: the drawer taking the focus leaves no active task.
     property Item taskWhenOpened: null
     onActiveTaskChanged: {
+        windowMenuOpen = false;
         if (open && activeTask !== null && activeTask !== taskWhenOpened
-                && !flyoutHovered && !compactHovered && !menuModel.menuOpen) {
+                && !flyoutHovered && !compactHovered && !holdOpen) {
             setOpen(false);
         }
     }
@@ -247,6 +276,7 @@ PlasmoidItem {
             taskWhenOpened = activeTask;
         } else {
             pinnedByClick = false;
+            windowMenuOpen = false;
             closeTimer.stop();
             menuModel.closeMenu();
         }
@@ -274,7 +304,7 @@ PlasmoidItem {
         id: closeTimer
         interval: root.cfg.closeDelay
         onTriggered: {
-            if (!root.pinnedByClick && !root.compactHovered && !root.flyoutHovered && !menuModel.menuOpen) {
+            if (!root.pinnedByClick && !root.compactHovered && !root.flyoutHovered && !root.holdOpen) {
                 root.setOpen(false);
             }
         }
@@ -319,6 +349,8 @@ PlasmoidItem {
 
     onFlyoutHoveredChanged: {
         if (flyoutHovered) {
+            // Back from the window menu (it covered the drawer while up)
+            windowMenuOpen = false;
             closeTimer.stop();
         } else if (open) {
             closeTimer.restart();
@@ -334,6 +366,15 @@ PlasmoidItem {
 
     Mpris.Mpris2Model {
         id: mprisModel
+        // The players, which the model doesn't count itself (an Instantiator over it does; its
+        // own C++ has slots named onRowsInserted…, so no handlers of that name here). Row 0 is
+        // Plasma's multiplexer ("choose automatically"), not a player
+        readonly property int count: Math.max(0, playerRows.count - 1)
+    }
+    Instantiator {
+        id: playerRows
+        model: mprisModel
+        delegate: QtObject {}
     }
 
     MediaState {

@@ -14,6 +14,7 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.private.mpris as Mpris
 
 import ".."
+import "../common"
 
 // Now playing, after Caelestia's media tab: a round cover inside the spectrum's rays on the left
 // (tap: raise the player, swipe: next or previous), and centred on the right the track, album and
@@ -31,13 +32,97 @@ Item {
     readonly property bool isPlaying: mediaState.playing
     readonly property bool hasVolume: hasPlayer && player.canControl && player.volume >= 0
     property real volumeBeforeMute: 0.5
+    // The controls in a colour from the cover (CoverArt picks one that reads, else the theme's)
+    readonly property color accent: art.accent
+    // The right-hand time: the track's length, or (tapped) what's left of it
+    property bool showRemaining: false
+
+    // ---- keys, as Plasma's own player: Space/K play or pause, P/N previous/next, J/L 5 s back
+    // or on, Home/End, 0-9 a tenth of the way in ---------------------------------------------
+    focus: true
+    onVisibleChanged: if (visible) forceActiveFocus()
+    Keys.onPressed: event => {
+        if (!tab.hasPlayer || (event.modifiers & ~Qt.KeypadModifier) !== Qt.NoModifier) {
+            return;
+        }
+        const ms = tab.mediaState;
+        const p = tab.player;
+        switch (event.key) {
+        case Qt.Key_Space:
+        case Qt.Key_K:
+            if (tab.isPlaying ? p.canPause : p.canPlay) {
+                p.PlayPause();
+            }
+            break;
+        case Qt.Key_P:
+            if (p.canGoPrevious) {
+                p.Previous();
+            }
+            break;
+        case Qt.Key_N:
+            if (p.canGoNext) {
+                p.Next();
+            }
+            break;
+        case Qt.Key_J:
+        case Qt.Key_Left:
+            ms.seekBy(-5000000);
+            break;
+        case Qt.Key_L:
+        case Qt.Key_Right:
+            ms.seekBy(5000000);
+            break;
+        case Qt.Key_Home:
+            ms.seek(0);
+            break;
+        case Qt.Key_End:
+            ms.seek(Math.max(0, ms.length - 1000000));
+            break;
+        default:
+            if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) {
+                ms.seek(ms.length * (event.key - Qt.Key_0) / 10);
+                break;
+            }
+            return;
+        }
+        event.accepted = true;
+    }
 
     implicitHeight: Kirigami.Units.gridUnit * 14
 
     Rectangle {
+        id: card
         anchors.fill: parent
         radius: Kirigami.Units.cornerRadius * 2.5
         color: Qt.alpha(Kirigami.Theme.textColor, 0.06)
+    }
+
+    // ---- the cover, blurred, behind it all -------------------------------------------------
+    CoverBackdrop {
+        anchors.fill: parent
+        radius: card.radius
+        source: art.ready ? art.front.source : ""
+        shown: tab.hasPlayer
+    }
+
+    // The players to choose from. Row 0 is Plasma's multiplexer, which follows whichever plays
+    DrawerMenu {
+        id: players
+        Repeater {
+            model: tab.mpris
+            delegate: PlasmaComponents.MenuItem {
+                required property int index
+                required property var model
+                text: index === 0 ? i18n("Choose player automatically") : (model.identity || "")
+                icon.name: index === 0 ? "media-playback-start" : (model.iconName || "multimedia-player")
+                checkable: true
+                checked: index === tab.mpris.currentIndex
+                onTriggered: {
+                    tab.mpris.currentIndex = index;
+                    checked = Qt.binding(() => index === tab.mpris.currentIndex);
+                }
+            }
+        }
     }
 
     // Nothing playing
@@ -55,6 +140,15 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: i18n("Nothing playing")
             opacity: 0.6
+        }
+        // Here, but another player has something
+        PillButton {
+            id: emptyChooser
+            Layout.alignment: Qt.AlignHCenter
+            visible: tab.mpris.count > 1
+            text: i18n("Choose a player")
+            icon.name: "multimedia-player"
+            onClicked: players.popup(emptyChooser, 0, emptyChooser.height)
         }
     }
 
@@ -97,7 +191,7 @@ Item {
                     anchors.fill: parent
                     radius: width / 2
                     color: Qt.alpha(Kirigami.Theme.textColor, 0.08)
-                    visible: art.status !== Image.Ready
+                    visible: !art.ready
                     Kirigami.Icon {
                         anchors.centerIn: parent
                         width: parent.width * 0.45
@@ -106,13 +200,11 @@ Item {
                         opacity: 0.6
                     }
                 }
-                RoundedImage {
+                CoverArt {
                     id: art
                     anchors.fill: parent
-                    radius: width / 2
                     source: tab.hasPlayer ? tab.player.artUrl : ""
-                    sourceSize.width: cover.width * Screen.devicePixelRatio
-                    sourceSize.height: cover.height * Screen.devicePixelRatio
+                    sourceSize: Qt.size(cover.width * Screen.devicePixelRatio, cover.height * Screen.devicePixelRatio)
                 }
                 RotationAnimator on rotation {
                     from: 0
@@ -144,6 +236,20 @@ Item {
                 enabled: tab.hasPlayer && tab.player.canRaise
                 onTapped: tab.player.Raise()
             }
+            // Scroll on the cover: the player's volume, with Plasma's volume display
+            WheelHandler {
+                enabled: tab.hasVolume
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                property real pending: 0
+                onWheel: event => {
+                    pending += event.angleDelta.y;
+                    const steps = Math.trunc(pending / 120);
+                    if (steps !== 0) {
+                        pending -= steps * 120;
+                        tab.player.changeVolume(steps * 0.05, true);
+                    }
+                }
+            }
         }
 
         // ---- track, controls, seek ---------------------------------------------------
@@ -157,6 +263,7 @@ Item {
             }
             AccentLabel {
                 Layout.fillWidth: true
+                color: Kirigami.ColorUtils.linearInterpolation(tab.accent, Kirigami.Theme.textColor, 0.4)
                 horizontalAlignment: Text.AlignHCenter
                 text: tab.hasPlayer ? (tab.player.track || tab.player.identity || "") : ""
                 textFormat: Text.PlainText
@@ -190,11 +297,16 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: Kirigami.Units.smallSpacing
                 spacing: Kirigami.Units.largeSpacing
-                PlasmaComponents.ToolButton {
+                PillButton {
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Previous")
                     icon.name: "media-skip-backward"
-                    icon.width: Kirigami.Units.iconSizes.smallMedium
-                    icon.height: Kirigami.Units.iconSizes.smallMedium
+                    iconSize: Kirigami.Units.iconSizes.smallMedium
+                    // Hidden rather than faded when the player can't (a washed-out arrow read as
+                    // broken), but keeping its room so play doesn't jump sideways
                     enabled: tab.hasPlayer && tab.player.canGoPrevious
+                    opacity: enabled ? 1 : 0
                     onClicked: tab.player.Previous()
                 }
                 Rectangle {
@@ -203,8 +315,8 @@ Item {
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                     Layout.preferredHeight: Kirigami.Units.gridUnit * 3
                     radius: width / 2
-                    color: playTap.pressed ? Qt.darker(Kirigami.Theme.highlightColor, 1.15)
-                        : playHover.hovered ? Qt.lighter(Kirigami.Theme.highlightColor, 1.1) : Kirigami.Theme.highlightColor
+                    color: playTap.pressed ? Qt.darker(tab.accent, 1.15)
+                        : playHover.hovered ? Qt.lighter(tab.accent, 1.1) : tab.accent
                     opacity: canToggle ? 1 : 0.4
                     Behavior on color {
                         ColorAnimation { duration: Kirigami.Units.shortDuration }
@@ -215,7 +327,7 @@ Item {
                         height: width
                         source: tab.isPlaying ? "media-playback-pause" : "media-playback-start"
                         isMask: true
-                        color: Kirigami.Theme.highlightedTextColor
+                        color: art.onAccent
                     }
                     HoverHandler {
                         id: playHover
@@ -227,11 +339,14 @@ Item {
                         onTapped: tab.player.PlayPause()
                     }
                 }
-                PlasmaComponents.ToolButton {
+                PillButton {
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Next")
                     icon.name: "media-skip-forward"
-                    icon.width: Kirigami.Units.iconSizes.smallMedium
-                    icon.height: Kirigami.Units.iconSizes.smallMedium
+                    iconSize: Kirigami.Units.iconSizes.smallMedium
                     enabled: tab.hasPlayer && tab.player.canGoNext
+                    opacity: enabled ? 1 : 0
                     onClicked: tab.player.Next()
                 }
             }
@@ -253,10 +368,27 @@ Item {
                 Item {
                     Layout.fillWidth: true
                 }
+                // The length, or (tap) the time left, "-1:23"; a fixed width so it doesn't jitter
                 PlasmaComponents.Label {
-                    text: tab.formatTime(tab.mediaState.length)
-                    font: Kirigami.Theme.smallFont
+                    Layout.preferredWidth: Math.max(implicitWidth, lengthMetrics.advanceWidth)
+                    horizontalAlignment: Text.AlignRight
+                    text: tab.showRemaining
+                        ? "-" + tab.formatTime(tab.mediaState.length - (seek.dragging ? seek.previewValue : tab.mediaState.position))
+                        : tab.formatTime(tab.mediaState.length)
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                    font.features: { "tnum": 1 }
                     opacity: 0.7
+                    TextMetrics {
+                        id: lengthMetrics
+                        font: Kirigami.Theme.smallFont
+                        text: "-" + tab.formatTime(tab.mediaState.length).replace(/[0-9]/g, "0")
+                    }
+                    HoverHandler {
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    TapHandler {
+                        onTapped: tab.showRemaining = !tab.showRemaining
+                    }
                 }
             }
 
@@ -264,50 +396,37 @@ Item {
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: Kirigami.Units.smallSpacing
-                PlasmaComponents.ToolButton {
+                PillButton {
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Shuffle")
                     icon.name: "media-playlist-shuffle"
-                    checkable: true
-                    visible: tab.hasPlayer && tab.player.shuffle !== undefined && tab.player.canControl
-                    checked: tab.hasPlayer && tab.player.shuffle === true
-                    opacity: checked ? 1 : 0.6
-                    onClicked: tab.player.shuffle = !tab.player.shuffle
-                    PlasmaComponents.ToolTip.text: i18n("Shuffle")
-                    PlasmaComponents.ToolTip.visible: hovered
+                    // An enum (Unknown, Off, On), not a bool
+                    visible: tab.hasPlayer && tab.player.canControl && tab.player.shuffle !== Mpris.ShuffleStatus.Unknown
+                    checked: tab.hasPlayer && tab.player.shuffle === Mpris.ShuffleStatus.On
+                    onClicked: tab.player.shuffle = tab.player.shuffle === Mpris.ShuffleStatus.On
+                        ? Mpris.ShuffleStatus.Off : Mpris.ShuffleStatus.On
                 }
-                PlasmaComponents.ToolButton {
+                // The player: a choice of the others when there are more, else just its name
+                PillButton {
                     id: playerChip
+                    readonly property bool choice: tab.mpris.count > 1
+                    // Not when it would only repeat the title (a player with no track's name)
+                    visible: choice || (tab.hasPlayer && !!tab.player.track)
+                    bare: !choice
+                    hoverEnabled: choice
                     icon.name: tab.hasPlayer && tab.player.iconName ? tab.player.iconName : "multimedia-player"
                     text: tab.hasPlayer ? tab.player.identity : ""
-                    display: PlasmaComponents.AbstractButton.TextBesideIcon
-                    enabled: tab.mpris.count > 1
-                    onClicked: players.popup(playerChip, 0, playerChip.height)
-                    background: Rectangle {
-                        radius: height / 2
-                        color: Qt.alpha(Kirigami.Theme.highlightColor, playerChip.hovered ? 0.3 : 0.18)
-                    }
-                    PlasmaComponents.Menu {
-                        id: players
-                        Repeater {
-                            model: tab.mpris
-                            delegate: PlasmaComponents.MenuItem {
-                                required property int index
-                                required property var model
-                                text: model.identity || ""
-                                icon.name: model.iconName || "multimedia-player"
-                                checkable: true
-                                checked: index === tab.mpris.currentIndex
-                                onTriggered: tab.mpris.currentIndex = index
-                            }
-                        }
-                    }
+                    onClicked: if (choice) players.popup(playerChip, 0, playerChip.height)
                 }
-                PlasmaComponents.ToolButton {
+                PillButton {
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Repeat")
                     readonly property int loop: tab.hasPlayer ? tab.player.loopStatus : Mpris.LoopStatus.Unknown
                     icon.name: loop === Mpris.LoopStatus.Track ? "media-repeat-single" : "media-repeat-all"
-                    checkable: true
                     visible: tab.hasPlayer && loop !== Mpris.LoopStatus.Unknown && tab.player.canControl
                     checked: loop === Mpris.LoopStatus.Playlist || loop === Mpris.LoopStatus.Track
-                    opacity: checked ? 1 : 0.6
                     onClicked: {
                         // None -> Playlist -> Track -> None
                         if (loop === Mpris.LoopStatus.None) {
@@ -318,10 +437,11 @@ Item {
                             tab.player.loopStatus = Mpris.LoopStatus.None;
                         }
                     }
-                    PlasmaComponents.ToolTip.text: i18n("Repeat")
-                    PlasmaComponents.ToolTip.visible: hovered
                 }
-                PlasmaComponents.ToolButton {
+                PillButton {
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: tab.hasPlayer && tab.player.volume <= 0 ? i18n("Unmute") : i18n("Mute")
                     visible: tab.hasVolume
                     icon.name: !tab.hasPlayer || tab.player.volume <= 0 ? "audio-volume-muted"
                         : tab.player.volume < 0.34 ? "audio-volume-low"
@@ -334,8 +454,6 @@ Item {
                             tab.player.volume = tab.volumeBeforeMute > 0 ? tab.volumeBeforeMute : 0.5;
                         }
                     }
-                    PlasmaComponents.ToolTip.text: tab.hasPlayer && tab.player.volume <= 0 ? i18n("Unmute") : i18n("Mute")
-                    PlasmaComponents.ToolTip.visible: hovered
                 }
                 PlasmaComponents.Slider {
                     visible: tab.hasVolume
@@ -379,7 +497,7 @@ Item {
                 width: bar.fraction * parent.width
                 height: parent.height
                 radius: parent.radius
-                color: Kirigami.Theme.highlightColor
+                color: tab.accent
             }
         }
         Rectangle {
@@ -388,12 +506,27 @@ Item {
             radius: width / 2
             x: bar.fraction * bar.width - width / 2
             anchors.verticalCenter: parent.verticalCenter
-            color: Kirigami.Theme.highlightColor
+            color: tab.accent
             border.color: Kirigami.Theme.backgroundColor
             border.width: 1
             opacity: bar.active ? 1 : 0
             Behavior on opacity {
                 NumberAnimation { duration: Kirigami.Units.shortDuration }
+            }
+        }
+        // Scroll: 5 s on or back
+        WheelHandler {
+            enabled: tab.mediaState.canSeek
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            property real pending: 0
+            onWheel: event => {
+                pending += event.angleDelta.y || -event.angleDelta.x;
+                const steps = Math.trunc(pending / 120);
+                if (steps !== 0) {
+                    pending -= steps * 120;
+                    const ms = tab.mediaState;
+                    ms.seekBy(steps * 5000000);
+                }
             }
         }
         MouseArea {

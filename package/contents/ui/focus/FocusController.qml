@@ -976,7 +976,9 @@ Item {
         sessionReady = true;
         if (resumed)
             return;
-        if (settings.focus_autostart)
+        // Only after a reboot: a Plasma restart keeps a timer that was stopped stopped
+        if (settings.focus_autostart
+                && !TimerLogic.savedThisBoot(TimerLogic.parseSession(settings.focus_session_state), bootId))
             start();
     }
 

@@ -55,6 +55,10 @@ Item {
     function minutesUntil(ev): int {
         return Math.ceil((ev.start.getTime() - now.getTime()) / 60000);
     }
+    // Minutes to its end, for one on now
+    function minutesLeft(ev): int {
+        return Math.max(0, Math.ceil((ev.end.getTime() - now.getTime()) / 60000));
+    }
 
     // "Standup in 5 min"; `shorten` cuts the name only, so the time always shows
     function label(ev, shorten): string {

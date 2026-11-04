@@ -164,20 +164,35 @@ Item {
                 color: root.dimColor
             }
 
-            PlasmaComponents.ComboBox {
+            // The period, as Glance's other buttons: its name and a menu of the others
+            PillButton {
                 id: periodPicker
 
                 Layout.alignment: Qt.AlignVCenter
-                model: root.periods
-                textRole: "label"
                 // A fixed width, room for the longest period ("Dzisiaj", "30 days"): sizing
                 // to its text inside this row looped on implicitWidth on every layout
                 implicitWidth: Kirigami.Units.gridUnit * 6
-                // Set once rather than bound to dayCount: binding currentIndex to a
-                // value the control itself writes is the recursion hazard the task
-                // picker in main.qml documents, and one segfault was seen with it.
-                Component.onCompleted: currentIndex = root.periodIndexOf(root.dayCount)
-                onActivated: index => root.dayCount = root.periods[index].days
+                text: root.periods[Math.max(0, root.periodIndexOf(root.dayCount))].label
+                icon.name: "arrow-down"
+                onClicked: periodMenu.popup(periodPicker, 0, periodPicker.height)
+
+                DrawerMenu {
+                    id: periodMenu
+                    Repeater {
+                        model: root.periods
+                        PlasmaComponents.MenuItem {
+                            required property var modelData
+                            text: modelData.label
+                            checkable: true
+                            checked: modelData.days === root.dayCount
+                            // A click toggles `checked` and breaks the binding: set it back
+                            onTriggered: {
+                                root.dayCount = modelData.days;
+                                checked = Qt.binding(() => modelData.days === root.dayCount);
+                            }
+                        }
+                    }
+                }
             }
         }
 

@@ -15,6 +15,7 @@ import org.kde.plasma.plasmoid
 
 import com.dv.glance.private as Island
 import "stand/lib/cycle.js" as Cycle
+import "focus" as Focus
 
 MouseArea {
     id: compact
@@ -57,10 +58,12 @@ MouseArea {
     readonly property int iconLength: hasLeadIcon ? leadIconItem.width + Kirigami.Units.smallSpacing : 0
 
     readonly property bool dndShown: island.cfg.showNotifications && notifications.doNotDisturb
+    readonly property bool unreadShown: island.cfg.showNotifications && island.cfg.unreadDot
+        && notifications.unreadCount > 0 && !notifications.doNotDisturb
     // The status segments past the text, at the strip's end (above the title on a vertical
     // panel), packed in one capsule as in macOS's menu bar: a light tint of each status's colour
-    // (camera green, microphone orange, screen sharing red, Do Not Disturb grey), icons in the
-    // text colour
+    // (camera green, microphone orange, screen sharing red, unread purple, Do Not Disturb grey),
+    // icons in the text colour
     readonly property int pillHeight: Math.min(thickness - 2, 22)
     readonly property int pillIconSize: Math.min(16, pillHeight - 6)
     // A segment per status: the icon with room around it, 2 px between segments
@@ -93,10 +96,11 @@ MouseArea {
                 icon: island.focusOnBreak ? "chronometer-pause-symbolic" : "chronometer-symbolic"});
         }
         // A meeting on now (one coming up is in the strip's text instead), in its colour; a click
-        // joins (when it has a link). Its countdown and tooltip are bound in the segment too.
+        // opens it in Event Calendar (Join is in the right-click menu). Its countdown and tooltip
+        // are bound in the segment too.
         if (island.meetingPill) {
             out.push({color: island.meetingOn.color || Kirigami.Theme.highlightColor,
-                action: island.meetingOn.meetingUrl ? "meeting" : "info", hasText: "meeting",
+                action: "meeting", hasText: "meeting",
                 icon: Qt.resolvedUrl("tiles/icons/glance-camera.svg")});
         }
         // Stand: time to switch (or a switch waiting to be confirmed); click switches
@@ -104,6 +108,11 @@ MouseArea {
             out.push({color: "#c9a227", action: "stand",
                 icon: Qt.resolvedUrl(island.stand.cycle.position === "stand" ? "stand/icons/person-sit.svg" : "stand/icons/person-stand.svg"),
                 tip: island.stand.tooltipText + "\n" + i18n("Click to switch now.")});
+        }
+        // Unread notifications (not while Do Not Disturb): a bell; a click opens them
+        if (unreadShown) {
+            out.push({color: "#af52de", icon: "notifications-symbolic", action: "unread",
+                tip: i18n("Unread notifications. Click to see them.")});
         }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
@@ -137,7 +146,12 @@ MouseArea {
     }
     readonly property int capsuleLength: pills.length > 0
         ? pills.reduce((sum, p) => sum + segmentLengthOf(p), 0) + (pills.length - 1) * pillGap : 0
-    readonly property int trailLength: pills.length > 0 ? capsuleLength + Kirigami.Units.largeSpacing : 0
+    // The pills hug the capsule's rounded end: as far from it as from its sides, not the text's
+    // margin away
+    readonly property int pillSideGap: Math.max(0, Math.round((pillThickness - pillHeight) / 2))
+    readonly property int pillEndShift: Math.max(0, margin - pillSideGap)
+    readonly property int trailLength: pills.length > 0
+        ? capsuleLength + Kirigami.Units.largeSpacing - pillEndShift : 0
     readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
         + trailLength + 2 * margin + 2 * inset)
     property real animatedLength: targetLength
@@ -388,21 +402,9 @@ MouseArea {
                 }
             }
 
-            // Unread notifications
-            Rectangle {
-                width: Math.max(4, Math.round(compact.pillThickness * 0.25))
-                height: width
-                radius: width / 2
-                anchors.right: parent.right
-                anchors.rightMargin: -compact.margin / 2 - width / 2
-                anchors.verticalCenter: parent.verticalCenter
-                visible: compact.island.cfg.showNotifications && compact.island.cfg.unreadDot
-                    && compact.notifications.unreadCount > 0 && !compact.notifications.doNotDisturb
-                color: Kirigami.Theme.highlightColor
-            }
             // The status segments, together at the strip's end
             Item {
-                x: Math.round(parent.width - width)
+                x: Math.round(parent.width - width + compact.pillEndShift)
                 y: Math.round((parent.height - height) / 2)
                 width: compact.capsuleLength
                 height: compact.pillHeight
@@ -438,8 +440,14 @@ MouseArea {
                             HoverHandler {
                                 id: pillHover
                             }
+                            // Focus: the time left as a wedge in a thin outline (Fokus's indicator). Not
+                            // in a flow or a break past its end: no fraction to show there, and its
+                            // spinning sweep was restless; the stopwatch instead
+                            readonly property bool focusIndicator: modelData.action === "focus" && !!compact.island.focusTimer
+                                && !compact.island.focusTimer.progressIndeterminate
                             Kirigami.Icon {
                                 id: segmentIcon
+                                opacity: segment.focusIndicator ? 0 : 1
                                 x: segment.modelData.hasText ? 6 : Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
@@ -449,10 +457,23 @@ MouseArea {
                                 isMask: true
                                 color: Kirigami.Theme.textColor
                             }
+                            Loader {
+                                anchors.fill: segmentIcon
+                                active: segment.focusIndicator
+                                sourceComponent: Focus.IndicatorIcon {
+                                    readonly property Item timer: compact.island.focusTimer
+                                    style: Focus.IndicatorIcon.Style.Pie
+                                    running: timer.active
+                                    paused: timer.sessionPaused
+                                    progress: timer.progressFraction()
+                                    tint: Kirigami.Theme.textColor
+                                }
+                            }
                             PlasmaComponents.Label {
                                 visible: !!segment.modelData.hasText
+                                // 6 px either end of the segment, 4 between icon and text
                                 anchors.left: segmentIcon.right
-                                anchors.leftMargin: 2
+                                anchors.leftMargin: 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: segment.modelData.hasText === "focus" && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText
                                     : segment.modelData.hasText === "meeting" ? compact.island.meetingCountdown : ""
@@ -478,6 +499,9 @@ MouseArea {
                                     case "dnd":
                                         compact.notifications.toggleDoNotDisturb();
                                         break;
+                                    case "unread":
+                                        compact.island.openOn("notifications", true);
+                                        break;
                                     case "stand":
                                         if (compact.island.stand.pendingPosition) {
                                             compact.island.stand.confirmPending();
@@ -494,7 +518,11 @@ MouseArea {
                                         micStreams.toggle();
                                         break;
                                     case "meeting":
-                                        compact.island.joinMeeting();
+                                        // In Event Calendar when it's there; else the click joins
+                                        if (!compact.island.eventCalendarLinked
+                                                || !compact.island.openEventCalendar(compact.island.meetingOn)) {
+                                            compact.island.joinMeeting(compact.island.meetingOn);
+                                        }
                                         break;
                                     case "focus":
                                         compact.island.focusTimer.toggleSession();
@@ -514,7 +542,8 @@ MouseArea {
                                             compact.island.focusTimer.sessionBtnText.replace("&", ""))
                                     : segment.modelData.hasText === "meeting" && compact.island.meeting
                                     ? compact.island.meetingLabel
-                                        + (compact.island.meeting.meetingUrl ? "\n" + i18n("Click to join.") : "")
+                                        + (compact.island.eventCalendarLinked ? "\n" + i18n("Click for its details in Event Calendar.")
+                                            : compact.island.meetingOn.meetingUrl ? "\n" + i18n("Click to join.") : "")
                                     : (segment.modelData.tip || "")
                                 location: Plasmoid.location
                             }

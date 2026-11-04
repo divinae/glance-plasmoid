@@ -8,6 +8,7 @@ import QtQuick
 
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
+import "common" as Common
 
 // Do Not Disturb: on, a click turns it off; off, a click offers how long (as the stock applet).
 PlasmaComponents.ToolButton {
@@ -41,7 +42,7 @@ PlasmaComponents.ToolButton {
     PlasmaComponents.ToolTip.visible: hovered
     PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
 
-    PlasmaComponents.Menu {
+    Common.DrawerMenu {
         id: durations
         property var choices: []
 

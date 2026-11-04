@@ -1,7 +1,6 @@
 import "./lib/cycle.js" as Cycle
 import QtQml
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -20,6 +19,12 @@ Tile {
     property var focusTimer: null
     readonly property var settings: root.settings
     readonly property var d: root.deskDriver
+
+    // The card's small round buttons: bare until hovered, in the card's text colour
+    component BareButton: PillButton {
+        bare: true
+        textColor: card.root.themeTextColor
+    }
 
     implicitHeight: column.implicitHeight + 2 * padding
 
@@ -136,79 +141,54 @@ Tile {
 
             // Sit | Stand as one segmented control, where you are lit. Offline they say where you
             // are rather than ask the desk to go there.
-            Rectangle {
+            SegmentedControl {
                 Layout.fillWidth: true
-                implicitHeight: segments.implicitHeight + 4
-                radius: height / 2
-                color: Qt.alpha(card.root.themeTextColor, 0.07)
+                textColor: card.root.themeTextColor
 
-                component Segment: PlasmaComponents.ToolButton {
-                    id: segment
+                component Segment: PillButton {
                     property string position
                     Layout.fillWidth: true
-                    readonly property bool here: card.root.cycle.position === position
+                    bare: true
+                    textColor: card.root.themeTextColor
+                    checked: card.root.cycle.position === position
                     icon.source: Qt.resolvedUrl(position === "stand" ? "icons/person-stand.svg" : "icons/person-sit.svg")
-                    icon.color: card.root.themeTextColor
                     enabled: !card.d.moving
-                    background: Rectangle {
-                        radius: height / 2
-                        color: segment.here ? Qt.alpha(Kirigami.Theme.highlightColor, 0.3)
-                            : segment.hovered ? Qt.alpha(card.root.themeTextColor, 0.08) : "transparent"
-                        Behavior on color {
-                            ColorAnimation { duration: Kirigami.Units.shortDuration }
-                        }
-                    }
-                    font.weight: here ? Font.DemiBold : Font.Normal
                     onClicked: card.root.deskOffline ? card.root.setPosition(position) : card.root.goTo(position)
                 }
 
-                RowLayout {
-                    id: segments
-                    anchors.fill: parent
-                    anchors.margins: 2
-                    spacing: 2
-                    Segment {
-                        position: "sit"
-                        text: card.root.deskOffline ? i18n("I'm sitting") : i18n("Sit")
-                    }
-                    Segment {
-                        position: "stand"
-                        text: card.root.deskOffline ? i18n("I'm standing") : i18n("Stand")
-                    }
+                Segment {
+                    position: "sit"
+                    text: card.root.deskOffline ? i18n("I'm sitting") : i18n("Sit")
+                }
+                Segment {
+                    position: "stand"
+                    text: card.root.deskOffline ? i18n("I'm standing") : i18n("Stand")
                 }
             }
-            PlasmaComponents.ToolButton {
+            BareButton {
                 visible: card.root.switchDue
                 icon.name: "chronometer-pause"
                 display: PlasmaComponents.AbstractButton.IconOnly
                 text: i18n("Snooze %1 min", card.settings.stand_snooze_minutes)
                 onClicked: card.root.snooze()
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
-            PlasmaComponents.ToolButton {
+            BareButton {
                 visible: card.root.status === "paused"
                 icon.name: "media-playback-start"
                 display: PlasmaComponents.AbstractButton.IconOnly
                 text: i18n("Resume")
                 onClicked: card.root.resume()
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
-            PlasmaComponents.ToolButton {
+            BareButton {
                 id: pauseButton
                 visible: card.root.status !== "paused"
                 icon.name: "media-playback-pause"
                 display: PlasmaComponents.AbstractButton.IconOnly
                 text: i18n("Pause…")
                 onClicked: pauseMenu.open()
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered && !pauseMenu.visible
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                PlasmaComponents.ToolTip.visible: hovered && !pauseMenu.visible
 
-                PlasmaComponents.Menu {
+                DrawerMenu {
                     id: pauseMenu
                     y: pauseButton.height
                     PlasmaComponents.MenuItem {
@@ -275,26 +255,20 @@ Tile {
                 font: Kirigami.Theme.smallFont
                 elide: Text.ElideRight
             }
-            PlasmaComponents.ToolButton {
+            BareButton {
                 visible: !card.d.moving
                 enabled: !card.d.reading
                 icon.name: "view-refresh"
                 display: PlasmaComponents.AbstractButton.IconOnly
                 text: card.d.reachable ? i18n("Read the height again") : i18n("Try again")
                 onClicked: card.d.readHeight()
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
-            PlasmaComponents.ToolButton {
+            BareButton {
                 visible: card.d.moving && card.d.attempt > 1
                 icon.name: "process-stop"
                 display: PlasmaComponents.AbstractButton.IconOnly
                 text: i18n("Stop retrying")
                 onClicked: card.d.cancel()
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
         }
     }

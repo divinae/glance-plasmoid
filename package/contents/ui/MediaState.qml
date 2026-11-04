@@ -45,8 +45,18 @@ Item {
         if (!canSeek) {
             return;
         }
+        // A relative Seek, not SetPosition: that one needs the track's id, which browsers and
+        // simple players often lack (they ignore it), and Seek works everywhere
         player.Seek(Math.round(us - estimate()));
         position = us;
+    }
+    // On or back by a span (keys, the wheel): exact, no estimate in it
+    function seekBy(us: real) {
+        if (!canSeek) {
+            return;
+        }
+        player.Seek(Math.round(us));
+        position = Math.max(0, Math.min(length, estimate() + us));
     }
 
     onPlayerChanged: {

@@ -168,7 +168,7 @@ GridLayout {
                         text: i18n("Pause…")
                         onClicked: pauseMenu.open()
 
-                        PlasmaComponents.Menu {
+                        DrawerMenu {
                             id: pauseMenu
 
                             y: pauseButton.height

@@ -5,6 +5,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
 import "../tiles"
+import "../common"
 
 // The timer as a card: the dial (the wheel adjusts the time), what's done today, Skip / Start /
 // Stop. Over the Focus controller (`root`).
@@ -79,18 +80,20 @@ Tile {
             Layout.alignment: Qt.AlignHCenter
             spacing: Kirigami.Units.smallSpacing
 
-            PlasmaComponents.Button {
+            PillButton {
                 text: card.root.isBreak() ? i18n("Skip Break") : i18n("Skip to Break")
                 icon.name: "chronometer-lap"
                 visible: !card.root.flowmodoroModeEnabled
                 onClicked: card.root.skip()
             }
-            PlasmaComponents.Button {
+            // The main action, lit
+            PillButton {
+                highlighted: true
                 text: card.root.sessionBtnText
                 icon.name: card.root.sessionBtnIconSource
                 onClicked: card.root.toggleSession()
             }
-            PlasmaComponents.Button {
+            PillButton {
                 // endForToday() keeps what was worked; see FocusController
                 text: (card.root.isBreak() || card.root.breakOvertime) ? i18n("&End for today") : i18n("St&op")
                 icon.name: "chronometer-reset"

@@ -41,11 +41,7 @@ Tile {
 
         RowLayout {
             Layout.fillWidth: true
-            Kirigami.Icon {
-                implicitWidth: Kirigami.Units.iconSizes.small
-                implicitHeight: implicitWidth
-                source: tile.watcher.doNotDisturb ? "notifications-disabled-symbolic" : "notification-inactive-symbolic"
-            }
+            // No bell before the title: the Do Not Disturb button at the end is one, and shows it
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: tile.watcher.unreadCount > 0

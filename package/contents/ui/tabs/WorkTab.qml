@@ -11,6 +11,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
 import "../tiles"
+import "../common"
 import "../focus" as Focus
 import "../stand" as Stand
 
@@ -59,19 +60,14 @@ GridLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
-                PlasmaComponents.ToolButton {
-                    text: i18n("Focus")
-                    icon.name: "chronometer"
-                    checkable: true
-                    checked: statsCard.page === 0
-                    onClicked: statsCard.page = 0
-                }
-                PlasmaComponents.ToolButton {
-                    text: i18n("Posture")
-                    icon.source: Qt.resolvedUrl("../stand/icons/person-stand.svg")
-                    checkable: true
-                    checked: statsCard.page === 1
-                    onClicked: statsCard.page = 1
+                // Pages of the card: tabs, not buttons
+                CardTabs {
+                    tabs: [
+                        {label: i18n("Focus"), icon: "chronometer-symbolic"},
+                        {label: i18n("Posture"), icon: Qt.resolvedUrl("../stand/icons/person-stand.svg")}
+                    ]
+                    currentIndex: statsCard.page
+                    onActivated: index => statsCard.page = index
                 }
                 Item {
                     Layout.fillWidth: true

@@ -242,7 +242,7 @@ Window {
     onActiveChanged: {
         if (active) {
             wasActive = true;
-        } else if (wasActive && island && island.open && !(appMenu && appMenu.menuOpen)) {
+        } else if (wasActive && island && island.open && !(appMenu && appMenu.menuOpen) && !island.holdOpen) {
             wasActive = false;
             island.setOpen(false);
         }

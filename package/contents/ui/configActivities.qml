@@ -47,7 +47,7 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: unreadDot
             Kirigami.FormData.label: i18n("Unread:")
-            text: i18n("Show a dot in the panel")
+            text: i18n("Show a pill in the panel")
         }
 
         Item {
