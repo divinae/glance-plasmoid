@@ -203,7 +203,9 @@ function compute(events, nowMs, nowMinutes, leadMinutes) {
 // Meetings whose start or end the clock passed between prevMs and nowMs (each only within
 // 2 minutes of it, so a suspend doesn't fire old ones). started: { id: end ms } of the meetings
 // started so far; an end is reported only for those, present in `events` or not (it may have
-// vanished when the events' source changed). Returns { started, begun: [events], ended: [{id, end}] }.
+// vanished when the events' source changed). An end that moved earlier (Event Calendar's "Mark as
+// Ended") counts as soon as it's seen, even if the clock passed it a moment before the news came.
+// Returns { started, begun: [events], ended: [{id, end}] }.
 function crossings(events, started, prevMs, nowMs) {
     const out = Object.assign({}, started);
     const begun = [];
@@ -213,8 +215,14 @@ function crossings(events, started, prevMs, nowMs) {
     }
     const window = 2 * 60000;
     for (const id in started) {
-        const end = started[id];
-        if (end > prevMs && end <= nowMs && nowMs - end < window) {
+        let end = started[id];
+        const ev = events.find(e => e.id === id);
+        const earlier = !!ev && ev.end.getTime() < end;
+        if (earlier) {
+            end = ev.end.getTime();
+            out[id] = end;
+        }
+        if ((end > prevMs || earlier) && end <= nowMs && nowMs - end < window) {
             ended.push({ id: id, end: new Date(end) });
         }
         if (end <= nowMs) {

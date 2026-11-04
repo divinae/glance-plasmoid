@@ -98,6 +98,19 @@ test("crossings: a start and an end as the clock passes them, not as meetings co
     assert.equal(r.begun.length + r.ended.length, 0);
 });
 
+test("crossings: a meeting marked as ended early ends then, even if the news comes a tick late", () => {
+    const planned = C.fromBus(bus([ev({ id: "a", start: at(0, 10), end: at(0, 11), guests: 2 })]));
+    let r = C.crossings(planned, {}, at(0, 9, 59), at(0, 10, 0));
+    assert.deepEqual(Array.from(r.begun, (e) => e.id), ["a"]);
+    // Marked as ended at 10:20; Glance hears it at 10:21, after a tick at 10:20:30
+    const early = C.fromBus(bus([ev({ id: "a", start: at(0, 10), end: at(0, 10, 20), guests: 2 })]));
+    r = C.crossings(early, r.started, at(0, 10, 20) + 30000, at(0, 10, 21));
+    assert.deepEqual(Array.from(r.ended, (e) => e.id), ["a"]);
+    // Once: not again at its planned end
+    r = C.crossings(planned, r.started, at(0, 10, 59), at(0, 11, 0));
+    assert.equal(r.ended.length, 0);
+});
+
 test("weatherFromBus: the weather Event Calendar sends, or nothing", () => {
     const w = C.weatherFromBus(JSON.stringify({ version: 1, events: [], weather: { temp: 7.6, text: "Clouds", iconName: "weather-clouds", high: 10, low: 3, place: "Warsaw" } }));
     assert.equal(w.temp, 8);
