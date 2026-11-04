@@ -57,113 +57,123 @@ Tile {
         return [ev.summary, when, ev.location].filter(t => !!t).join("\n");
     }
 
+    component EventLine: Item {
+        id: line
+        required property var modelData
+        // "in 5 min", "14:00"; tomorrow's says so
+        property string whenText: tile.when(modelData)
+        property bool joinable: true
+        readonly property bool rowHovered: rowHover.hovered
+        Layout.fillWidth: true
+        implicitHeight: row.implicitHeight + 4
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Kirigami.Units.cornerRadius
+            color: Qt.alpha(Kirigami.Theme.textColor, rowHover.hovered ? 0.08 : 0)
+            Behavior on color {
+                ColorAnimation { duration: Kirigami.Units.shortDuration }
+            }
+        }
+
+        RowLayout {
+            id: row
+            readonly property var modelData: line.modelData
+            anchors.fill: parent
+            anchors.leftMargin: 4
+            anchors.rightMargin: 4
+            spacing: Kirigami.Units.smallSpacing
+
+            Rectangle {
+                Layout.preferredWidth: 3
+                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                radius: 1.5
+                color: row.modelData.color ? row.modelData.color : Kirigami.Theme.highlightColor
+            }
+            readonly property bool declined: modelData.response === "declined"
+            TapHandler {
+                gesturePolicy: TapHandler.WithinBounds
+                // Not on the Join icon: that one joins, and only that
+                onTapped: (point) => {
+                    const p = joinIcon.mapFromItem(row, point.position);
+                    if (!(joinIcon.visible && joinIcon.contains(p))) {
+                        tile.eventClicked(row.modelData);
+                    }
+                }
+            }
+            HoverHandler {
+                id: rowHover
+                cursorShape: Qt.PointingHandCursor
+            }
+            // The event in full: title, when, where, which calendar, your answer
+            QQC2.ToolTip.text: tile.details(modelData)
+            QQC2.ToolTip.visible: rowHover.hovered && !joinArea.containsMouse
+            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+            opacity: declined ? 0.5 : 1
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: row.modelData.summary
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                font.strikeout: row.declined
+                font.italic: row.modelData.response === "tentative"
+            }
+            PlasmaComponents.Label {
+                text: line.whenText
+                textFormat: Text.PlainText
+                opacity: 0.7
+                font: Kirigami.Theme.smallFont
+            }
+            // Join: the meeting's own link (Meet, Zoom, Teams...), a small icon in the line
+            Kirigami.Icon {
+                id: joinIcon
+                visible: line.joinable && !!row.modelData.meetingUrl && !row.declined
+                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                source: Qt.resolvedUrl("icons/glance-camera.svg")
+                isMask: true
+                color: Kirigami.Theme.textColor
+                active: joinArea.containsMouse
+                MouseArea {
+                    id: joinArea
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: tile.calendar.join(row.modelData)
+                }
+                QQC2.ToolTip.text: row.modelData.meetingLabel ? i18n("Join (%1)", row.modelData.meetingLabel) : i18n("Join")
+                QQC2.ToolTip.visible: joinArea.containsMouse
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+            }
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: Kirigami.Units.smallSpacing
 
         Repeater {
             model: tile.events
-            // A line: its hover highlight under the row of colour bar, title, time and Join
-            delegate: Item {
-                id: line
-                required property var modelData
-                Layout.fillWidth: true
-                implicitHeight: row.implicitHeight + 4
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Kirigami.Units.cornerRadius
-                    color: Qt.alpha(Kirigami.Theme.textColor, rowHover.hovered ? 0.08 : 0)
-                    Behavior on color {
-                        ColorAnimation { duration: Kirigami.Units.shortDuration }
-                    }
-                }
-
-                RowLayout {
-                    id: row
-                    readonly property var modelData: line.modelData
-                    anchors.fill: parent
-                    anchors.leftMargin: 4
-                    anchors.rightMargin: 4
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Rectangle {
-                        Layout.preferredWidth: 3
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                        radius: 1.5
-                        color: row.modelData.color ? row.modelData.color : Kirigami.Theme.highlightColor
-                    }
-                    readonly property bool declined: modelData.response === "declined"
-                    TapHandler {
-                        gesturePolicy: TapHandler.WithinBounds
-                        // Not on the Join icon: that one joins, and only that
-                        onTapped: (point) => {
-                            const p = joinIcon.mapFromItem(row, point.position);
-                            if (!(joinIcon.visible && joinIcon.contains(p))) {
-                                tile.eventClicked(row.modelData);
-                            }
-                        }
-                    }
-                    HoverHandler {
-                        id: rowHover
-                        cursorShape: Qt.PointingHandCursor
-                    }
-                    // The event in full: title, when, where, which calendar, your answer
-                    QQC2.ToolTip.text: tile.details(modelData)
-                    QQC2.ToolTip.visible: rowHover.hovered && !joinArea.containsMouse
-                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                    opacity: declined ? 0.5 : 1
-                    PlasmaComponents.Label {
-                        Layout.fillWidth: true
-                        text: row.modelData.summary
-                        textFormat: Text.PlainText
-                        elide: Text.ElideRight
-                        font.strikeout: row.declined
-                        font.italic: row.modelData.response === "tentative"
-                    }
-                    PlasmaComponents.Label {
-                        text: tile.when(row.modelData)
-                        textFormat: Text.PlainText
-                        opacity: 0.7
-                        font: Kirigami.Theme.smallFont
-                    }
-                    // Join: the meeting's own link (Meet, Zoom, Teams...), a small icon in the line
-                    Kirigami.Icon {
-                        id: joinIcon
-                        visible: !!row.modelData.meetingUrl && !row.declined
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                        source: Qt.resolvedUrl("icons/glance-camera.svg")
-                        isMask: true
-                        color: Kirigami.Theme.textColor
-                        active: joinArea.containsMouse
-                        MouseArea {
-                            id: joinArea
-                            anchors.fill: parent
-                            anchors.margins: -4
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: tile.calendar.join(row.modelData)
-                        }
-                        QQC2.ToolTip.text: row.modelData.meetingLabel ? i18n("Join (%1)", row.modelData.meetingLabel) : i18n("Join")
-                        QQC2.ToolTip.visible: joinArea.containsMouse
-                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                    }
-                }
-            }
+            delegate: EventLine {}
         }
-
+        // Nothing left today: a quiet line, and tomorrow's first as a line of its own
         PlasmaComponents.Label {
             Layout.fillWidth: true
+            Layout.leftMargin: 4
             visible: tile.events.length === 0
-            text: tile.calendar.tomorrowFirst
-                ? i18n("Nothing else today. Tomorrow: %1", tile.calendar.tomorrowFirst.summary)
-                : i18n("Nothing else today.")
-            textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-            maximumLineCount: 2
-            elide: Text.ElideRight
-            opacity: 0.6
+            text: i18n("Nothing else today")
+            font: Kirigami.Theme.smallFont
+            opacity: 0.75
+        }
+        EventLine {
+            visible: tile.events.length === 0 && !!tile.calendar.tomorrowFirst
+            modelData: tile.calendar.tomorrowFirst || ({summary: "", start: new Date(), end: new Date()})
+            whenText: modelData.allDay ? i18n("Tomorrow")
+                : i18nc("tomorrow at a time", "Tomorrow, %1", Qt.formatTime(modelData.start, tile.timeFormat))
+            joinable: false
+            // Fainter than the line above, so it doesn't read as today's
+            opacity: rowHovered ? 0.8 : 0.5
         }
         Item {
             Layout.fillHeight: true

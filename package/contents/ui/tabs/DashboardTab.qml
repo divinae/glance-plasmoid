@@ -74,6 +74,14 @@ GridLayout {
                     onClicked: tab.island.openEventCalendar(null)
                 }
             }
+            // Under the date, between it and the agenda: the same line as above who-and-what
+            Rectangle {
+                visible: tab.showAgenda
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: Kirigami.Theme.textColor
+                opacity: 0.12
+            }
             // What's next today, from Event Calendar (the month itself is Event Calendar's)
             AgendaTile {
                 visible: tab.showAgenda
