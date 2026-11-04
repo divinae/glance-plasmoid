@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.2.0 — 2026-11-04
+
+Glance and [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar) work
+together: with "Share events with Glance" on in Event Calendar (Calendars), it sends today's
+and tomorrow's events, from every calendar, with meeting links and your response, over D-Bus
+whenever they change. Only widgets in Plasma itself can send them. Without it, Glance reads
+Event Calendar's cache file (Google calendars only) as before, which works again with Event
+Calendar 1.18's per-widget files.
+
+**Meetings in the panel.** Before a meeting, its name takes the panel text: "Standup in
+5 min", with a calendar in the event's colour. While it's on, a pill with a camera in its place
+(a click joins). "Join" is in the right-click menu too.
+
+**Focus and Shift know meetings.** Focus warns of a meeting coming up, pauses at its start (a
+flow too) and offers to resume after. Shift holds its reminders and the desk during a meeting
+and makes a switch that came due at its end; it can stand you up for meetings (off by default).
+
+**Dashboard.** Always there, and the first tab. Today's events under the clock, one slim row
+each (declined struck through, tentative in italics, a camera to join); a click opens that
+event in Event Calendar. The weather, from Event Calendar, small at the time's right. Icons are
+symbolic and match the theme; the media card's spectrum circles the cover, as on the Media tab.
+
+**Shift's reminder** offers Snooze, and Done (or Move the desk, with one) to record the switch.
+
+**Gone:** the Agenda and Window tabs (the dashboard and the menu bar on top have both);
+Glance's notifications stay out of the history.
+
 ## 1.1.1 — 2026-11-03
 
 **One Work tab.** With Focus and Shift both on, they share a tab: the timer on the left, a

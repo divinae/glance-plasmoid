@@ -32,12 +32,11 @@ translucent over a blurred background, rounded where it meets the panel's edge (
 a floating panel). Across its top runs the active window's menu bar, as on macOS: its menus
 (global menu) and window buttons. Its tabs:
 
-- **Dashboard:** the time, CPU/memory/disk, what's playing, who you are and what you run, your
-  notifications, focus and posture, and the shelf;
+- **Dashboard:** the time and weather, today's events, CPU/memory/disk, what's playing, who you
+  are and what you run, your notifications, focus and posture, and the shelf;
 - **Media:** the cover inside the spectrum's rays, controls, seek bar, players;
 - **Notifications:** the history grouped by app, with actions, replies, thumbnails and file
   transfers; Do Not Disturb for an hour, four hours, until tomorrow…;
-- **Agenda:** today's events, from the [Event Calendar NG](https://store.kde.org/p/2379570/) widget;
 - **Shelf:** drop files to keep them at hand, drag them out into any app;
 - **Focus:** a pomodoro or flowmodoro timer with its stats; a break overlay on every screen,
   Do Not Disturb while you focus, media paused for breaks, sounds and scripts. Locking the
@@ -51,6 +50,11 @@ breaks: no reminder or desk move in the middle of a session, and a switch that's
 made at the break. Breaks count as neither sitting nor standing. They take over from the
 separate [Fokus](https://gitlab.com/divinae/focus-plasmoid) and
 [Shift](https://gitlab.com/divinae/shift-plasmoid) widgets (their settings aren't imported).
+
+Events and the weather come from the [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar)
+widget: with "Share events with Glance" on there, over D-Bus, with meeting links. Before a
+meeting its name takes the panel text, and while it's on a pill joins it; Focus pauses for it
+and Shift waits until it's over. A click on an event opens it in Event Calendar.
 
 The drawer resizes from its corner. Without `layer-shell-qt`, or if you prefer, Glance opens
 Plasma's usual popup instead (Settings > Popup > Style).
