@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1 — 2026-11-04
+
+**Animations, where something changes.** A new pill grows in; notification rows slide in and
+fade out, the rest moving into place; one highlight slides between Sit and Stand; the strip
+flashes once when a meeting starts (not during Do Not Disturb). All follow Plasma's animation
+speed.
+
+**Fixed:** the calendar icon before an event is in the text's colour, as the strip's other
+icons (calendar colours are often a dull grey).
+
 ## 1.3.0 — 2026-11-04
 
 **Music.** The cover, blurred, behind the Media tab and lighter behind the dashboard's card; the
