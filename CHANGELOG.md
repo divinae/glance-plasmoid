@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.4.0 — 2026-11-04
+
+**Cards on the pills.** Hover a pill for a card to act on, without opening the drawer:
+- Focus: the wedge, what's left, the session, today, the meeting warning; Start or Pause, Skip,
+  Stop.
+- The meeting on now: until when and how far in, where, who; Join, Details (in Event Calendar).
+- Transfers: each with its bar; Pause, Cancel where the transfer allows.
+- Shift: Move the desk or Done, Snooze; Yes or Not yet when Glance asks.
+- Unread: the latest three; Open, Clear All.
+
+**Keep awake.** No dimming, screen lock or sleep while a focus session (or its break) runs or a
+meeting is on; not during a break run past its end. Two settings, on by default.
+
+**File transfers.** Copies and downloads show a pill with their progress ("42%", the wedge
+filling), also once their notification is minimised.
+
+**Calendar.** A meeting marked as ended in Event Calendar ends in Glance too: its pill goes, Focus
+offers to resume, Shift carries on (needs Event Calendar after 1.20). With nothing left today, the
+agenda says so in a small line and shows tomorrow's first, faint; a line under the date.
+
 ## 1.3.1 — 2026-11-04
 
 **Animations, where something changes.** A new pill grows in; notification rows slide in and
