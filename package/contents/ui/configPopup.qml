@@ -16,7 +16,6 @@ KCM.SimpleKCM {
     property alias cfg_drawerEdge: drawerEdge.currentIndex
     property alias cfg_drawerRadius: drawerRadius.value
     property alias cfg_drawerWidth: drawerWidth.value
-    property alias cfg_showDashboard: showDashboard.checked
     property alias cfg_drawerBlur: drawerBlur.checked
     property alias cfg_drawerOpacity: drawerOpacity.value
     property alias cfg_openOnHover: openOnHover.checked
@@ -127,12 +126,8 @@ KCM.SimpleKCM {
         }
 
         QQC2.CheckBox {
-            id: showDashboard
-            Kirigami.FormData.label: i18n("Show:")
-            text: i18n("Dashboard tab")
-        }
-        QQC2.CheckBox {
             id: showWindowButtons
+            Kirigami.FormData.label: i18n("Show:")
             text: i18n("Window buttons")
         }
         QQC2.CheckBox {

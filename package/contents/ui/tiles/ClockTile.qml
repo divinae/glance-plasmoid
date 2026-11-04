@@ -29,6 +29,9 @@ Tile {
         onTriggered: tile.now = new Date()
     }
 
+    // The time's line, for something to line up with it (the dashboard's weather)
+    readonly property Item timeItem: timeLabel
+
     // Its content's height, for a card that stacks it with others
     implicitHeight: clockColumn.implicitHeight + 2 * padding
 
@@ -42,6 +45,7 @@ Tile {
             Layout.fillHeight: true
         }
         PlasmaComponents.Label {
+            id: timeLabel
             Layout.fillWidth: true
             text: Qt.formatTime(tile.now, Qt.locale().timeFormat(Locale.ShortFormat))
             textFormat: Text.PlainText

@@ -22,6 +22,8 @@ Item {
     property int leadMinutes: 15
     property int nowMinutes: 5
 
+    // The weather Event Calendar shows (over D-Bus only): { temp, text, iconName, high, low, place }
+    property var weather: null
     // Where the events come from now: "bus", "file" or ""
     property string origin: ""
     readonly property bool available: _events.length > 0 || origin !== ""
@@ -83,6 +85,7 @@ Item {
             return;
         }
         let events = null;
+        weather = Island.CalendarBus.connected ? Calendar.weatherFromBus(Island.CalendarBus.eventsJson) : null;
         if (Island.CalendarBus.connected) {
             events = Calendar.fromBus(Island.CalendarBus.eventsJson);
             if (events !== null) {

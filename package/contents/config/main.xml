@@ -116,9 +116,6 @@
       <min>20</min>
       <max>100</max>
     </entry>
-    <entry name="showDashboard" type="Bool">
-      <default>true</default>
-    </entry>
     <entry name="switchTabOnHover" type="Bool">
       <default>true</default>
     </entry>

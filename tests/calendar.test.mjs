@@ -97,3 +97,11 @@ test("crossings: a start and an end as the clock passes them, not as meetings co
     r = C.crossings(list, {}, at(0, 9), at(0, 12));
     assert.equal(r.begun.length + r.ended.length, 0);
 });
+
+test("weatherFromBus: the weather Event Calendar sends, or nothing", () => {
+    const w = C.weatherFromBus(JSON.stringify({ version: 1, events: [], weather: { temp: 7.6, text: "Clouds", iconName: "weather-clouds", high: 10, low: 3, place: "Warsaw" } }));
+    assert.equal(w.temp, 8);
+    assert.equal(w.iconName, "weather-clouds");
+    assert.equal(C.weatherFromBus(JSON.stringify({ version: 1, events: [] })), null);
+    assert.equal(C.weatherFromBus(JSON.stringify({ version: 1, events: [], weather: { text: "?" } })), null);
+});

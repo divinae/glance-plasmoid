@@ -40,14 +40,8 @@ Item {
     // ---- tabs ----------------------------------------------------------------
     readonly property var tabs: {
         const t = [];
-        if (island.cfg.showDashboard) {
-            t.push({key: "dashboard", label: i18n("Dashboard"), icon: "view-grid"});
-        }
-        // With the dashboard the menu strip on top has the window's buttons and menus: the
-        // Window tab only without it
-        if (!island.cfg.showDashboard) {
-            t.push({key: "window", label: i18n("Window"), icon: "window"});
-        }
+        // The dashboard always; the window's menus and buttons are in the strip on top
+        t.push({key: "dashboard", label: i18n("Dashboard"), icon: "view-grid"});
         if (island.cfg.showMedia && island.hasPlayer) {
             t.push({key: "media", label: i18n("Media"), icon: "media-playback-start"});
         }
@@ -77,7 +71,7 @@ Item {
     function tabKey(key: string): string {
         return workTab && (key === "focus" || key === "stand") ? "work" : key;
     }
-    readonly property string homeKey: island.cfg.showDashboard ? "dashboard" : "window"
+    readonly property string homeKey: "dashboard"
     property string currentKey: homeKey
     readonly property int currentIndex: Math.max(0, tabs.findIndex(t => t.key === currentKey))
 
@@ -90,16 +84,7 @@ Item {
             return island.requestedTab;
         }
         // The dashboard shows media, unread notifications and the next event itself
-        if (island.cfg.showDashboard) {
-            return "dashboard";
-        }
-        if (island.playing && island.cfg.showMedia) {
-            return "media";
-        }
-        if (island.cfg.showNotifications && notifications.unreadCount > 0) {
-            return "notifications";
-        }
-        return "window";
+        return "dashboard";
     }
 
     function pickTab() {
@@ -169,7 +154,7 @@ Item {
         RowLayout {
             id: menuStrip
             Layout.fillWidth: true
-            visible: content.island.cfg.showDashboard && content.task !== null
+            visible: content.task !== null
                 && (content.island.cfg.showAppMenu || content.island.cfg.showWindowButtons)
             spacing: Kirigami.Units.smallSpacing
 
@@ -211,49 +196,6 @@ Item {
             onActivated: key => content.currentKey = key
         }
 
-        // ---- window header + buttons: only on the Window tab (else the menu strip has them) --
-        RowLayout {
-            id: header
-            Layout.fillWidth: true
-            visible: content.currentKey === "window"
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Icon {
-                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                source: content.task && content.task.icon ? content.task.icon : "preferences-desktop"
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-
-                PlasmaExtras.Heading {
-                    Layout.fillWidth: true
-                    level: 4
-                    text: content.task ? content.task.appName : content.island.cfg.placeholder
-                    elide: Text.ElideRight
-                    textFormat: Text.PlainText
-                    wrapMode: Text.NoWrap
-                }
-                PlasmaComponents.Label {
-                    Layout.fillWidth: true
-                    visible: text !== ""
-                    text: content.task && content.task.title !== content.task.appName ? content.task.title : ""
-                    elide: Text.ElideMiddle
-                    textFormat: Text.PlainText
-                    wrapMode: Text.NoWrap
-                    opacity: 0.7
-                    font: Kirigami.Theme.smallFont
-                }
-            }
-
-            WindowButtons {
-                visible: content.island.cfg.showWindowButtons && content.task !== null
-                island: content.island
-                tasks: content.tasks
-            }
-        }
 
         PlasmaComponents.TabBar {
             id: tabBar
@@ -351,13 +293,6 @@ Item {
                             content.currentKey = k;
                         }
                     }
-                }
-            }
-            Page {
-                key: "window"
-                sourceComponent: WindowTab {
-                    island: content.island
-                    appMenu: content.appMenu
                 }
             }
             Page {

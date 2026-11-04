@@ -230,3 +230,28 @@ function crossings(events, started, prevMs, nowMs) {
     }
     return { started: out, begun: begun, ended: ended };
 }
+
+// The weather Event Calendar sends along (its "weather"): { temp, text, iconName, high, low,
+// place, units }, temperatures rounded or null; null when it sends none
+function weatherFromBus(text) {
+    let data = null;
+    try {
+        data = text ? JSON.parse(text) : null;
+    } catch (e) {
+        return null;
+    }
+    const w = data && data.version === 1 ? data.weather : null;
+    if (!w || typeof w !== "object") {
+        return null;
+    }
+    const num = (v) => typeof v === "number" && isFinite(v) ? Math.round(v) : null;
+    const out = {
+        temp: num(w.temp),
+        text: String(w.text || ""),
+        iconName: String(w.iconName || ""),
+        high: num(w.high),
+        low: num(w.low),
+        place: String(w.place || ""),
+    };
+    return out.temp === null && out.high === null ? null : out;
+}

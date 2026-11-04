@@ -49,13 +49,30 @@ GridLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.largeSpacing
 
-            // The time at the top, today's agenda under it, who and what at the bottom
-            ClockTile {
+            // The time at the top (the weather small at its right, from Event Calendar), today's
+            // agenda under it, who and what at the bottom
+            Item {
                 Layout.fillWidth: true
-                color: "transparent"
-                padding: 0
-                alignTop: true
-                timeScale: 3.6
+                implicitHeight: clock.implicitHeight
+
+                ClockTile {
+                    id: clock
+                    anchors.fill: parent
+                    anchors.rightMargin: weather.visible ? weather.width : 0
+                    color: "transparent"
+                    padding: 0
+                    alignTop: true
+                    timeScale: 3.6
+                }
+                WeatherLine {
+                    id: weather
+                    // On the time's line, in its middle
+                    anchors.right: parent.right
+                    y: clock.timeItem.y + (clock.timeItem.height - height) / 2
+                    visible: tab.island.cfg.calendarEnabled && tab.calendar.weather !== null
+                    weather: tab.calendar.weather || ({})
+                    onClicked: tab.island.openEventCalendar(null)
+                }
             }
             // What's next today, from Event Calendar (the month itself is Event Calendar's)
             AgendaTile {
