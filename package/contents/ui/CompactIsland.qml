@@ -92,11 +92,11 @@ MouseArea {
             out.push({color: Kirigami.Theme.highlightColor, action: "focus", hasText: "focus",
                 icon: island.focusOnBreak ? "chronometer-pause-symbolic" : "chronometer-symbolic"});
         }
-        // A meeting soon or on: its countdown in the meeting's colour; a click joins (when it has
-        // a link). Its countdown and tooltip are bound in the segment too.
-        if (island.meeting && island.cfg.pillMeeting) {
-            out.push({color: island.meeting.color || Kirigami.Theme.highlightColor,
-                action: island.meeting.meetingUrl ? "meeting" : "info", hasText: "meeting",
+        // A meeting on now (one coming up is in the strip's text instead), in its colour; a click
+        // joins (when it has a link). Its countdown and tooltip are bound in the segment too.
+        if (island.meetingPill) {
+            out.push({color: island.meetingOn.color || Kirigami.Theme.highlightColor,
+                action: island.meetingOn.meetingUrl ? "meeting" : "info", hasText: "meeting",
                 icon: Qt.resolvedUrl("tiles/icons/glance-camera.svg")});
         }
         // Stand: time to switch (or a switch waiting to be confirmed); click switches
@@ -327,13 +327,15 @@ MouseArea {
                     color: compact.foreground
                     opacity: compact.island.cfg.cavaPanelOpacity / 100
                 }
-                Rectangle {
+                // An event: a calendar in its colour
+                Kirigami.Icon {
                     id: eventDot
-                    width: Math.round(compact.pillThickness * 0.35)
+                    width: leadIconItem.width
                     height: width
-                    radius: width / 2
                     anchors.verticalCenter: parent.verticalCenter
                     visible: compact.mode === "event"
+                    source: "view-calendar-day-symbolic"
+                    isMask: true
                     color: compact.island.stripEvent && compact.island.stripEvent.color
                         ? compact.island.stripEvent.color : Kirigami.Theme.highlightColor
                 }

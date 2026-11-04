@@ -62,7 +62,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: meetingInStrip
-            text: i18n("A meeting takes the panel text (ahead of the window and music)")
+            text: i18n("A meeting coming up takes the panel text (ahead of the window and music)")
         }
         QQC2.Label {
             Layout.fillWidth: true

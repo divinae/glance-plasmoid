@@ -199,7 +199,7 @@
     <entry name="calendarEnabled" type="Bool">
       <default>true</default>
     </entry>
-    <!-- A meeting soon or on takes the panel text, ahead of the window and of media -->
+    <!-- A meeting coming up takes the panel text, ahead of the window and of media; one on now is the pill -->
     <entry name="meetingInStrip" type="Bool">
       <default>true</default>
     </entry>

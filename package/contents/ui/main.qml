@@ -92,7 +92,12 @@ PlasmoidItem {
 
     // The meeting on now, or starting within the lead: the panel's text and its pill
     readonly property var meeting: cfg.calendarEnabled ? calendarSource.meeting : null
-    readonly property bool meetingInStrip: meeting !== null && cfg.meetingInStrip
+    // Before a meeting: its name and countdown in the strip, no pill. While it's on: only the
+    // pill, and the strip goes back to the window
+    readonly property var meetingOn: cfg.calendarEnabled ? calendarSource.meetingNow : null
+    readonly property var meetingSoon: meeting !== null && meeting !== meetingOn ? meeting : null
+    readonly property bool meetingInStrip: meetingSoon !== null && cfg.meetingInStrip
+    readonly property bool meetingPill: meetingOn !== null && cfg.pillMeeting
     readonly property string meetingCountdown: {
         if (!meeting) {
             return "";
@@ -113,7 +118,9 @@ PlasmoidItem {
     // "Standup · 5 min", for the pill's tooltip
     readonly property string meetingLabel: meeting ? calendarSource.label(meeting) : ""
     readonly property var stripEvent: !cfg.calendarEnabled ? null
-        : meetingInStrip ? meeting : calendarSource.stripEvent
+        : meetingInStrip ? meetingSoon
+        : meetingPill && calendarSource.stripEvent && calendarSource.stripEvent.id === meetingOn.id ? null
+        : calendarSource.stripEvent
     // Time to sit down or stand up asks for something: it goes before media and the window
     readonly property bool standDue: stand !== null && stand !== undefined && stand.switchDue && !stand.pendingPosition
     readonly property bool focusActive: focusTimer !== null && focusTimer !== undefined && focusTimer.active
@@ -128,9 +135,7 @@ PlasmoidItem {
         case "notice": return noticeText;
         case "stand": return stand.cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
         case "media": return mediaText;
-        // A meeting with its pill: the name here, the countdown in the pill (not both)
-        case "event": return truncate(stripEvent === meeting && cfg.pillMeeting
-            ? stripEvent.summary : calendarSource.label(stripEvent));
+        case "event": return calendarSource.label(stripEvent, root.truncate);
         default: return windowText;
         }
     }

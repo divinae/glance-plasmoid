@@ -56,18 +56,20 @@ Item {
         return Math.ceil((ev.start.getTime() - now.getTime()) / 60000);
     }
 
-    function label(ev): string {
+    // "Standup in 5 min"; `shorten` cuts the name only, so the time always shows
+    function label(ev, shorten): string {
         if (!ev) {
             return "";
         }
+        const name = shorten ? shorten(ev.summary) : ev.summary;
         const m = minutesUntil(ev);
         if (m <= 0) {
-            return i18nc("event happening now", "%1 · now", ev.summary);
+            return i18nc("event happening now", "%1 now", name);
         }
         if (m < 60) {
-            return i18nc("event starts in N minutes", "%1 · %2 min", ev.summary, m);
+            return i18nc("event starts in N minutes", "%1 in %2 min", name, m);
         }
-        return i18nc("event starts at time", "%1 · %2", ev.summary, Qt.formatTime(ev.start, Qt.locale().timeFormat(Locale.ShortFormat)));
+        return i18nc("event starts at time", "%1 at %2", name, Qt.formatTime(ev.start, Qt.locale().timeFormat(Locale.ShortFormat)));
     }
 
     // Opens a meeting's link (only http(s), only on a click)
