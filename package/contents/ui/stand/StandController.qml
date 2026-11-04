@@ -47,8 +47,11 @@ Item {
     // A focus break (or its overrun) is on: away from the desk, so the cycle stands still -
     // the break counts as neither sitting nor standing.
     property bool focusBreak: false
+    // A meeting is on (from Event Calendar, set by Glance): reminders and desk moves wait for
+    // its end, and a switch due soon is made then
+    property bool holdForMeeting: false
     // Either reason to keep quiet
-    readonly property bool quiet: dndActive || holdForFocus
+    readonly property bool quiet: dndActive || holdForFocus || holdForMeeting
     // A reminder held back by Do Not Disturb or a focus block, shown once it ends.
     property bool pendingRemind: false
     readonly property string dndCmd: "dbus-send --session --print-reply=literal --dest=org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.DBus.Properties.Get string:org.freedesktop.Notifications string:Inhibited"
@@ -135,6 +138,8 @@ Item {
             return i18n("Reminders start again at %1", formatClock(workHours.startMinutes));
         if (status === "snoozed")
             return i18n("Snoozed for %1", Cycle.formatMinutes(cycle.snoozeUntil - nowMs));
+        if (cycle.dueSinceMs && holdForMeeting)
+            return i18n("Due for %1, waits for the meeting to end", Cycle.formatMinutes(nowMs - cycle.dueSinceMs));
         if (cycle.dueSinceMs && holdForFocus)
             return i18n("Due for %1, waits for the focus break", Cycle.formatMinutes(nowMs - cycle.dueSinceMs));
         if (cycle.dueSinceMs && dndActive)
@@ -272,8 +277,12 @@ Item {
         if (!settings.stand_notification_enabled)
             return;
         var target = standing ? "sit" : "stand";
+        // A desk that moves: the button moves it. Otherwise you switch yourself, and Done records
+        // it there and then (no second confirmation).
+        var moves = deskEnabled && desk.reachable;
         notifications.notifyActions(standing ? i18n("Time to sit down.") : i18n("Time to stand up."), [
-            { label: standing ? i18n("Sit now") : i18n("Stand now"), action: function() { root.goTo(target); } },
+            moves ? { label: i18n("Move the desk"), action: function() { root.goTo(target); } }
+                  : { label: i18n("Done"), action: function() { root.setPosition(target); } },
             { label: i18n("Snooze %1 min", settings.stand_snooze_minutes), action: root.snooze }
         ], standing ? "go-down" : "go-up");
     }
@@ -292,6 +301,24 @@ Item {
         pendingRemind = false;
         if (switchDue)
             actOnDue();
+    }
+
+    // Stand up for a meeting ("Stand up for meetings"): the desk rises at its start, and goes
+    // back down at its end if it rose for it
+    property bool roseForMeeting: false
+    function meetingStarted() {
+        if (!settings.stand_stand_for_meetings || idle || cycle.position === "stand")
+            return;
+        if (deskEnabled && desk.reachable && desk.moveTo("stand"))
+            roseForMeeting = true;
+    }
+    // switchDueSoon: also make a switch due within 10 minutes now ("Wait for meetings")
+    function meetingEnded(switchDueSoon) {
+        if (roseForMeeting && deskEnabled && desk.reachable && cycle.position === "stand")
+            desk.moveTo("sit");
+        else if (switchDueSoon)
+            switchAtBreak(10 * 60 * 1000);
+        roseForMeeting = false;
     }
 
     // A focus break has started and the next switch is close: make it now rather than a few

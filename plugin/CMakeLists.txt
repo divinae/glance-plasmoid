@@ -13,6 +13,7 @@ find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED
 find_package(KF6WindowSystem ${KF6_MIN_VERSION} REQUIRED)
 find_package(KF6Service ${KF6_MIN_VERSION} REQUIRED)
 find_package(Plasma REQUIRED)
+find_package(PlasmaQuick REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PipeWire REQUIRED IMPORTED_TARGET libpipewire-0.3)
 
@@ -48,6 +49,8 @@ ecm_add_qml_module(glanceplugin URI com.dv.glance.private GENERATE_PLUGIN_SOURCE
 target_sources(glanceplugin PRIVATE
     appmenumodel.cpp
     appmenumodel.h
+    calendarbus.cpp
+    calendarbus.h
     cavasource.cpp
     cavasource.h
     drawereffects.cpp
@@ -73,6 +76,7 @@ target_link_libraries(glanceplugin PRIVATE
     KF6::WindowSystem
     KF6::Service
     Plasma::Plasma
+    Plasma::PlasmaQuick
     PkgConfig::PipeWire
     glancedbusmenuqt
 )

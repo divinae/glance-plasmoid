@@ -13,9 +13,8 @@ import "../tiles"
 
 // The first tab, after Caelestia's dashboard:
 //
-//   clock    | today's events | CPU·RAM·disk | media
-//   user and | notifications · focus · stand · shelf
-//   system   |
+//   clock, today's events | CPU·RAM·disk | media
+//   user and system       | notifications · focus/shift · shelf
 // (the window's menus and buttons are in the menu bar along the top of the drawer)
 GridLayout {
     id: tab
@@ -35,7 +34,7 @@ GridLayout {
     readonly property bool showShelf: island.cfg.showShelf
     readonly property bool showSystem: island.cfg.showSystem
 
-    columns: 4
+    columns: 3
     rowSpacing: Kirigami.Units.largeSpacing
     columnSpacing: Kirigami.Units.largeSpacing
 
@@ -50,14 +49,29 @@ GridLayout {
             anchors.fill: parent
             spacing: Kirigami.Units.largeSpacing
 
-            // The time at the top, who and what at the bottom
+            // The time at the top, today's agenda under it, who and what at the bottom
             ClockTile {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
                 color: "transparent"
                 padding: 0
                 alignTop: true
                 timeScale: 3.6
+            }
+            // What's next today, from Event Calendar (the month itself is Event Calendar's)
+            AgendaTile {
+                visible: tab.showAgenda
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                color: "transparent"
+                padding: 0
+                calendar: tab.calendar
+                maxEvents: 4
+                // The calendar itself is Event Calendar's: its popup opens
+                onEventClicked: ev => tab.island.openEventCalendar(ev)
+            }
+            Item {
+                visible: !tab.showAgenda
+                Layout.fillHeight: true
             }
             Rectangle {
                 Layout.fillWidth: true
@@ -72,17 +86,6 @@ GridLayout {
                 padding: 0
             }
         }
-    }
-    // What's next today, from Event Calendar (the month itself is Event Calendar's)
-    AgendaTile {
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
-        visible: tab.showAgenda
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 12
-        calendar: tab.calendar
-        maxEvents: 5
-        onClicked: tab.openTab("agenda")
     }
     ResourcesTile {
         Layout.minimumHeight: Kirigami.Units.gridUnit * 9
@@ -99,7 +102,7 @@ GridLayout {
         Layout.fillHeight: true
         Layout.preferredWidth: Kirigami.Units.gridUnit * 9
         // Takes the places of what's hidden in this row, so it never leaves a gap
-        Layout.columnSpan: 1 + (tab.showAgenda ? 0 : 1) + (tab.showSystem ? 0 : 1)
+        Layout.columnSpan: 1 + (tab.showSystem ? 0 : 1)
         island: tab.island
         cava: tab.cava
         mediaState: tab.mediaState
@@ -113,7 +116,7 @@ GridLayout {
         Layout.fillWidth: true
         Layout.minimumHeight: Kirigami.Units.gridUnit * 7
         Layout.fillHeight: true
-        Layout.columnSpan: 3
+        Layout.columnSpan: 2
         spacing: Kirigami.Units.largeSpacing
 
         NotificationsTile {

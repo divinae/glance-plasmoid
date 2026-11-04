@@ -62,12 +62,64 @@ PlasmoidItem {
 
     // ---- panel strip: what the text shows, highest priority first ------------
     property string noticeText: ""
-    readonly property var stripEvent: cfg.calendarEnabled ? calendarSource.stripEvent : null
+    // A meeting is on (timed, with a link or guests, not declined): Focus and Shift give way
+    readonly property bool inMeeting: cfg.calendarEnabled && calendarSource.meetingNow !== null
+    // At a meeting's real start and end (CalendarSource tells them apart from one that merely
+    // appears or vanishes)
+    Connections {
+        target: calendarSource
+        enabled: root.cfg.calendarEnabled
+        function onMeetingStarted(ev) {
+            if (root.focusTimer && root.cfg.focus_meeting_pause) {
+                root.focusTimer.pauseForMeeting();
+            }
+            if (root.stand) {
+                root.stand.meetingStarted();
+            }
+        }
+        function onMeetingEnded(ev) {
+            if (root.focusTimer) {
+                root.focusTimer.meetingEnded();
+            }
+            // A beat later: Shift's hold for the meeting lifts first, so a reminder isn't held back
+            Qt.callLater(() => {
+                if (root.stand) {
+                    root.stand.meetingEnded(root.cfg.stand_meeting_hold);
+                }
+            });
+        }
+    }
+
+    // The meeting on now, or starting within the lead: the panel's text and its pill
+    readonly property var meeting: cfg.calendarEnabled ? calendarSource.meeting : null
+    readonly property bool meetingInStrip: meeting !== null && cfg.meetingInStrip
+    readonly property string meetingCountdown: {
+        if (!meeting) {
+            return "";
+        }
+        const m = calendarSource.minutesUntil(meeting);
+        return m <= 0 ? i18nc("meeting on now", "now")
+            : m < 60 ? i18nc("meeting in N minutes", "%1 min", m)
+            : Qt.formatTime(meeting.start, Qt.locale().timeFormat(Locale.ShortFormat));
+    }
+    // Event Calendar's popup, in place of Glance's drawer: on an event's details when given one
+    function openEventCalendar(ev) {
+        setOpen(false);
+        Island.CalendarBus.openEventCalendar(Plasmoid, ev ? ev.calendarId : "", ev ? ev.id : "");
+    }
+    function joinMeeting() {
+        calendarSource.join(meeting);
+    }
+    // "Standup · 5 min", for the pill's tooltip
+    readonly property string meetingLabel: meeting ? calendarSource.label(meeting) : ""
+    readonly property var stripEvent: !cfg.calendarEnabled ? null
+        : meetingInStrip ? meeting : calendarSource.stripEvent
     // Time to sit down or stand up asks for something: it goes before media and the window
     readonly property bool standDue: stand !== null && stand !== undefined && stand.switchDue && !stand.pendingPosition
     readonly property bool focusActive: focusTimer !== null && focusTimer !== undefined && focusTimer.active
     readonly property string stripMode: noticeText !== "" ? "notice"
         : standDue ? "stand"
+        : meetingInStrip ? "event"
         : showMediaInPanel ? "media"
         : stripEvent ? "event"
         : "window"
@@ -76,7 +128,9 @@ PlasmoidItem {
         case "notice": return noticeText;
         case "stand": return stand.cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
         case "media": return mediaText;
-        case "event": return truncate(calendarSource.label(stripEvent));
+        // A meeting with its pill: the name here, the countdown in the pill (not both)
+        case "event": return truncate(stripEvent === meeting && cfg.pillMeeting
+            ? stripEvent.summary : calendarSource.label(stripEvent));
         default: return windowText;
         }
     }
@@ -328,6 +382,7 @@ PlasmoidItem {
                 settings: root.cfg
                 // Focus and Stand together: switches wait for the focus break
                 holdForFocus: root.cfg.stand_focus_sync_enabled && root.focusInBlock
+                holdForMeeting: root.cfg.stand_meeting_hold && root.inMeeting
                 // A focus break is time away from the desk: neither sitting nor standing
                 focusBreak: root.cfg.stand_focus_sync_enabled && root.focusOnBreak
             }
@@ -342,6 +397,7 @@ PlasmoidItem {
         sourceComponent: Component {
             Focus.FocusController {
                 settings: root.cfg
+                nextMeeting: root.cfg.calendarEnabled ? calendarSource.meetingNext : null
                 expanded: root.open
             }
         }
@@ -459,6 +515,12 @@ PlasmoidItem {
         PlasmaCore.Action {
             isSeparator: true
             visible: !!root.stand
+        },
+        PlasmaCore.Action {
+            text: root.meeting ? i18n("Join %1", root.truncate(root.meeting.summary)) : ""
+            icon.name: "camera-video-symbolic"
+            visible: !!root.meeting && !!root.meeting.meetingUrl
+            onTriggered: root.joinMeeting()
         },
         PlasmaCore.Action {
             text: i18n("Do Not Disturb")

@@ -23,6 +23,8 @@ KCMUtils.SimpleKCM {
     property alias cfg_stand_sound_volume: sound_volume.value
     property alias cfg_stand_away_on_lock_enabled: away_on_lock_enabled.checked
     property alias cfg_stand_focus_sync_enabled: focus_sync_enabled.checked
+    property alias cfg_stand_meeting_hold: meeting_hold.checked
+    property alias cfg_stand_stand_for_meetings: stand_for_meetings.checked
     property alias cfg_stand_work_hours_enabled: work_hours_enabled.checked
     property alias cfg_stand_work_start_minutes: work_start_minutes.value
     property alias cfg_stand_work_end_minutes: work_end_minutes.value
@@ -241,6 +243,20 @@ KCMUtils.SimpleKCM {
 
                 text: i18n("Switch at focus breaks")
                 description: i18n("With Focus on, reminders and desk moves wait for the break, and a switch due within 10 minutes is made at the break. Breaks count as neither sitting nor standing.")
+            }
+            FormCard.FormDelegateSeparator {}
+            FormCard.FormSwitchDelegate {
+                id: meeting_hold
+
+                text: i18n("Wait for meetings")
+                description: i18n("No reminders or desk moves during a meeting from Event Calendar; a switch due soon is made when it ends.")
+            }
+            FormCard.FormDelegateSeparator {}
+            FormCard.FormSwitchDelegate {
+                id: stand_for_meetings
+
+                text: i18n("Stand up for meetings")
+                description: i18n("The desk rises when a meeting starts and goes back down when it ends.")
             }
         }
 

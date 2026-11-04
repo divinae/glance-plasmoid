@@ -144,6 +144,46 @@ Item {
         return settings.focus_timer_start_sfx_enabled ? settings.focus_timer_start_sfx_filepath : "";
     }
 
+    // The next meeting (Glance passes Event Calendar's), for a warning before a session that
+    // would run into it
+    property var nextMeeting: null
+    // A clock for the warning, ticking only while there is a meeting to warn about
+    property real meetingClockMs: Date.now()
+    Timer {
+        interval: 30 * 1000
+        repeat: true
+        running: root.nextMeeting !== null
+        triggeredOnStart: true
+        onTriggered: root.meetingClockMs = Date.now()
+    }
+    readonly property string meetingWarning: {
+        if (!nextMeeting || timer.running || isBreak())
+            return "";
+        var minutes = Math.round((nextMeeting.start.getTime() - meetingClockMs) / 60000);
+        if (minutes <= 0 || (!flowmodoroModeEnabled && minutes * 60 >= counterSeconds) || minutes > 120)
+            return "";
+        return i18np("A meeting starts in %1 minute", "A meeting starts in %1 minutes", minutes);
+    }
+
+    // Paused for a meeting (Glance pauses the block at its start): offered back at its end
+    property bool pausedForMeeting: false
+    function pauseForMeeting() {
+        if (!timer.running || isBreak())
+            return;
+        pause(); // A flow too: it goes on after the meeting, as a pomodoro does
+        pausedForMeeting = true;
+    }
+    function meetingEnded() {
+        if (!pausedForMeeting)
+            return;
+        pausedForMeeting = false;
+        if (timer.running)
+            return;
+        notificationManager.notifyActions(i18n("The meeting is over."), [
+            { label: i18n("Resume focus"), action: function() { if (!timer.running) root.start(); } }
+        ], "chronometer");
+    }
+
     // The popup and the sound are independent: either, both or neither. Previously
     // the sound rode along inside the notification, so it could not play alone.
     function announce(breakEvent, atEnd, summary, actionLabel, action) {

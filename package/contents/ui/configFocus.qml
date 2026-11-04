@@ -49,6 +49,7 @@ KCMUtils.SimpleKCM {
 
     property alias cfg_focus_autostart: autostart.checked
     property alias cfg_focus_pause_on_lock_enabled: pause_on_lock_enabled.checked
+    property alias cfg_focus_meeting_pause: meeting_pause.checked
     property alias cfg_focus_do_not_disturb_enabled: do_not_disturb_enabled.checked
     property alias cfg_focus_break_pause_media_enabled: break_pause_media_enabled.checked
     property alias cfg_focus_timer_auto_focus_enabled: timer_auto_focus_enabled.checked
@@ -547,6 +548,15 @@ KCMUtils.SimpleKCM {
 
                 text: i18n("Pause while the screen is locked")
                 description: i18n("A focus session pauses when you lock the screen and picks up again when you unlock it. Breaks keep running.")
+            }
+
+            FormCard.FormDelegateSeparator {}
+
+            FormCard.FormSwitchDelegate {
+                id: meeting_pause
+
+                text: i18n("Pause for meetings")
+                description: i18n("A meeting from Event Calendar pauses a focus session (or a flow) when it starts, and offers to resume when it ends.")
             }
 
             FormCard.FormDelegateSeparator {}

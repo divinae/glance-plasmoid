@@ -50,7 +50,11 @@ Tile {
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: Kirigami.Units.iconSizes.small
             implicitHeight: implicitWidth
-            source: bar.icon
+            source: Qt.resolvedUrl("icons/glance-" + bar.icon + ".svg")
+            // Drawn for this card, line icons in the text colour, alike
+            isMask: true
+            color: Kirigami.Theme.textColor
+            opacity: 0.8
         }
         PlasmaComponents.ToolTip.text: bar.label + ": " + Math.round(bar.value) + "%"
         PlasmaComponents.ToolTip.visible: hover.hovered
@@ -73,7 +77,7 @@ Tile {
             value: tile.monitor.number(tile.monitor.memPercent)
         }
         Bar {
-            icon: "drive-harddisk"
+            icon: "disk"
             label: i18n("Disk")
             value: tile.monitor.number(tile.monitor.disk)
         }

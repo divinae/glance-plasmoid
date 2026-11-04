@@ -39,6 +39,9 @@
     <entry name="pillFocus" type="Bool">
       <default>true</default>
     </entry>
+    <entry name="pillMeeting" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="pillDnd" type="Bool">
       <default>true</default>
     </entry>
@@ -199,6 +202,10 @@
     <entry name="calendarEnabled" type="Bool">
       <default>true</default>
     </entry>
+    <!-- A meeting soon or on takes the panel text, ahead of the window and of media -->
+    <entry name="meetingInStrip" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="calendarLeadMinutes" type="Int">
       <default>15</default>
       <min>1</min>
@@ -331,6 +338,15 @@
             <default>false</default>
         </entry>
 
+
+        <!-- No reminders or desk moves during a meeting (Event Calendar); a switch due soon at its end -->
+        <entry name="stand_meeting_hold" type="Bool">
+            <default>true</default>
+        </entry>
+        <!-- The desk rises for a meeting and goes back down after -->
+        <entry name="stand_stand_for_meetings" type="Bool">
+            <default>false</default>
+        </entry>
 
         <!-- Posture switches wait for focus breaks, and one due soon is made at the break -->
         <entry name="stand_focus_sync_enabled" type="Bool">
@@ -586,6 +602,11 @@
 
         <entry name="focus_flowmodoro_mode_enabled" type="Bool">
             <default>false</default>
+        </entry>
+
+        <!-- A meeting's start (Event Calendar) pauses a focus block; its end offers to resume -->
+        <entry name="focus_meeting_pause" type="Bool">
+            <default>true</default>
         </entry>
 
         <!-- A running focus block pauses while the screen is locked, and resumes on unlock -->

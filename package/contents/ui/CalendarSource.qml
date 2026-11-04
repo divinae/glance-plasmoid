@@ -3,13 +3,17 @@
 
     SPDX-License-Identifier: GPL-2.0-or-later
 
-    Reads the event cache written by the Event Calendar widget
-    (~/.cache/plasma-eventcalendar/events.ini, [events] json=...). Read-only:
-    Glance never talks to Google itself.
+    The events of the Event Calendar widget. Over D-Bus, as it publishes them (every calendar,
+    with meeting links and your answer: Island.CalendarBus); without that (an older Event
+    Calendar) from its per-widget cache file, Google calendars only. Read-only: Glance never
+    talks to a calendar itself.
 */
 
 import QtQuick
-import QtCore
+
+import com.dv.glance.private as Island
+
+import "Calendar.js" as Calendar
 
 Item {
     id: source
@@ -18,33 +22,36 @@ Item {
     property int leadMinutes: 15
     property int nowMinutes: 5
 
-    readonly property bool available: _events.length > 0 || _loaded
+    // Where the events come from now: "bus", "file" or ""
+    property string origin: ""
+    readonly property bool available: _events.length > 0 || origin !== ""
     property var todayEvents: []      // remaining timed + all-day events today, sorted
     property var tomorrowFirst: null  // first timed event tomorrow
-    property var nextEvent: null      // next timed event that has not started
+    property var nextEvent: null      // next timed event that has not started (not declined)
     property var currentEvent: null   // timed event that started at most nowMinutes ago
+    property var meetingNow: null     // the meeting on now
+    property var meetingNext: null    // the next meeting, however far
+    // The meeting for the panel: on now, or starting within leadMinutes
+    property var meeting: null
     // Event shown on the panel strip: just started, or starting within leadMinutes
     readonly property var stripEvent: currentEvent ? currentEvent
         : (nextEvent && minutesUntil(nextEvent) <= leadMinutes ? nextEvent : null)
 
+    // A meeting's real start and end, seen as the clock passes them (not when a meeting merely
+    // appears or vanishes: the events' source can change, Plasma can restart). Only within
+    // 2 minutes of the moment, so a suspend or a long gap doesn't fire old ones; an end only for
+    // a meeting whose start was acted on, even if it has vanished since.
+    signal meetingStarted(var ev)
+    signal meetingEnded(var ev)
+    property real _prevNowMs: 0
+    property var _started: ({}) // id → end (ms) of the meetings started
+
     property var _events: []
-    property bool _loaded: false
     property date now: new Date()
 
-    function localPath(url) {
-        const p = String(url || "");
-        return p.indexOf("file://") === 0 ? decodeURIComponent(p.slice(7)) : p;
-    }
-
-    Settings {
-        id: cache
-        location: "file://" + source.localPath(StandardPaths.writableLocation(StandardPaths.GenericCacheLocation))
-            + "/plasma-eventcalendar/events.ini"
-        category: "events"
-    }
-
+    // Whole minutes left, rounded up: "now" only once it has started
     function minutesUntil(ev): int {
-        return Math.round((ev.start.getTime() - now.getTime()) / 60000);
+        return Math.ceil((ev.start.getTime() - now.getTime()) / 60000);
     }
 
     function label(ev): string {
@@ -61,121 +68,83 @@ Item {
         return i18nc("event starts at time", "%1 · %2", ev.summary, Qt.formatTime(ev.start, Qt.locale().timeFormat(Locale.ShortFormat)));
     }
 
-    function parseDate(d) {
-        if (!d) {
-            return null;
+    // Opens a meeting's link (only http(s), only on a click)
+    function join(ev) {
+        if (ev && ev.meetingUrl) {
+            Qt.openUrlExternally(ev.meetingUrl);
         }
-        if (d.dateTime) {
-            return {date: new Date(d.dateTime), allDay: false};
-        }
-        if (d.date) {
-            const parts = d.date.split("-");
-            return {date: new Date(+parts[0], +parts[1] - 1, +parts[2]), allDay: true};
-        }
-        return null;
     }
 
     function reload() {
         if (!active) {
             _events = [];
+            origin = "";
             recompute();
             return;
         }
-        cache.sync();
-        const text = cache.value("json", "");
-        let data = null;
-        try {
-            data = text ? JSON.parse(text) : null;
-        } catch (e) {
-            data = null;
-        }
-        const out = [];
-        if (data && data.version === 1 && data.calendars) {
-            for (const calId in data.calendars) {
-                const items = data.calendars[calId];
-                if (!Array.isArray(items)) {
-                    continue;
-                }
-                for (const it of items) {
-                    if (!it || it.status === "cancelled" || !it.summary) {
-                        continue;
-                    }
-                    const s = parseDate(it.start);
-                    const e = parseDate(it.end);
-                    if (!s) {
-                        continue;
-                    }
-                    out.push({
-                        summary: it.summary,
-                        start: s.date,
-                        end: e ? e.date : s.date,
-                        allDay: s.allDay,
-                        color: it.backgroundColor || "",
-                        link: it.htmlLink || "",
-                        location: it.location || "",
-                    });
-                }
+        let events = null;
+        if (Island.CalendarBus.connected) {
+            events = Calendar.fromBus(Island.CalendarBus.eventsJson);
+            if (events !== null) {
+                origin = "bus";
             }
         }
-        out.sort((a, b) => a.start - b.start);
-        _events = out;
-        _loaded = data !== null;
+        if (events === null) {
+            events = Calendar.fromCache(Island.CalendarBus.readCacheFile());
+            origin = events !== null ? "file" : "";
+        }
+        _events = events || [];
         recompute();
     }
 
     function recompute() {
         now = new Date();
-        const t = now.getTime();
-        const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const dayEnd = new Date(dayStart.getTime() + 86400000);
-        const tomorrowEnd = new Date(dayEnd.getTime() + 86400000);
+        const r = Calendar.compute(_events, now.getTime(), nowMinutes, leadMinutes);
+        todayEvents = r.today;
+        nextEvent = r.next;
+        currentEvent = r.current;
+        tomorrowFirst = r.tomorrow;
+        meetingNow = r.meetingNow;
+        meetingNext = r.meetingNext;
+        meeting = r.meeting;
+        crossings(now.getTime());
+    }
 
-        const today = [];
-        let next = null;
-        let current = null;
-        let tomorrow = null;
-        for (const ev of _events) {
-            if (ev.allDay) {
-                if (ev.start < dayEnd && ev.end > dayStart) {
-                    today.push(ev);
-                }
-                continue;
-            }
-            if (ev.start < dayEnd && ev.end.getTime() > t) {
-                today.push(ev);
-            }
-            if (ev.start.getTime() > t && !next) {
-                next = ev;
-            }
-            if (ev.start.getTime() <= t && ev.end.getTime() > t && t - ev.start.getTime() <= nowMinutes * 60000) {
-                current = ev;
-            }
-            if (!tomorrow && ev.start >= dayEnd && ev.start < tomorrowEnd) {
-                tomorrow = ev;
-            }
+    function crossings(nowMs) {
+        const r = Calendar.crossings(_events, _started, _prevNowMs, nowMs);
+        _prevNowMs = nowMs;
+        _started = r.started;
+        // Ends first: back to back, the next one starts as the last one ends
+        for (const ev of r.ended) {
+            meetingEnded(ev);
         }
-        // all-day first, then by start time
-        today.sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start));
-        todayEvents = today;
-        nextEvent = next;
-        currentEvent = current;
-        tomorrowFirst = tomorrow;
+        for (const ev of r.begun) {
+            meetingStarted(ev);
+        }
     }
 
     onActiveChanged: reload()
+    onLeadMinutesChanged: recompute()
     Component.onCompleted: Qt.callLater(reload)
 
-    // File refresh is cheap; minute ticks keep countdowns right
+    Connections {
+        target: Island.CalendarBus
+        function onChanged() { source.reload(); }
+        function onConnectedChanged() { source.reload(); }
+    }
+
+    // Without the bus, the file is read every minute; with it, the minute only moves the clock
     Timer {
         interval: 60000
         repeat: true
         running: source.active
-        onTriggered: source.reload()
+        onTriggered: source.origin === "bus" ? source.recompute() : source.reload()
     }
+    // Countdowns in the panel stay right to the minute
     Timer {
         interval: 15000
         repeat: true
-        running: source.active && source.stripEvent !== null
+        running: source.active && (source.stripEvent !== null || source.meeting !== null)
         onTriggered: source.recompute()
     }
 }

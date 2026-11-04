@@ -54,9 +54,12 @@ Tile {
     ].filter(u => u !== "" && u !== "file:")
     property int faceIndex: 0
 
+    // A line of the card: a monochrome icon (symbolic, else the icon drawn in the text colour)
+    // and its text
     component Line: RowLayout {
         id: line
         property string icon
+        property string fallback
         property string text
         Layout.fillWidth: true
         spacing: Kirigami.Units.smallSpacing
@@ -64,6 +67,10 @@ Tile {
             implicitWidth: Kirigami.Units.iconSizes.small
             implicitHeight: implicitWidth
             source: line.icon
+            fallback: line.fallback
+            isMask: true
+            color: Kirigami.Theme.textColor
+            opacity: 0.8
         }
         PlasmaComponents.Label {
             Layout.fillWidth: true
@@ -133,19 +140,22 @@ Tile {
             }
         }
         Line {
-            icon: KCoreAddons.KOSRelease.logo || "start-here-kde"
+            // The distribution's logo, its -symbolic variant if the theme has one
+            icon: (KCoreAddons.KOSRelease.logo || "start-here-kde") + "-symbolic"
+            fallback: KCoreAddons.KOSRelease.logo || "start-here-kde-symbolic"
             text: KCoreAddons.KOSRelease.prettyName || KCoreAddons.KOSRelease.name
         }
         Line {
-            icon: "plasmashell"
+            icon: "plasma-symbolic"
             text: i18nc("desktop and its version", "KDE Plasma %1", Island.SystemInfo.plasmaVersion)
         }
         Line {
-            icon: "preferences-system-linux"
+            // No symbolic Tux in Breeze: the kernel as the chip drawn for the resources card
+            icon: Qt.resolvedUrl("icons/glance-cpu.svg")
             text: i18nc("kernel version", "Linux %1", Island.SystemInfo.kernel)
         }
         Line {
-            icon: "chronometer"
+            icon: "chronometer-symbolic"
             text: tile.uptimeText(tile.uptime)
         }
     }

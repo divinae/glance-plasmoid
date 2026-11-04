@@ -29,7 +29,11 @@ Tile {
         onTriggered: tile.now = new Date()
     }
 
+    // Its content's height, for a card that stacks it with others
+    implicitHeight: clockColumn.implicitHeight + 2 * padding
+
     ColumnLayout {
+        id: clockColumn
         anchors.fill: parent
         spacing: 0
 

@@ -56,6 +56,16 @@ Tile {
             }
         }
 
+        // A session would run into a meeting
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            visible: card.root.meetingWarning !== ""
+            text: card.root.meetingWarning
+            color: Kirigami.Theme.neutralTextColor
+            font: Kirigami.Theme.smallFont
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+        }
         PlasmaComponents.Label {
             Layout.fillWidth: true
             text: card.root.doneTodayText()

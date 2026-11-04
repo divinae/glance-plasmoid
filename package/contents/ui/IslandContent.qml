@@ -54,9 +54,6 @@ Item {
         if (island.cfg.showNotifications) {
             t.push({key: "notifications", label: i18n("Notifications"), icon: "notifications"});
         }
-        if (island.cfg.calendarEnabled && calendar.available) {
-            t.push({key: "agenda", label: i18n("Agenda"), icon: "view-calendar-day"});
-        }
         if (island.cfg.showShelf) {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
         }
@@ -101,9 +98,6 @@ Item {
         }
         if (island.cfg.showNotifications && notifications.unreadCount > 0) {
             return "notifications";
-        }
-        if (island.cfg.calendarEnabled && calendar.stripEvent) {
-            return "agenda";
         }
         return "window";
     }
@@ -379,12 +373,6 @@ Item {
                 key: "notifications"
                 sourceComponent: NotificationsTab {
                     watcher: content.notifications
-                }
-            }
-            Page {
-                key: "agenda"
-                sourceComponent: AgendaTab {
-                    calendar: content.calendar
                 }
             }
             Page {

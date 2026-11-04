@@ -18,6 +18,7 @@ KCM.SimpleKCM {
     property alias cfg_unreadDot: unreadDot.checked
     property var cfg_pulseIgnoreApps: []
     property alias cfg_calendarLeadMinutes: calendarLeadMinutes.value
+    property alias cfg_meetingInStrip: meetingInStrip.checked
 
     Kirigami.FormLayout {
         QQC2.CheckBox {
@@ -59,9 +60,13 @@ KCM.SimpleKCM {
             from: 1
             to: 240
         }
+        QQC2.CheckBox {
+            id: meetingInStrip
+            text: i18n("A meeting takes the panel text (ahead of the window and music)")
+        }
         QQC2.Label {
             Layout.fillWidth: true
-            text: i18n("Events come from the Event Calendar widget's cache, so that widget has to be in use.")
+            text: i18n("Events come from the Event Calendar widget (over D-Bus, with meeting links; or its cache file), so that widget has to be in use.")
             wrapMode: Text.Wrap
             opacity: 0.7
             font: Kirigami.Theme.smallFont

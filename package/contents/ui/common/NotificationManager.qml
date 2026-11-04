@@ -39,6 +39,9 @@ QtObject {
         componentName: "plasma_workspace"
         eventId: "notification"
         title: "Glance"
+        // Reminders and session ends are about now: shown, not kept in the notification
+        // history ("transient", which Plasma's history leaves out)
+        hints: ({ "transient": true })
         // Set per message by notifyActions; a fixed "go-up" put an up arrow on "Time to sit
         // down".
         iconName: notificationManager.defaultIcon

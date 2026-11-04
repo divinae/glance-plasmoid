@@ -26,23 +26,6 @@ Tile {
 
     signal openMedia()
 
-    CavaBars {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: -tile.padding + 2
-        height: parent.height * 0.3
-        cava: tile.cava
-        visible: tile.hasPlayer && tile.mediaState.playing && tile.cava.available
-        stretch: true
-        fadeUp: true
-        boost: true
-        spacing: 2
-        style: tile.island.cfg.cavaPopupStyle
-        rounded: tile.island.cfg.cavaRounded
-        opacity: 0.25
-    }
-
     ColumnLayout {
         anchors.fill: parent
         anchors.topMargin: Kirigami.Units.smallSpacing
@@ -56,10 +39,22 @@ Tile {
             Layout.fillHeight: true
             Layout.minimumHeight: Kirigami.Units.gridUnit * 3
 
+            // The cover in the spectrum's rays, as on the Media tab
+            RadialCava {
+                anchors.centerIn: parent
+                width: Math.min(coverArea.width, coverArea.height)
+                height: width
+                cava: tile.cava
+                visible: tile.hasPlayer && tile.mediaState.playing && tile.cava.available
+                innerRadius: coverBox.side / 2 + Kirigami.Units.smallSpacing / 2
+                maxLength: width / 2 - innerRadius
+                rayWidth: Math.max(2, Math.round(width / 60))
+            }
+
             Item {
                 id: coverBox
-                // Not quite all of it: room around the cover, as around the text
-                readonly property real side: Math.min(coverArea.width, coverArea.height) * 0.86
+                // Room around the cover for the rays
+                readonly property real side: Math.min(coverArea.width, coverArea.height) * 0.68
                 anchors.centerIn: parent
                 width: side
                 height: side

@@ -156,7 +156,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: calendarEnabled
-            text: i18n("Agenda tab (from Event Calendar)")
+            text: i18n("Today's events (from Event Calendar)")
         }
         QQC2.CheckBox {
             id: showShelf

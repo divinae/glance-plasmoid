@@ -89,8 +89,15 @@ MouseArea {
         // paused; a click does what the Focus tab's main button does. The title stays in the strip.
         // The time and tooltip are bound in the segment, so the model isn't rebuilt every second
         if (island.focusTimer && (island.focusActive || island.focusTimer.paused) && island.cfg.pillFocus) {
-            out.push({color: Kirigami.Theme.highlightColor, action: "focus", hasText: true,
+            out.push({color: Kirigami.Theme.highlightColor, action: "focus", hasText: "focus",
                 icon: island.focusOnBreak ? "chronometer-pause-symbolic" : "chronometer-symbolic"});
+        }
+        // A meeting soon or on: its countdown in the meeting's colour; a click joins (when it has
+        // a link). Its countdown and tooltip are bound in the segment too.
+        if (island.meeting && island.cfg.pillMeeting) {
+            out.push({color: island.meeting.color || Kirigami.Theme.highlightColor,
+                action: island.meeting.meetingUrl ? "meeting" : "info", hasText: "meeting",
+                icon: Qt.resolvedUrl("tiles/icons/glance-camera.svg")});
         }
         // Stand: time to switch (or a switch waiting to be confirmed); click switches
         if (island.stand && (island.stand.switchDue || island.stand.pendingPosition)) {
@@ -118,8 +125,15 @@ MouseArea {
         text: island.focusTimer ? island.focusTimer.panelTimeText.replace(/[0-9]/g, "0") : "00:00"
     }
     readonly property int pillTextLength: Math.ceil(pillTextMetrics.advanceWidth) + 4
+    TextMetrics {
+        id: meetingTextMetrics
+        font: Kirigami.Theme.smallFont
+        text: island.meetingCountdown.replace(/[0-9]/g, "0")
+    }
+    readonly property int meetingTextLength: Math.ceil(meetingTextMetrics.advanceWidth) + 4
     function segmentLengthOf(p) {
-        return p.hasText ? segmentLength + pillTextLength : segmentLength;
+        return p.hasText === "focus" ? segmentLength + pillTextLength
+            : p.hasText === "meeting" ? segmentLength + meetingTextLength : segmentLength;
     }
     readonly property int capsuleLength: pills.length > 0
         ? pills.reduce((sum, p) => sum + segmentLengthOf(p), 0) + (pills.length - 1) * pillGap : 0
@@ -413,7 +427,7 @@ MouseArea {
                             bottomRightRadius: last ? end : 3
                             // Under the pointer: a deeper tint
                             readonly property bool hot: pillHover.hovered
-                            readonly property bool clickable: modelData.action !== "privacy"
+                            readonly property bool clickable: modelData.action !== "privacy" && modelData.action !== "info"
                             color: modelData.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, hot ? 0.2 : 0.1)
                                 : Qt.alpha(modelData.color, hot ? 0.42 : 0.22)
                             Behavior on color {
@@ -438,7 +452,8 @@ MouseArea {
                                 anchors.left: segmentIcon.right
                                 anchors.leftMargin: 2
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: segment.modelData.hasText && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText : ""
+                                text: segment.modelData.hasText === "focus" && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText
+                                    : segment.modelData.hasText === "meeting" ? compact.island.meetingCountdown : ""
                                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                                 font.features: { "tnum": 1 }
                                 color: Kirigami.Theme.textColor
@@ -476,6 +491,9 @@ MouseArea {
                                     case "mic":
                                         micStreams.toggle();
                                         break;
+                                    case "meeting":
+                                        compact.island.joinMeeting();
+                                        break;
                                     case "focus":
                                         compact.island.focusTimer.toggleSession();
                                         break;
@@ -492,6 +510,9 @@ MouseArea {
                                     ? compact.island.focusTimer.tooltipText + "\n"
                                         + i18nc("what a click on the Focus pill does", "Click: %1",
                                             compact.island.focusTimer.sessionBtnText.replace("&", ""))
+                                    : segment.modelData.hasText === "meeting" && compact.island.meeting
+                                    ? compact.island.meetingLabel
+                                        + (compact.island.meeting.meetingUrl ? "\n" + i18n("Click to join.") : "")
                                     : (segment.modelData.tip || "")
                                 location: Plasmoid.location
                             }
