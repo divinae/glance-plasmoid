@@ -70,6 +70,20 @@ ColumnLayout {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
+            // A new one slides in from above, a cleared one fades, the rest move into place
+            add: Transition {
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Kirigami.Units.longDuration }
+                NumberAnimation { property: "y"; from: -Kirigami.Units.gridUnit; duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+            }
+            remove: Transition {
+                NumberAnimation { property: "opacity"; to: 0; duration: Kirigami.Units.shortDuration }
+            }
+            displaced: Transition {
+                NumberAnimation { properties: "y"; duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                // A row caught mid-add still ends fully shown
+                NumberAnimation { property: "opacity"; to: 1; duration: Kirigami.Units.shortDuration }
+            }
+
             delegate: Loader {
                 id: row
                 required property int index

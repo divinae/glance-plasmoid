@@ -21,6 +21,15 @@ Tile {
 
     clickable: true
 
+    // The top notification shown last (summary + app): a new one at the top fades in
+    property string shownTop: ""
+    // Not on the first fill (the history at startup), from then on yes
+    property bool primed: false
+    onLatestChanged: Qt.callLater(() => {
+        tile.shownTop = tile.latest.length > 0 ? tile.latest[0].summary + tile.latest[0].app : "";
+        tile.primed = true;
+    })
+
     // The model's rows are read by role; recount when it changes
     readonly property var latest: {
         tile.watcher.count; // dependency
@@ -76,8 +85,24 @@ Tile {
             delegate: RowLayout {
                 id: row
                 required property var modelData
+                required property int index
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
+                // The newest fades in when it arrives (the rows are rebuilt on every change, so
+                // only the top one, and only when it's a different notification)
+                opacity: 1
+                Component.onCompleted: {
+                    if (index === 0 && tile.primed && tile.shownTop !== modelData.summary + modelData.app) {
+                        opacity = 0;
+                        fadeIn.start();
+                    }
+                }
+                NumberAnimation on opacity {
+                    id: fadeIn
+                    running: false
+                    to: 1
+                    duration: Kirigami.Units.longDuration
+                }
                 Kirigami.Icon {
                     implicitWidth: Kirigami.Units.iconSizes.small
                     implicitHeight: implicitWidth

@@ -23,6 +23,8 @@ PlasmaComponents.ToolButton {
     property int iconSize: Kirigami.Units.iconSizes.small
 
     readonly property bool lit: checked || highlighted
+    // In a SegmentedControl: its sliding highlight shows the chosen one, not this background
+    property bool segmented: false
 
     readonly property bool iconOnly: display === PlasmaComponents.AbstractButton.IconOnly || text === ""
     readonly property bool hasIcon: icon.name !== "" || icon.source.toString() !== ""
@@ -67,7 +69,8 @@ PlasmaComponents.ToolButton {
 
     background: Rectangle {
         radius: height / 2
-        color: button.lit ? Qt.alpha(Kirigami.Theme.highlightColor, button.hovered ? 0.4 : 0.3)
+        color: button.lit && !button.segmented ? Qt.alpha(Kirigami.Theme.highlightColor, button.hovered ? 0.4 : 0.3)
+            : button.lit ? "transparent"
             : button.hovered || button.visualFocus ? Qt.alpha(button.textColor, 0.12)
             : button.bare ? "transparent" : Qt.alpha(button.textColor, 0.07)
         Behavior on color {

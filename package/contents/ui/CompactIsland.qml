@@ -69,6 +69,10 @@ MouseArea {
     // A segment per status: the icon with room around it, 2 px between segments
     readonly property int segmentLength: pillIconSize + 12
     readonly property int pillGap: 2
+    // The pills shown last time: a segment not among them is new and grows in (the model is
+    // rebuilt whenever one comes or goes, so every segment is created again)
+    property var shownPills: []
+    onPillsChanged: Qt.callLater(() => compact.shownPills = compact.pills.map(p => p.action))
     readonly property var pills: {
         const out = [];
         if (privacy.cameraActive && island.cfg.pillCamera) {
@@ -341,7 +345,8 @@ MouseArea {
                     color: compact.foreground
                     opacity: compact.island.cfg.cavaPanelOpacity / 100
                 }
-                // An event: a calendar in its colour
+                // An event: a calendar, in the text's colour as the strip's other icons (calendar
+                // colours are often a dull grey that sat badly beside the text)
                 Kirigami.Icon {
                     id: eventDot
                     width: leadIconItem.width
@@ -350,8 +355,7 @@ MouseArea {
                     visible: compact.mode === "event"
                     source: "view-calendar-day-symbolic"
                     isMask: true
-                    color: compact.island.stripEvent && compact.island.stripEvent.color
-                        ? compact.island.stripEvent.color : Kirigami.Theme.highlightColor
+                    color: compact.foreground
                 }
             }
 
@@ -481,9 +485,27 @@ MouseArea {
                                 font.features: { "tnum": 1 }
                                 color: Kirigami.Theme.textColor
                             }
-                            scale: pillMouse.pressed && segment.clickable ? 0.88 : 1
+                            // Grows in when new (appear 0.6 → 1, fading in), presses in when clicked
+                            property real appear: 1
+                            scale: (pillMouse.pressed && segment.clickable ? 0.88 : 1) * appear
+                            opacity: appear < 1 ? (appear - 0.6) / 0.4 : 1
                             Behavior on scale {
+                                enabled: segment.appear === 1
                                 NumberAnimation { duration: Kirigami.Units.shortDuration }
+                            }
+                            NumberAnimation on appear {
+                                id: growIn
+                                running: false
+                                from: 0.6
+                                to: 1
+                                duration: Kirigami.Units.longDuration
+                                easing.type: Easing.OutBack
+                            }
+                            Component.onCompleted: {
+                                if (compact.shownPills.indexOf(modelData.action) === -1) {
+                                    appear = 0.6;
+                                    growIn.start();
+                                }
                             }
                             MouseArea {
                                 id: pillMouse

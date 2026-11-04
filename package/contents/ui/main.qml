@@ -76,6 +76,10 @@ PlasmoidItem {
         target: calendarSource
         enabled: root.cfg.calendarEnabled
         function onMeetingStarted(ev) {
+            // The strip flashes once, as for a notification (not during Do Not Disturb)
+            if (!notificationWatcher.doNotDisturb) {
+                root.pulseRequested(ev.color || Kirigami.Theme.highlightColor);
+            }
             if (root.focusTimer && root.cfg.focus_meeting_pause) {
                 root.focusTimer.pauseForMeeting();
             }
