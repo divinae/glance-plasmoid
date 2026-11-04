@@ -52,9 +52,9 @@ separate [Fokus](https://gitlab.com/divinae/focus-plasmoid) and
 [Shift](https://gitlab.com/divinae/shift-plasmoid) widgets (their settings aren't imported).
 
 Events and the weather come from the [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar)
-widget: with "Share events with Glance" on there, over D-Bus, with meeting links. Before a
-meeting its name takes the panel text, and while it's on a pill joins it; Focus pauses for it
-and Shift waits until it's over. A click on an event opens it in Event Calendar.
+widget (1.20 or later): with "Share events with Glance" on there, over D-Bus, with meeting
+links. Before a meeting its name takes the panel text, and while it's on a pill joins it; Focus
+pauses for it and Shift waits until it's over. A click on an event opens it in Event Calendar.
 
 The drawer resizes from its corner. Without `layer-shell-qt`, or if you prefer, Glance opens
 Plasma's usual popup instead (Settings > Popup > Style).
@@ -83,12 +83,6 @@ plasmashell.
 `make package` builds `glance-v<version>.plasmoid` (QML and translations only: the plugin still
 has to be installed with `make install`). `make test` runs the tests, `make lint` the QML linter,
 `make messages` collects the strings to translate into `po/`.
-
-### Upgrading from 0.x
-
-Up to 0.2 the widget's id was `com.dv.island`. Remove the old widget from the panel, add Glance
-again, then `kpackagetool6 -t Plasma/Applet -r com.dv.island` and
-`rm -rf ~/.local/lib/qml/com/dv/island`.
 
 ## Global menu
 
