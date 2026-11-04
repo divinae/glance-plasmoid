@@ -39,6 +39,10 @@
     <entry name="pillFocus" type="Bool">
       <default>true</default>
     </entry>
+    <!-- File transfers (copies, downloads): a pill with their progress -->
+    <entry name="pillJobs" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="pillMeeting" type="Bool">
       <default>true</default>
     </entry>
@@ -198,6 +202,10 @@
       <default></default>
     </entry>
     <entry name="calendarEnabled" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- No screen-off, lock or sleep while a meeting is on -->
+    <entry name="keepAwakeMeetings" type="Bool">
       <default>true</default>
     </entry>
     <!-- A meeting coming up takes the panel text, ahead of the window and of media; one on now is the pill -->
@@ -609,6 +617,10 @@
 
         <!-- A running focus block pauses while the screen is locked, and resumes on unlock -->
         <entry name="focus_pause_on_lock_enabled" type="Bool">
+            <default>true</default>
+        </entry>
+        <!-- No screen-off, lock or sleep while a session (or its break) runs -->
+        <entry name="focus_keep_awake" type="Bool">
             <default>true</default>
         </entry>
 

@@ -45,8 +45,7 @@ Tile {
 
     // The tooltip: the title, when (and your answer if it isn't yes), where
     function details(ev): string {
-        let when = ev.allDay ? i18n("All day")
-            : Qt.formatTime(ev.start, timeFormat) + " – " + Qt.formatTime(ev.end, timeFormat);
+        let when = calendar.timeRange(ev);
         if (ev.response === "declined") {
             when += " · " + i18n("Declined");
         } else if (ev.response === "tentative") {

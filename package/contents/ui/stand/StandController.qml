@@ -215,6 +215,16 @@ Item {
         saveCycle();
     }
 
+    // The switch to the other position, as the reminder and the pill's card offer it: a desk that
+    // moves, the button moves it; otherwise you switch yourself, and Done records it there and
+    // then (no second confirmation). { label, run }
+    function switchAction() {
+        var target = Cycle.opposite(cycle.position);
+        return deskEnabled && desk.reachable
+            ? { label: i18n("Move the desk"), run: function() { root.goTo(target); } }
+            : { label: i18n("Done"), run: function() { root.setPosition(target); } };
+    }
+
     function snooze() {
         cycle = Cycle.snooze(cycle, Date.now(), settings.stand_snooze_minutes);
         saveCycle();
@@ -276,13 +286,9 @@ Item {
             sfx.play(settings.stand_sfx_filepath, settings.stand_sound_volume / 100);
         if (!settings.stand_notification_enabled)
             return;
-        var target = standing ? "sit" : "stand";
-        // A desk that moves: the button moves it. Otherwise you switch yourself, and Done records
-        // it there and then (no second confirmation).
-        var moves = deskEnabled && desk.reachable;
+        var next = switchAction();
         notifications.notifyActions(standing ? i18n("Time to sit down.") : i18n("Time to stand up."), [
-            moves ? { label: i18n("Move the desk"), action: function() { root.goTo(target); } }
-                  : { label: i18n("Done"), action: function() { root.setPosition(target); } },
+            { label: next.label, action: next.run },
             { label: i18n("Snooze %1 min", settings.stand_snooze_minutes), action: root.snooze }
         ], standing ? "go-down" : "go-up");
     }

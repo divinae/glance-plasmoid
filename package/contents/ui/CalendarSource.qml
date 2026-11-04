@@ -60,6 +60,18 @@ Item {
         return Math.max(0, Math.ceil((ev.end.getTime() - now.getTime()) / 60000));
     }
 
+    // "14:00 – 15:30", or "All day"
+    function timeRange(ev): string {
+        if (!ev) {
+            return "";
+        }
+        if (ev.allDay) {
+            return i18n("All day");
+        }
+        const f = Qt.locale().timeFormat(Locale.ShortFormat);
+        return Qt.formatTime(ev.start, f) + " – " + Qt.formatTime(ev.end, f);
+    }
+
     // "Standup in 5 min"; `shorten` cuts the name only, so the time always shows
     function label(ev, shorten): string {
         if (!ev) {

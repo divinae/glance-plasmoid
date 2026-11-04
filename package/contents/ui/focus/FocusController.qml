@@ -210,6 +210,22 @@ Item {
         return i18np("%1 focus session today, %2 in total", "%1 focus sessions today, %2 in total", focusDoneToday, TimerLogic.formatCounter(focusSecondsToday));
     }
 
+    // What's running, and its time, for the pill's card: "Focus" / "12:41 left"
+    function phaseTitle() {
+        if (breakOvertime)
+            return i18n("Break over");
+        if (isBreak())
+            return isLongBreak() ? i18n("Long break") : i18n("Short break");
+        return flowmodoroModeEnabled ? i18n("Flow") : i18n("Focus");
+    }
+    function phaseTime() {
+        if (breakOvertime)
+            return i18n("%1 over", TimerLogic.formatCounter(-counterSeconds));
+        if (flowmodoroModeEnabled && !isBreak())
+            return i18n("%1 so far", timeText);
+        return sessionPaused ? i18n("%1 left, paused", timeText) : i18n("%1 left", timeText);
+    }
+
     function getToolTipText() {
         if (breakOvertime)
             return i18n("Break ended %1 ago.", TimerLogic.formatCounter(-counterSeconds)) + "\n" + doneTodayText();

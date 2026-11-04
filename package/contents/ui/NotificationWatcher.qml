@@ -23,6 +23,14 @@ Item {
     readonly property alias groupedModel: groupedModel
     readonly property int count: historyModel.count
     readonly property int unreadCount: historyModel.unreadNotificationsCount
+    // File transfers going (copies, downloads, through Plasma's job tracking) and their progress
+    // together, 0-100, as Plasma's own notification applet shows them
+    readonly property int jobsCount: jobsEnabled ? jobsModel.activeJobsCount : 0
+    // The transfers themselves, for the transfers pill's card (pause, resume, cancel)
+    readonly property alias jobsModel: jobsModel
+    readonly property int jobsPercent: Math.max(0, jobsModel.jobsPercentage)
+    // Off with the transfers pill: no model kept for them
+    property bool jobsEnabled: true
     // Ticks while Do Not Disturb runs, so a timed one ends on time in the UI too
     property date now: new Date()
     Timer {
@@ -158,6 +166,15 @@ Item {
         onRowsInserted: (parent, first, last) => watcher.handleInserted(first, last)
     }
 
+    NotificationManager.Notifications {
+        id: jobsModel
+        showNotifications: false
+        showJobs: watcher.jobsEnabled
+        // A transfer whose popup was minimised (dismissed) or timed out still runs
+        showDismissed: true
+        showExpired: true
+    }
+
     History {
         id: groupedModel
         groupMode: NotificationManager.Notifications.GroupApplicationsFlat
@@ -174,6 +191,19 @@ Item {
 
     function role(row, r) {
         return historyModel.data(historyModel.index(row, 0), r);
+    }
+    // The newest few, in short: [{summary, app, icon}] (the dashboard's card, the unread pill's)
+    function latest(n) {
+        count; // dependency, for a binding that calls this
+        const out = [];
+        for (let i = 0; i < Math.min(n, count); ++i) {
+            out.push({
+                summary: role(i, NotificationManager.Notifications.SummaryRole) || "",
+                app: role(i, NotificationManager.Notifications.ApplicationNameRole) || "",
+                icon: role(i, NotificationManager.Notifications.ApplicationIconNameRole) || "",
+            });
+        }
+        return out;
     }
 
     function handleInserted(first, last) {

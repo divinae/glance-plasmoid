@@ -31,18 +31,7 @@ Tile {
     })
 
     // The model's rows are read by role; recount when it changes
-    readonly property var latest: {
-        tile.watcher.count; // dependency
-        const out = [];
-        for (let i = 0; i < Math.min(2, tile.watcher.count); ++i) {
-            out.push({
-                summary: tile.watcher.role(i, NotificationManager.Notifications.SummaryRole) || "",
-                app: tile.watcher.role(i, NotificationManager.Notifications.ApplicationNameRole) || "",
-                icon: tile.watcher.role(i, NotificationManager.Notifications.ApplicationIconNameRole) || "",
-            });
-        }
-        return out;
-    }
+    readonly property var latest: tile.watcher.latest(2)
 
     ColumnLayout {
         anchors.fill: parent

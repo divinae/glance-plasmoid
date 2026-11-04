@@ -19,6 +19,7 @@ KCM.SimpleKCM {
     property var cfg_pulseIgnoreApps: []
     property alias cfg_calendarLeadMinutes: calendarLeadMinutes.value
     property alias cfg_meetingInStrip: meetingInStrip.checked
+    property alias cfg_keepAwakeMeetings: keepAwakeMeetings.checked
 
     Kirigami.FormLayout {
         QQC2.CheckBox {
@@ -63,6 +64,10 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: meetingInStrip
             text: i18n("A meeting coming up takes the panel text (ahead of the window and music)")
+        }
+        QQC2.CheckBox {
+            id: keepAwakeMeetings
+            text: i18n("Keep the screen on during meetings")
         }
         QQC2.Label {
             Layout.fillWidth: true

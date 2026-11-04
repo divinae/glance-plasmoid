@@ -14,6 +14,7 @@ import com.dv.glance.private as Island
 
 import "stand" as Stand
 import "focus" as Focus
+import "common" as Common
 
 PlasmoidItem {
     id: root
@@ -70,6 +71,8 @@ PlasmoidItem {
     property string noticeText: ""
     // A meeting is on (timed, with a link or guests, not declined): Focus and Shift give way
     readonly property bool inMeeting: cfg.calendarEnabled && calendarSource.meetingNow !== null
+    // The events, for the pills' cards
+    readonly property Item calendar: calendarSource
     // At a meeting's real start and end (CalendarSource tells them apart from one that merely
     // appears or vanishes)
     Connections {
@@ -130,11 +133,6 @@ PlasmoidItem {
     function joinMeeting(ev) {
         calendarSource.join(ev || meeting);
     }
-    // The pill's tooltip: "Standup, until 14:30 (25 min left)"
-    readonly property string meetingLabel: meetingOn
-        ? i18nc("meeting on now: its name, end time and minutes left", "%1, until %2 (%3 left)", meetingOn.summary,
-            Qt.formatTime(meetingOn.end, Qt.locale().timeFormat(Locale.ShortFormat)), meetingCountdown)
-        : ""
     readonly property var stripEvent: !cfg.calendarEnabled ? null
         : meetingInStrip ? meetingSoon
         : meetingPill && calendarSource.stripEvent && calendarSource.stripEvent.id === meetingOn.id ? null
@@ -161,6 +159,22 @@ PlasmoidItem {
     // ---- hover / popup state --------------------------------------------------
     property bool pinnedByClick: false
     property bool compactHovered: false
+    // The pointer is on a pill with a hover card: that opens, not the drawer
+    property bool overCardPill: false
+    onOverCardPillChanged: {
+        if (overCardPill) {
+            openTimer.stop();
+        } else {
+            // Off the pill, still on the strip: the drawer as usual
+            maybeStartOpen();
+        }
+    }
+    // Hovering opens the drawer after a moment, unless it's open, suppressed, or on a card pill
+    function maybeStartOpen() {
+        if (compactHovered && cfg.openOnHover && !open && !hoverSuppressed && !overCardPill) {
+            openTimer.restart();
+        }
+    }
     property bool flyoutHovered: false
     // KWin's window menu (from the drawer's app icon) is up: the drawer stays under it. KWin
     // doesn't say when it closes, so this ends when the pointer comes back to the drawer, another
@@ -254,6 +268,15 @@ PlasmoidItem {
         setOpen(true);
     }
 
+    // ---- keep awake: no screen-off, lock or sleep while focusing (its break too, but not one
+    // run past its end: nobody may be there) or in a meeting
+    readonly property bool keepAwake: (cfg.focus_keep_awake && !!focusTimer && focusTimer.active && !focusTimer.breakOvertime)
+        || (cfg.keepAwakeMeetings && inMeeting)
+    Common.Inhibitor {
+        what: "--power --screenSaver"
+        active: root.keepAwake
+    }
+
     toolTipMainText: ""
     toolTipSubText: ""
     preferredRepresentation: compactRepresentation
@@ -298,7 +321,7 @@ PlasmoidItem {
         id: openTimer
         interval: root.cfg.hoverDelay
         onTriggered: {
-            if (root.compactHovered && !root.hoverSuppressed) {
+            if (root.compactHovered && !root.hoverSuppressed && !root.overCardPill) {
                 root.setOpen(true);
             }
         }
@@ -340,9 +363,7 @@ PlasmoidItem {
         }
         if (compactHovered) {
             closeTimer.stop();
-            if (cfg.openOnHover && !open) {
-                openTimer.restart();
-            }
+            maybeStartOpen();
         } else {
             openTimer.stop();
             if (open) {
@@ -389,6 +410,7 @@ PlasmoidItem {
     NotificationWatcher {
         id: notificationWatcher
         pulseEnabled: root.cfg.pulseEnabled
+        jobsEnabled: root.cfg.pillJobs
         pulseOnJobs: root.cfg.pulseOnJobs
         ignoredApps: root.cfg.pulseIgnoreApps
         onPulse: (color, summary) => {
