@@ -79,6 +79,8 @@ public:
     // Fetches the whole tree, not only the menus on the bar: many apps fill a submenu only as it
     // opens, so searching needs it asked for first (it arrives over a moment)
     Q_INVOKABLE void prefetchAll();
+    // The search closed: no more fetching as submenus arrive
+    Q_INVOKABLE void stopPrefetch();
     // The items whose path ("File › Export › PNG…") has every word of `text`, at most `limit`:
     // [{action, text, path, shortcut, enabled, checkable, checked}]. `action` is the QAction:
     // trigger() on it clicks it in the app
@@ -99,6 +101,8 @@ Q_SIGNALS:
     void menuOpenChanged();
     void buttonGridChanged();
     void requestActivateIndex(int index);
+    // More of the tree has arrived (prefetchAll): a search can run again
+    void treeChanged();
     // An action was chosen from the menus (the drawer closes, as macOS's menu bar does)
     void actionTriggered();
     void modelNeedsUpdate();
@@ -141,12 +145,23 @@ private:
     // The submenus asked for by prefetchAll(), and whether new ones are fetched as they come
     QSet<QMenu *> m_prefetched;
     bool m_prefetching = false;
-    void prefetchChildren(QMenu *menu, int depth);
+    QMetaObject::Connection m_prefetchConnection;
+    // `deep`: into the submenus already fetched as well (a new search, once); not as each arrives
+    void prefetchChildren(QMenu *menu, bool deep = false, int depth = 0);
+    // An item of the tree, its name and path ("File › Export") as shown and lowercased
     struct Found {
-        QAction *action;
+        QPointer<QAction> action;
+        QString text;
         QString path;
+        QString textLower;
+        QString pathLower;
     };
     void collect(QMenu *menu, const QString &path, QList<Found> &out, int depth) const;
+    // The tree flattened, kept until the menus change
+    const QList<Found> &flat() const;
+    mutable QList<Found> m_flat;
+    // treeChanged once a burst of submenus has arrived
+    QTimer m_treeChangedTimer;
     // Switching menus by pointing waits a moment on the button (eventFilter)
     QTimer m_hoverTimer;
     int m_hoverIndex = -1;

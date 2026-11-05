@@ -176,21 +176,44 @@ PlasmoidItem {
         }
     }
     property bool flyoutHovered: false
-    // KWin's window menu (from the drawer's app icon) is up: the drawer stays under it. KWin
-    // doesn't say when it closes, so this ends when the pointer comes back to the drawer, another
-    // window becomes active, or after a while
-    property bool windowMenuOpen: false
-    // The window it's for: its becoming active (made so for the menu) doesn't end the hold
-    property Item windowMenuTask: null
-    // Glance's own menus open in the drawer (DrawerMenu, counted by IslandContent)
-    property int menusOpen: 0
-    // Something over the drawer that's part of it: it doesn't close under it
-    readonly property bool holdOpen: menuModel.menuOpen || windowMenuOpen || menusOpen > 0
-    onWindowMenuOpenChanged: if (windowMenuOpen) windowMenuTimeout.restart()
+    // Something over the drawer that's part of it keeps it open: the app's menus, Glance's own
+    // (DrawerMenu), the menu search, KWin's window menu. Each holds by its own key and lets go;
+    // closing the drawer lets go of all
+    property var holds: ({})
+    function hold(key) {
+        if (!holds[key]) {
+            const h = Object.assign({}, holds);
+            h[key] = true;
+            holds = h;
+        }
+    }
+    function release(key) {
+        if (holds[key]) {
+            const h = Object.assign({}, holds);
+            delete h[key];
+            holds = h;
+        }
+    }
+    readonly property bool holdOpen: menuModel.menuOpen || Object.keys(holds).length > 0
+    // Let go with the pointer elsewhere: the drawer closes as it would have (a click-opened one
+    // too: it lost the focus to what held it, e.g. the window menu's app)
+    onHoldOpenChanged: {
+        if (!holdOpen && open && !flyoutHovered && !compactHovered) {
+            pinnedByClick = false;
+            closeTimer.restart();
+        }
+    }
+    // KWin's window menu (from the drawer's app icon): KWin doesn't say when it closes, so its
+    // hold ends when the pointer comes back to the drawer, another window becomes active, or
+    // after a while
+    function holdForWindowMenu() {
+        hold("windowMenu");
+        windowMenuTimeout.restart();
+    }
     Timer {
         id: windowMenuTimeout
         interval: 30000
-        onTriggered: root.windowMenuOpen = false
+        onTriggered: root.release("windowMenu")
     }
     // Tab to show next time the popup opens (e.g. "shelf" after a drag onto the strip)
     property string requestedTab: ""
@@ -293,8 +316,9 @@ PlasmoidItem {
     // Only another application counts: the drawer taking the focus leaves no active task.
     property Item taskWhenOpened: null
     onActiveTaskChanged: {
-        if (activeTask !== windowMenuTask) {
-            windowMenuOpen = false;
+        // Not the app it was opened over: made active for the window menu, that one is
+        if (activeTask !== null && activeTask !== taskWhenOpened) {
+            release("windowMenu");
         }
         if (open && activeTask !== null && activeTask !== taskWhenOpened
                 && !flyoutHovered && !compactHovered && !holdOpen) {
@@ -307,7 +331,7 @@ PlasmoidItem {
             taskWhenOpened = activeTask;
         } else {
             pinnedByClick = false;
-            windowMenuOpen = false;
+            holds = ({});
             closeTimer.stop();
             menuModel.closeMenu();
         }
@@ -379,7 +403,7 @@ PlasmoidItem {
     onFlyoutHoveredChanged: {
         if (flyoutHovered) {
             // Back from the window menu (it covered the drawer while up)
-            windowMenuOpen = false;
+            release("windowMenu");
             closeTimer.stop();
         } else if (open) {
             closeTimer.restart();

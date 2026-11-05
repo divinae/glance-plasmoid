@@ -203,6 +203,16 @@ QString CalendarBus::readCacheFile() const
     if (files.isEmpty()) {
         return QString();
     }
+    // Unchanged files (the same names and times): the same answer, without parsing them again
+    QString stamp;
+    for (const QFileInfo &file : files) {
+        stamp += file.fileName() + QString::number(file.lastModified().toMSecsSinceEpoch()) + QLatin1Char(';');
+    }
+    if (stamp == m_cacheStamp) {
+        return m_cacheJson;
+    }
+    m_cacheStamp = stamp;
+    m_cacheJson.clear();
     // The newest with any calendars in it: each Event Calendar widget writes its own, and one
     // that shows none (another instance, a preview) may well be the newest
     for (const QFileInfo &file : files) {
@@ -210,10 +220,11 @@ QString CalendarBus::readCacheFile() const
         const QString json = ini.value(QStringLiteral("events/json")).toString();
         const QJsonObject calendars = QJsonDocument::fromJson(json.toUtf8()).object().value(QStringLiteral("calendars")).toObject();
         if (!calendars.isEmpty()) {
-            return json;
+            m_cacheJson = json;
+            break;
         }
     }
-    return QString();
+    return m_cacheJson;
 }
 
 // The Event Calendar widget in the same shell as `applet` (the first one), or null

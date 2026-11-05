@@ -37,9 +37,13 @@ Item {
     property bool drawerStyle: false
 
     readonly property Item task: island.activeTask
-    // Menus open inside (DrawerMenu): the drawer stays while any is
-    property int menusOpen: 0
-    onMenusOpenChanged: island.menusOpen = Math.max(0, menusOpen)
+    // For what opens inside (DrawerMenu, the search): the drawer stays while it's up
+    function hold(key) {
+        island.hold(key);
+    }
+    function release(key) {
+        island.release(key);
+    }
 
     // ---- tabs ----------------------------------------------------------------
     readonly property var tabs: {
@@ -102,12 +106,8 @@ Item {
         function onOpenChanged() {
             if (content.island.open) {
                 content.pickTab();
-            } else {
-                // Its menus went with it
-                content.menusOpen = 0;
-                if (content.currentKey === "notifications") {
-                    content.notifications.markRead();
-                }
+            } else if (content.currentKey === "notifications") {
+                content.notifications.markRead();
             }
         }
         // Asked for while open: switch now. While closed, opening picks it (openOn() asks
@@ -140,16 +140,19 @@ Item {
         menuSearch.x = Math.max(0, Math.min(width - menuSearch.width, searchButton.mapToItem(content, 0, 0).x
             + searchButton.width - menuSearch.width));
         menuSearch.y = menuStrip.y + menuStrip.height + Kirigami.Units.smallSpacing;
-        // Typing takes the keyboard, which read as leaving and closed the drawer: it stays,
-        // pinned, while the search is up (counted as a menu, see holdOpen)
-        island.pinnedByClick = true;
+        // Typing takes the keyboard, which read as leaving and closed the drawer: it's held
+        // while the search is up
         menuSearch.open();
     }
     MenuSearch {
         id: menuSearch
         appMenu: content.appMenu
-        onOpened: content.menusOpen++
-        onClosed: content.menusOpen = Math.max(0, content.menusOpen - 1)
+        onOpened: content.hold("menuSearch")
+        onClosed: {
+            content.release("menuSearch");
+            content.appMenu.stopPrefetch();
+        }
+        Component.onDestruction: content.release("menuSearch")
         onRan: content.island.setOpen(false)
     }
     // Keys while the drawer has the keyboard: Alt+letter opens that menu (its mnemonic),
@@ -168,14 +171,12 @@ Item {
         }
         return false;
     }
-    Keys.onPressed: event => event.accepted = menuKey(event)
 
     // KWin's shortcut acts on its active window. Opened by hover, the drawer never took the focus,
     // so that's the app; opened by a click it has (KWin's active window is then plasmashell), so
     // the app is made active first, a moment before. The drawer stays under the menu either way
     function showWindowMenu() {
-        island.windowMenuTask = content.task;
-        island.windowMenuOpen = true;
+        island.holdForWindowMenu();
         if (island.pinnedByClick) {
             content.tasks.requestActivate();
             windowMenuLater.restart();
@@ -189,7 +190,7 @@ Item {
             "Window Operations Menu"], (cmd, exitCode) => {
             // No menu came: don't hold the drawer for one
             if (exitCode !== 0) {
-                island.windowMenuOpen = false;
+                island.release("windowMenu");
             }
         });
     }
@@ -268,10 +269,10 @@ Item {
                 textFormat: Text.PlainText
                 font.weight: Font.Bold
                 elide: Text.ElideRight
-                opacity: appNameHover.hovered && appMenuItems.count > 0 ? 0.75 : 1
+                opacity: appNameHover.hovered && content.appMenu.menuAvailable ? 0.75 : 1
                 HoverHandler {
                     id: appNameHover
-                    cursorShape: appMenuItems.count > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    cursorShape: content.appMenu.menuAvailable ? Qt.PointingHandCursor : Qt.ArrowCursor
                 }
                 TapHandler {
                     onTapped: {
@@ -285,7 +286,8 @@ Item {
                     id: appNameMenu
                     Repeater {
                         id: appMenuItems
-                        model: content.appMenu.menuAvailable ? content.appMenu.appActions(appName.text) : []
+                        // Filled on a click (it walks the whole tree), not on every window switch
+                        model: []
                         delegate: PlasmaComponents.MenuItem {
                             required property var modelData
                             text: modelData.text

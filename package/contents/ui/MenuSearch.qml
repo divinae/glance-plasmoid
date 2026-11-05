@@ -26,7 +26,7 @@ QQC2.Popup {
 
     function refresh() {
         results = field.text.trim() === "" ? [] : appMenu.search(field.text, 40);
-        current = Math.min(current, Math.max(0, results.length - 1));
+        current = Math.max(0, Math.min(current, results.length - 1));
     }
     function run(i) {
         const r = results[i];
@@ -44,26 +44,15 @@ QQC2.Popup {
 
     onOpened: {
         field.text = "";
-        results = [];
-        current = 0;
-        // Submenus many apps fill only as they open: asked for now, searched as they come
+        refresh();
+        // Submenus many apps fill only as they open: asked for now, searched again as they come
         appMenu.prefetchAll();
         field.forceActiveFocus();
-        settle.restart();
     }
-    // The tree arrives over a moment: search again a few times while it does
-    Timer {
-        id: settle
-        property int rounds: 0
-        interval: 350
-        repeat: true
-        onTriggered: {
-            search.refresh();
-            if (++rounds >= 6) {
-                stop();
-                rounds = 0;
-            }
-        }
+    Connections {
+        target: search.appMenu
+        enabled: search.opened
+        function onTreeChanged() { search.refresh(); }
     }
 
     contentItem: ColumnLayout {
@@ -77,7 +66,7 @@ QQC2.Popup {
                 search.current = 0;
                 search.refresh();
             }
-            Keys.onDownPressed: search.current = Math.min(search.results.length - 1, search.current + 1)
+            Keys.onDownPressed: search.current = Math.max(0, Math.min(search.results.length - 1, search.current + 1))
             Keys.onUpPressed: search.current = Math.max(0, search.current - 1)
             Keys.onReturnPressed: search.run(search.current)
             Keys.onEnterPressed: search.run(search.current)

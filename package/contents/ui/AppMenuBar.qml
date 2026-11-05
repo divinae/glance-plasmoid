@@ -54,7 +54,8 @@ Flow {
         const want = letter.toLowerCase();
         for (let i = 0; i < repeater.count; ++i) {
             const button = repeater.itemAt(i);
-            const m = button && button.visible ? /&([^&])/.exec(button.activeMenu) : null;
+            // A "&" not part of "&&" (a real ampersand)
+            const m = button && button.visible ? /(?:^|[^&])&([^&])/.exec(button.activeMenu) : null;
             if (m && m[1].toLowerCase() === want) {
                 activate(i);
                 return true;

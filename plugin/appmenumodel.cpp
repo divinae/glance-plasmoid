@@ -67,6 +67,9 @@ AppMenuModel::AppMenuModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_serviceWatcher(new QDBusServiceWatcher(this))
 {
+    m_treeChangedTimer.setSingleShot(true);
+    m_treeChangedTimer.setInterval(200);
+    connect(&m_treeChangedTimer, &QTimer::timeout, this, &AppMenuModel::treeChanged);
     m_hoverTimer.setSingleShot(true);
     m_hoverTimer.setInterval(120);
     connect(&m_hoverTimer, &QTimer::timeout, this, [this] {
@@ -275,8 +278,9 @@ void AppMenuModel::updateApplicationMenu()
     closeMenu();
     releaseCurrentMenu();
     m_importer.reset();
+    stopPrefetch();
     m_prefetched.clear();
-    m_prefetching = false;
+    m_flat.clear();
     deleteDetachedMenus();
 
     if (serviceName.isEmpty() || menuObjectPath.isEmpty()) {
@@ -297,6 +301,7 @@ void AppMenuModel::updateApplicationMenu()
     QMetaObject::invokeMethod(m_importer.get(), "updateMenu", Qt::QueuedConnection);
 
     connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
+        m_flat.clear();
         m_menu = m_importer->menu();
         if (m_menu.isNull() || menu != m_menu) {
             return;
@@ -350,27 +355,39 @@ void AppMenuModel::updateApplicationMenu()
 
 // ---- the whole tree: prefetching, search, the app's own About/Settings/Quit ----------------
 
+// The menus' tree is walked at most this deep, and at most this many submenus are fetched
+constexpr int MaxMenuDepth = 6;
+constexpr int MaxPrefetched = 400;
+
 static QString plainText(const QAction *action)
 {
+    // "&" marks the mnemonic, "&&" a real one
+    static const QRegularExpression mnemonic(QStringLiteral("&(?!&)"));
     QString text = action->text();
-    text.remove(QRegularExpression(QStringLiteral("&(?!&)")));
+    text.remove(mnemonic);
     return text.replace(QStringLiteral("&&"), QStringLiteral("&")).trimmed();
 }
 
-void AppMenuModel::prefetchChildren(QMenu *menu, int depth)
+void AppMenuModel::prefetchChildren(QMenu *menu, bool deep, int depth)
 {
-    if (!menu || !m_importer || depth > 5 || m_prefetched.size() > 400) {
+    if (!menu || !m_importer || depth > MaxMenuDepth) {
         return;
     }
     const auto actions = menu->actions();
     for (QAction *a : actions) {
         QMenu *sub = a->menu();
-        if (sub && !m_prefetched.contains(sub)) {
+        // Only the ones not asked for yet: each comes back through menuUpdated, and its own
+        // submenus are asked for then
+        if (sub && !m_prefetched.contains(sub) && m_prefetched.size() < MaxPrefetched) {
             m_prefetched.insert(sub);
+            // A submenu the importer drops (a new layout) leaves the set: its address may be
+            // reused by a new one, which must still be fetched
+            connect(sub, &QObject::destroyed, this, [this, sub] {
+                m_prefetched.remove(sub);
+            });
             m_importer->updateMenu(sub);
-        }
-        if (sub) {
-            prefetchChildren(sub, depth + 1);
+        } else if (sub && deep) {
+            prefetchChildren(sub, true, depth + 1);
         }
     }
 }
@@ -381,18 +398,20 @@ void AppMenuModel::prefetchAll()
         return;
     }
     m_prefetching = true;
-    // Each submenu as it arrives: its own submenus next
-    connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
-        if (m_prefetching && menu != m_menu) {
-            prefetchChildren(menu, 1);
+    // Each submenu as it arrives: its own submenus next, and searches see the new items
+    m_prefetchConnection = connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
+        if (menu != m_menu) {
+            prefetchChildren(menu);
         }
+        m_flat.clear();
+        m_treeChangedTimer.start();
     });
-    prefetchChildren(m_menu, 0);
+    prefetchChildren(m_menu, true);
 }
 
 void AppMenuModel::collect(QMenu *menu, const QString &path, QList<Found> &out, int depth) const
 {
-    if (!menu || depth > 6) {
+    if (!menu || depth > MaxMenuDepth) {
         return;
     }
     const auto actions = menu->actions();
@@ -408,44 +427,55 @@ void AppMenuModel::collect(QMenu *menu, const QString &path, QList<Found> &out, 
         if (a->menu()) {
             collect(a->menu(), here, out, depth + 1);
         } else {
-            out.append({a, here});
+            out.append({a, text, here, text.toLower(), here.toLower()});
         }
     }
+}
+
+const QList<AppMenuModel::Found> &AppMenuModel::flat() const
+{
+    // Walked once per change of the menus (menuUpdated, a new window), not per keystroke
+    if (m_flat.isEmpty() && m_menuAvailable && m_menu) {
+        collect(m_menu, QString(), m_flat, 0);
+    }
+    return m_flat;
+}
+
+void AppMenuModel::stopPrefetch()
+{
+    disconnect(m_prefetchConnection);
+    m_prefetching = false;
 }
 
 QVariantList AppMenuModel::search(const QString &text, int limit) const
 {
     QVariantList result;
     const QStringList words = text.simplified().toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
-    if (!m_menuAvailable || !m_menu || words.isEmpty()) {
+    if (words.isEmpty()) {
         return result;
     }
-    QList<Found> all;
-    collect(m_menu, QString(), all, 0);
-    // The item's own name matching first, then its path's
-    QList<Found> first;
-    QList<Found> second;
-    for (const Found &f : std::as_const(all)) {
-        const QString path = f.path.toLower();
-        if (!std::ranges::all_of(words, [&](const QString &w) { return path.contains(w); })) {
-            continue;
+    QList<Found> matches;
+    for (const Found &f : flat()) {
+        if (std::ranges::all_of(words, [&](const QString &w) { return f.pathLower.contains(w); })) {
+            matches.append(f);
         }
-        const QString name = plainText(f.action).toLower();
-        (std::ranges::any_of(words, [&](const QString &w) { return name.contains(w); }) ? first : second).append(f);
     }
-    first.append(second);
-    for (const Found &f : std::as_const(first)) {
+    // The item's own name matching first, then its path's
+    std::stable_partition(matches.begin(), matches.end(), [&](const Found &f) {
+        return std::ranges::any_of(words, [&](const QString &w) { return f.textLower.contains(w); });
+    });
+    for (const Found &f : std::as_const(matches)) {
         if (result.size() >= limit) {
             break;
         }
         result.append(QVariantMap{
-            {QStringLiteral("action"), QVariant::fromValue(f.action)},
-            {QStringLiteral("text"), plainText(f.action)},
+            {QStringLiteral("action"), QVariant::fromValue(f.action.data())},
+            {QStringLiteral("text"), f.text},
             {QStringLiteral("path"), f.path},
-            {QStringLiteral("shortcut"), f.action->shortcut().toString(QKeySequence::NativeText)},
-            {QStringLiteral("enabled"), f.action->isEnabled()},
-            {QStringLiteral("checkable"), f.action->isCheckable()},
-            {QStringLiteral("checked"), f.action->isChecked()},
+            {QStringLiteral("shortcut"), f.action ? f.action->shortcut().toString(QKeySequence::NativeText) : QString()},
+            {QStringLiteral("enabled"), f.action && f.action->isEnabled()},
+            {QStringLiteral("checkable"), f.action && f.action->isCheckable()},
+            {QStringLiteral("checked"), f.action && f.action->isChecked()},
         });
     }
     return result;
@@ -454,11 +484,7 @@ QVariantList AppMenuModel::search(const QString &text, int limit) const
 QVariantList AppMenuModel::appActions(const QString &appName) const
 {
     QVariantList result;
-    if (!m_menuAvailable || !m_menu) {
-        return result;
-    }
-    QList<Found> all;
-    collect(m_menu, QString(), all, 0);
+    const QString app = appName.toLower();
     // Best match per kind: a name that starts with the word beats one that only has it
     struct Kind {
         QString id;
@@ -470,14 +496,15 @@ QVariantList AppMenuModel::appActions(const QString &appName) const
         // Some apps only close their window ("Close Window" in Konsole)
         {QStringLiteral("quit"), {QStringLiteral("quit"), QStringLiteral("exit"), QStringLiteral("close window")}},
     };
+    const QList<Found> &all = flat();
     for (const Kind &kind : kinds) {
-        QAction *best = nullptr;
+        const Found *best = nullptr;
         int bestScore = 0;
-        for (const Found &f : std::as_const(all)) {
-            if (!f.action->isEnabled()) {
+        for (const Found &f : all) {
+            if (!f.action || !f.action->isEnabled()) {
                 continue;
             }
-            const QString name = plainText(f.action).toLower();
+            const QString &name = f.textLower;
             int score = 0;
             for (int i = 0; i < kind.words.size(); ++i) {
                 const QString &w = kind.words.at(i);
@@ -493,7 +520,6 @@ QVariantList AppMenuModel::appActions(const QString &appName) const
             // toolkit's About ("About KDE", "About Qt") last. Else the shorter, the likelier
             // ("Configure Keyboard Shortcuts…" isn't the app's settings)
             if (score > 0) {
-                const QString app = appName.toLower();
                 if (!app.isEmpty() && name.contains(app)) {
                     score += 30;
                 } else if (name.contains(QLatin1String("kde")) || name.contains(QLatin1String(" qt"))) {
@@ -503,14 +529,14 @@ QVariantList AppMenuModel::appActions(const QString &appName) const
             }
             if (score > bestScore) {
                 bestScore = score;
-                best = f.action;
+                best = &f;
             }
         }
         if (best) {
             result.append(QVariantMap{
                 {QStringLiteral("kind"), kind.id},
-                {QStringLiteral("action"), QVariant::fromValue(best)},
-                {QStringLiteral("text"), plainText(best)},
+                {QStringLiteral("action"), QVariant::fromValue(best->action.data())},
+                {QStringLiteral("text"), best->text},
             });
         }
     }

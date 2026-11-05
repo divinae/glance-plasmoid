@@ -97,21 +97,37 @@ Item {
 
     // The widget (Plasmoid), to find Event Calendar in the same shell and ask it to send
     property var applet: null
-    // Asks Event Calendar to send its events now, at most once a minute: at start (it may have
-    // sent before Glance was there), and while the bus has brought nothing for today
+    // Asks Event Calendar to send its events now, at most once a minute (a later ask waits for
+    // the minute to pass, not dropped): a few seconds after start (it may have sent before Glance
+    // was there), and while it has sent an empty list then (below)
     property real _askedMs: 0
     function askEventCalendar() {
-        const t = Date.now();
-        if (applet && t - _askedMs > 60000) {
-            _askedMs = t;
-            Island.CalendarBus.requestPublish(applet);
+        if (!applet) {
+            return;
         }
+        const wait = _askedMs + 60000 - Date.now();
+        if (wait > 0) {
+            askAgain.interval = wait;
+            askAgain.restart();
+            return;
+        }
+        _askedMs = Date.now();
+        Island.CalendarBus.requestPublish(applet);
     }
     Timer {
         interval: 5000
         running: source.active && source.applet !== null
         onTriggered: source.askEventCalendar()
     }
+    Timer {
+        id: askAgain
+        onTriggered: source.askEventCalendar()
+    }
+    // Event Calendar before 1.21 sent an empty list at every start, before its events loaded. Until
+    // the bus has brought real events once, within the first minutes, an empty list is taken for
+    // that and the cache shown instead; after, an empty list means nothing's there
+    readonly property real _startMs: Date.now()
+    property bool _busHadEvents: false
 
     function reload() {
         if (!active) {
@@ -126,22 +142,20 @@ Item {
             events = Calendar.fromBus(Island.CalendarBus.eventsJson);
             if (events !== null) {
                 origin = "bus";
+                _busHadEvents = _busHadEvents || events.length > 0;
             }
         }
-        // An empty list over the bus while the cache has events: an Event Calendar that sent
-        // before its events had loaded (an older one does at every start). The cache meanwhile,
-        // and ask it again
-        if (events !== null && events.length === 0) {
+        const earlyEmpty = events !== null && events.length === 0 && !_busHadEvents
+            && Date.now() - _startMs < 10 * 60000;
+        if (events === null || earlyEmpty) {
             const cached = Calendar.fromCache(Island.CalendarBus.readCacheFile());
-            if (cached && cached.length > 0) {
+            if (events === null || (cached && cached.length > 0)) {
                 events = cached;
-                origin = "file";
+                origin = cached !== null ? "file" : "";
+            }
+            if (earlyEmpty) {
                 askEventCalendar();
             }
-        }
-        if (events === null) {
-            events = Calendar.fromCache(Island.CalendarBus.readCacheFile());
-            origin = events !== null ? "file" : "";
         }
         _events = events || [];
         recompute();

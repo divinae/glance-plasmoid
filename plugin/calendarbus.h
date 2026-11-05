@@ -102,4 +102,7 @@ private:
 
     QTimer m_staleTimer;
     bool m_connected = false;
+    // readCacheFile()'s last answer, and the files (names, times) it came from
+    mutable QString m_cacheStamp;
+    mutable QString m_cacheJson;
 };
