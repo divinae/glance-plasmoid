@@ -12,7 +12,7 @@
         "Id": "com.dv.glance",
         "License": "GPL-2.0-or-later",
         "Name": "Glance",
-        "Version": "1.4.0",
+        "Version": "1.5.0",
         "Website": "https://gitlab.com/divinae/glance-plasmoid",
         "BugReportUrl": "https://gitlab.com/divinae/glance-plasmoid/-/issues"
     },

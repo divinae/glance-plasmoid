@@ -52,7 +52,7 @@ separate [Fokus](https://gitlab.com/divinae/focus-plasmoid) and
 [Shift](https://gitlab.com/divinae/shift-plasmoid) widgets (their settings aren't imported).
 
 Events and the weather come from the [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar)
-widget (1.20 or later): with "Share events with Glance" on there, over D-Bus, with meeting
+widget (1.21 or later): with "Share events with Glance" on there, over D-Bus, with meeting
 links. Before a meeting its name takes the panel text, and while it's on a pill joins it; Focus
 pauses for it and Shift waits until it's over. A click on an event opens it in Event Calendar.
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.5.0 — 2026-11-05
+
+**The window's menus.** In the drawer's menu bar:
+- Search them, as the old HUD: the magnifier, Alt+/ or Ctrl+F; a few letters of any item
+  however deep ("prof new" finds File › New Tab › Profile…), its path and shortcut shown, Enter
+  runs it.
+- A click on the app's name: its own About, Settings and Quit (macOS's app menu), found in its
+  menus.
+- Alt and a letter opens that menu, by the menus' own mnemonics.
+
+The window menu from the app's icon keeps the drawer open under it, also in a drawer opened by
+a click.
+
+**Today's events after a restart.** With Event Calendar 1.21, they come within seconds of Plasma
+starting: Glance asks for them, and Event Calendar sends them once loaded. Until it has, and
+with an older Event Calendar that sends an empty list at start, Glance shows its cache. The
+cache read is the newest file that has calendars in it.
+
+**Fixed:** a media error when a player went away; "Mark as Ended" (1.4.0) needs Event Calendar
+1.21.
+
 ## 1.4.0 — 2026-11-04
 
 **Cards on the pills.** Hover a pill for a card to act on, without opening the drawer:
@@ -17,7 +38,7 @@ meeting is on; not during a break run past its end. Two settings, on by default.
 filling), also once their notification is minimised.
 
 **Calendar.** A meeting marked as ended in Event Calendar ends in Glance too: its pill goes, Focus
-offers to resume, Shift carries on (needs Event Calendar after 1.20). With nothing left today, the
+offers to resume, Shift carries on (needs Event Calendar 1.21). With nothing left today, the
 agenda says so in a small line and shows tomorrow's first, faint; a line under the date.
 
 ## 1.3.1 — 2026-11-04
