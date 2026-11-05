@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.7.0 — 2026-11-05
+
+**The Controls tab**, what Plasma spreads over several widgets, in one place:
+- quick settings: Wi-Fi, Do Not Disturb, keep awake (by hand, on top of Focus and meetings), the
+  microphone's mute, and the power profile as three icons;
+- the display: each screen's brightness, the keyboard's light, dark mode, Night Light;
+- where sound goes: the outputs, unplugged ones left out, a click switches;
+- Bluetooth: on / off, Pair, what's connected (its battery in a ring), what's paired (a click
+  connects);
+- the batteries of devices on a USB receiver.
+
+Each comes from Plasma's own module, loaded on its own: without plasma-nm, say, only Wi-Fi is
+missing. Settings > Popup > "Controls tab".
+
+**The dashboard.** A Controls card: six toggles, the brightness, the batteries in rings (the name
+on hover). Controls · system · notifications on top; music below, only with a player, beside
+Focus and Stand.
+
+**Music as a pill** of its own (Settings > Media > "As a pill", on): thin mirrored bars in a
+colour from the album, resting bars and a pause badge while paused. Its card is laid out as the
+dashboard's: the turning cover in its rays, seek and volume sliders, play in the album's colour.
+
+**Simpler settings.** The rarely useful options are off the pages (their values kept), and the
+defaults are saner.
+
+**Fixes.** No more crash when a card closed while its cover's colours were still being read. The
+strip's thin bars no longer blur for some titles. A page's scrollbar no longer covers its right
+edge.
+
 ## 1.6.0 — 2026-11-05
 
 **No break during meetings.** Focus no longer pauses when a meeting starts: it goes on, and a

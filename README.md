@@ -29,6 +29,7 @@ show, and which may show at all is up to you:
 
 | Pill | Shows | A click |
 | --- | --- | --- |
+| Music (the album's colour) | thin bars to the music; paused: resting bars and a pause badge | plays or pauses |
 | Camera (green) | it's in use, and by whom | — |
 | Microphone (orange) | it's in use | mutes what's being recorded |
 | Screen sharing (red) | it's shared | ends it (through the portal) |
@@ -39,7 +40,8 @@ show, and which may show at all is up to you:
 | Unread (purple) | notifications you haven't seen | opens them |
 | Do Not Disturb (grey) | how long it lasts | turns it off |
 
-**Hover cards.** Hover the Focus, meeting, transfers, sit/stand or unread pill and a card opens
+**Hover cards.** Hover the music pill for the track, the seek and volume sliders and the
+controls. Hover the Focus, meeting, transfers, sit/stand or unread pill and a card opens
 beside it, without the drawer: what's left and today's total with Start, Pause, Skip and Stop;
 the meeting's times and guests with Join and Details; each transfer with Pause and Cancel;
 Move the desk (or Done) and Snooze; the latest notifications with Open and Clear All.
@@ -64,13 +66,17 @@ Plasma's usual popup instead (Settings > Popup > Style).
 **Its tabs:**
 - **Dashboard:** the time and weather; today's events, one slim line each, with Join on
   meetings and tomorrow's first, faint, when today's are done; CPU, memory and disk; what's
-  playing, over its blurred cover; who you are and what you run; your notifications; focus and
-  posture; the shelf.
+  playing, over its blurred cover (with a player); who you are and what you run; your
+  notifications; quick controls (Bluetooth, Wi-Fi, Do Not Disturb, dark mode, Night Light, the
+  microphone, the brightness, the batteries); focus and posture; the shelf.
 - **Media:** the cover inside the spectrum's rays and blurred behind it all, the controls in a
   colour from the cover, the seek bar (scroll for 5 s, tap the length for the time left), the
   volume (scroll on the cover), shuffle, repeat, and the player when there's more than one.
 - **Notifications:** the history grouped by app, with actions, replies, thumbnails and file
   transfers; Do Not Disturb for an hour, four hours, until tomorrow…
+- **Controls:** Wi-Fi, Do Not Disturb, keep awake, the microphone and the power profile; each
+  screen's brightness, the keyboard's light, dark mode and Night Light; where sound goes;
+  Bluetooth with its devices and Pair; the batteries of devices on a USB receiver.
 - **Shelf:** drop files to keep them at hand, drag them out into any app.
 - **Work** (Focus and Shift together, or each alone): the timer and its stats, where you are
   and what's next, today against your goal, the week, the desk.
@@ -132,7 +138,9 @@ Service, libplasma (with PlasmaQuick), libpipewire, gettext.
 
 At run time, for what uses them: [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar)
 1.21 or later for events and meetings, `kde-inhibit` (Plasma's) to keep the screen on, and
-`gdbus` (GLib's) for KWin's window menu.
+`gdbus` (GLib's) for KWin's window menu. The Controls tab uses Plasma's own modules: bluez-qt
+and bluedevil for Bluetooth, plasma-nm for Wi-Fi, power-profiles-daemon for the power profile;
+without one, only its control is missing.
 
 ## Build and install
 
