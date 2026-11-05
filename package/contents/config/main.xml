@@ -46,6 +46,10 @@
     <entry name="pillMeeting" type="Bool">
       <default>true</default>
     </entry>
+    <!-- A device's battery (mouse, keyboard, headphones…): a pill when it's low (20% or less) -->
+    <entry name="pillLowBattery" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="pillDnd" type="Bool">
       <default>true</default>
     </entry>

@@ -22,6 +22,7 @@ KCM.SimpleKCM {
     property alias cfg_pillFocus: pillFocus.checked
     property alias cfg_pillMeeting: pillMeeting.checked
     property alias cfg_pillDnd: pillDnd.checked
+    property alias cfg_pillLowBattery: pillLowBattery.checked
     property alias cfg_showAppIcon: showAppIcon.checked
     property alias cfg_boldFont: boldFont.checked
     property alias cfg_capitalFont: capitalFont.checked
@@ -74,6 +75,10 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: pillMeeting
             text: i18n("Meeting on now (a click shows it in Event Calendar)")
+        }
+        QQC2.CheckBox {
+            id: pillLowBattery
+            text: i18n("A device's battery, when low (mouse, keyboard, headphones…)")
         }
         QQC2.CheckBox {
             id: pillDnd

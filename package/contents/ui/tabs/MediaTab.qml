@@ -392,6 +392,29 @@ Item {
                 }
             }
 
+            // The Bluetooth headphones it plays through, and their battery
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                visible: !!tab.island.headphones.device
+                spacing: Kirigami.Units.smallSpacing
+                opacity: 0.75
+                Kirigami.Icon {
+                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                    source: "audio-headphones-symbolic"
+                    isMask: true
+                    color: tab.island.headphones.low ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
+                }
+                PlasmaComponents.Label {
+                    text: tab.island.headphones.percent >= 0
+                        ? i18nc("headphones and their battery", "%1 · %2%", tab.island.headphones.name, tab.island.headphones.percent)
+                        : tab.island.headphones.name
+                    textFormat: Text.PlainText
+                    font: Kirigami.Theme.smallFont
+                    color: tab.island.headphones.low ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
+                }
+            }
+
             // shuffle · the player · repeat · volume
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter

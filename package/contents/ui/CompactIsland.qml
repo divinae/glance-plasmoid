@@ -137,6 +137,14 @@ MouseArea {
             out.push({color: "#af52de", icon: "notifications-symbolic", action: "unread", card: unreadCard,
                 tip: i18n("Unread notifications. Click to see them.")});
         }
+        // A device running low (20% or less): mouse, keyboard, headphones… a pill each, in red,
+        // with its icon and its battery
+        if (island.cfg.pillLowBattery) {
+            for (const b of island.peripherals.low.slice(0, 3)) {
+                out.push({color: "#e5484d", icon: island.peripherals.iconFor(b), action: "info", hasText: "battery",
+                    percent: b.percent, tip: i18n("%1: battery low, %2%", b.name, b.percent)});
+            }
+        }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
                 tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
@@ -216,10 +224,16 @@ MouseArea {
         text: compact.jobsTextAt(100).replace(/[0-9]/g, "0")
     }
     readonly property int jobsTextLength: Math.ceil(jobsTextMetrics.advanceWidth) + 4
+    TextMetrics {
+        id: batteryTextMetrics
+        font: Kirigami.Theme.smallFont
+        text: i18nc("a battery's level", "%1%", 20)
+    }
     function segmentLengthOf(p) {
         return p.hasText === "focus" ? segmentLength + pillTextLength
             : p.hasText === "meeting" ? segmentLength + meetingTextLength
-            : p.hasText === "jobs" ? segmentLength + jobsTextLength : segmentLength;
+            : p.hasText === "jobs" ? segmentLength + jobsTextLength
+            : p.hasText === "battery" ? segmentLength + Math.ceil(batteryTextMetrics.advanceWidth) + 4 : segmentLength;
     }
     readonly property int capsuleLength: pills.length > 0
         ? pills.reduce((sum, p) => sum + segmentLengthOf(p), 0) + (pills.length - 1) * pillGap : 0
@@ -661,7 +675,8 @@ MouseArea {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: segment.modelData.hasText === "focus" && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText
                                     : segment.modelData.hasText === "meeting" ? compact.island.meetingCountdown
-                                    : segment.modelData.hasText === "jobs" ? compact.jobsText : ""
+                                    : segment.modelData.hasText === "jobs" ? compact.jobsText
+                                    : segment.modelData.hasText === "battery" ? i18nc("a battery's level", "%1%", segment.modelData.percent) : ""
                                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                                 font.features: { "tnum": 1 }
                                 color: Kirigami.Theme.textColor

@@ -73,6 +73,10 @@ PlasmoidItem {
     readonly property bool inMeeting: cfg.calendarEnabled && calendarSource.meetingNow !== null
     // The events, for the pills' cards
     readonly property Item calendar: calendarSource
+    // The Bluetooth headphones connected, and their battery (the Media tab)
+    readonly property QtObject headphones: BluetoothAudio {}
+    // Mouse, keyboard, headphones… running low: a pill each
+    readonly property Item peripherals: PeripheralBatteries {}
     // At a meeting's real start and end (CalendarSource tells them apart from one that merely
     // appears or vanishes)
     Connections {
