@@ -132,16 +132,55 @@ Item {
     // for just before isn't spent while it is still closed)
     Component.onCompleted: if (island.open) pickTab()
 
+    // Search the active window's menus, under the menu bar
+    function openMenuSearch() {
+        if (!stripMenu.visible) {
+            return;
+        }
+        menuSearch.x = Math.max(0, Math.min(width - menuSearch.width, searchButton.mapToItem(content, 0, 0).x
+            + searchButton.width - menuSearch.width));
+        menuSearch.y = menuStrip.y + menuStrip.height + Kirigami.Units.smallSpacing;
+        // Typing takes the keyboard, which read as leaving and closed the drawer: it stays,
+        // pinned, while the search is up (counted as a menu, see holdOpen)
+        island.pinnedByClick = true;
+        menuSearch.open();
+    }
+    MenuSearch {
+        id: menuSearch
+        appMenu: content.appMenu
+        onOpened: content.menusOpen++
+        onClosed: content.menusOpen = Math.max(0, content.menusOpen - 1)
+        onRan: content.island.setOpen(false)
+    }
+    // Keys while the drawer has the keyboard: Alt+letter opens that menu (its mnemonic),
+    // Alt+/ (or Ctrl+F) searches them. True when used
+    function menuKey(event): bool {
+        if (!stripMenu.visible) {
+            return false;
+        }
+        const alt = (event.modifiers & Qt.AltModifier) && !(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier));
+        if ((alt && event.key === Qt.Key_Slash) || (event.key === Qt.Key_F && (event.modifiers & Qt.ControlModifier))) {
+            openMenuSearch();
+            return true;
+        }
+        if (alt && event.text.length === 1 && /\S/.test(event.text)) {
+            return stripMenu.activateMnemonic(event.text);
+        }
+        return false;
+    }
+    Keys.onPressed: event => event.accepted = menuKey(event)
+
     // KWin's shortcut acts on its active window. Opened by hover, the drawer never took the focus,
-    // so that's the app; opened by a click it has the focus, so it closes first and the app gets
-    // it back (else the menu would be for plasmashell)
+    // so that's the app; opened by a click it has (KWin's active window is then plasmashell), so
+    // the app is made active first, a moment before. The drawer stays under the menu either way
     function showWindowMenu() {
+        island.windowMenuTask = content.task;
+        island.windowMenuOpen = true;
         if (island.pinnedByClick) {
-            island.setOpen(false);
+            content.tasks.requestActivate();
             windowMenuLater.restart();
             return;
         }
-        island.windowMenuOpen = true;
         invokeWindowMenu();
     }
     function invokeWindowMenu() {
@@ -219,20 +258,62 @@ Item {
                 PlasmaComponents.ToolTip.visible: windowMenuHover.hovered
                 PlasmaComponents.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
-            // The whole name when there are no menus beside it; capped when there are
+            // The whole name when there are no menus beside it; capped when there are. A click:
+            // the app's own About, Settings and Quit, as macOS's app menu (found in its menus)
             PlasmaComponents.Label {
+                id: appName
                 Layout.fillWidth: !stripMenu.visible
                 Layout.maximumWidth: stripMenu.visible ? Kirigami.Units.gridUnit * 10 : -1
                 text: content.task ? content.task.appName : ""
                 textFormat: Text.PlainText
                 font.weight: Font.Bold
                 elide: Text.ElideRight
+                opacity: appNameHover.hovered && appMenuItems.count > 0 ? 0.75 : 1
+                HoverHandler {
+                    id: appNameHover
+                    cursorShape: appMenuItems.count > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }
+                TapHandler {
+                    onTapped: {
+                        appMenuItems.model = content.appMenu.menuAvailable ? content.appMenu.appActions(appName.text) : [];
+                        if (appMenuItems.count > 0) {
+                            appNameMenu.popup(appName, 0, appName.height);
+                        }
+                    }
+                }
+                Common.DrawerMenu {
+                    id: appNameMenu
+                    Repeater {
+                        id: appMenuItems
+                        model: content.appMenu.menuAvailable ? content.appMenu.appActions(appName.text) : []
+                        delegate: PlasmaComponents.MenuItem {
+                            required property var modelData
+                            text: modelData.text
+                            icon.name: modelData.kind === "about" ? "help-about"
+                                : modelData.kind === "settings" ? "configure" : "application-exit"
+                            onTriggered: {
+                                modelData.action.trigger();
+                                content.island.setOpen(false);
+                            }
+                        }
+                    }
+                }
             }
             AppMenuBar {
                 id: stripMenu
                 Layout.fillWidth: true
                 appMenu: content.appMenu
                 visible: content.island.cfg.showAppMenu && content.appMenu.menuAvailable && count > 0
+            }
+            // Search the menus (as the old HUD)
+            Common.PillButton {
+                id: searchButton
+                visible: stripMenu.visible
+                bare: true
+                display: PlasmaComponents.AbstractButton.IconOnly
+                text: i18n("Search the menus")
+                icon.name: "search"
+                onClicked: content.openMenuSearch()
             }
             WindowButtons {
                 visible: content.island.cfg.showWindowButtons

@@ -163,6 +163,9 @@ Item {
             function toggleKeepAbove() {
                 tasksModel.requestToggleKeepAbove(modelIndex());
             }
+            function requestActivate() {
+                tasksModel.requestActivate(modelIndex());
+            }
         }
     }
 
@@ -174,6 +177,10 @@ Item {
     }
     function requestClose() {
         activeTaskItem?.requestClose();
+    }
+    // The window back in front (and the keyboard back to it), e.g. from the drawer
+    function requestActivate() {
+        activeTaskItem?.requestActivate();
     }
     function toggleKeepAbove() {
         activeTaskItem?.toggleKeepAbove();

@@ -272,6 +272,8 @@ Window {
         anchors.fill: parent
         focus: true
         Keys.onEscapePressed: drawer.island.setOpen(false)
+        // Alt+letter opens that menu of the window's, Alt+/ searches them (IslandContent.menuKey)
+        Keys.onPressed: event => event.accepted = !!contentLoader.item && contentLoader.item.menuKey(event)
 
         HoverHandler {
             onHoveredChanged: {
@@ -394,6 +396,7 @@ Window {
                 opacity: Math.max(0, Math.min(1, (drawer.reveal - 0.35) / 0.5))
 
                 Loader {
+                    id: contentLoader
                     anchors.fill: parent
                     anchors.margins: drawer.padding
                     active: drawer.ready

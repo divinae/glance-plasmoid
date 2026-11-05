@@ -15,6 +15,8 @@
 
 #include <QAbstractListModel>
 #include <QPointer>
+#include <QSet>
+#include <QVariantList>
 #include <QQuickItem>
 #include <QTimer>
 #include <qqmlregistration.h>
@@ -74,6 +76,18 @@ public:
     Q_INVOKABLE void trigger(QQuickItem *ctx, int idx);
     Q_INVOKABLE void closeMenu();
 
+    // Fetches the whole tree, not only the menus on the bar: many apps fill a submenu only as it
+    // opens, so searching needs it asked for first (it arrives over a moment)
+    Q_INVOKABLE void prefetchAll();
+    // The items whose path ("File › Export › PNG…") has every word of `text`, at most `limit`:
+    // [{action, text, path, shortcut, enabled, checkable, checked}]. `action` is the QAction:
+    // trigger() on it clicks it in the app
+    Q_INVOKABLE QVariantList search(const QString &text, int limit = 40) const;
+    // About, Settings and Quit as the app's own menus have them (macOS's app menu), in that
+    // order, those found: [{kind: "about"|"settings"|"quit", action, text}]
+    // `appName`: the app's own ("About Konsole" over "About KDE")
+    Q_INVOKABLE QVariantList appActions(const QString &appName = QString()) const;
+
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 Q_SIGNALS:
@@ -124,6 +138,15 @@ private:
     bool m_switching = false;
     // Menus taken from their parent widget to show (see trigger()): deleted with the importer
     QList<QPointer<QMenu>> m_detachedMenus;
+    // The submenus asked for by prefetchAll(), and whether new ones are fetched as they come
+    QSet<QMenu *> m_prefetched;
+    bool m_prefetching = false;
+    void prefetchChildren(QMenu *menu, int depth);
+    struct Found {
+        QAction *action;
+        QString path;
+    };
+    void collect(QMenu *menu, const QString &path, QList<Found> &out, int depth) const;
     // Switching menus by pointing waits a moment on the button (eventFilter)
     QTimer m_hoverTimer;
     int m_hoverIndex = -1;

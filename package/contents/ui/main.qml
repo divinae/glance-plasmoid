@@ -180,6 +180,8 @@ PlasmoidItem {
     // doesn't say when it closes, so this ends when the pointer comes back to the drawer, another
     // window becomes active, or after a while
     property bool windowMenuOpen: false
+    // The window it's for: its becoming active (made so for the menu) doesn't end the hold
+    property Item windowMenuTask: null
     // Glance's own menus open in the drawer (DrawerMenu, counted by IslandContent)
     property int menusOpen: 0
     // Something over the drawer that's part of it: it doesn't close under it
@@ -291,7 +293,9 @@ PlasmoidItem {
     // Only another application counts: the drawer taking the focus leaves no active task.
     property Item taskWhenOpened: null
     onActiveTaskChanged: {
-        windowMenuOpen = false;
+        if (activeTask !== windowMenuTask) {
+            windowMenuOpen = false;
+        }
         if (open && activeTask !== null && activeTask !== taskWhenOpened
                 && !flyoutHovered && !compactHovered && !holdOpen) {
             setOpen(false);

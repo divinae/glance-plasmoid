@@ -48,6 +48,21 @@ Flow {
         }
     }
 
+    // Alt+F: the menu whose name has "&F" (its own mnemonic, as the app's menu bar would).
+    // True when one opened
+    function activateMnemonic(letter) {
+        const want = letter.toLowerCase();
+        for (let i = 0; i < repeater.count; ++i) {
+            const button = repeater.itemAt(i);
+            const m = button && button.visible ? /&([^&])/.exec(button.activeMenu) : null;
+            if (m && m[1].toLowerCase() === want) {
+                activate(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
     Connections {
         target: bar.appMenu
         function onRequestActivateIndex(index) {

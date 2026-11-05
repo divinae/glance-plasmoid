@@ -18,6 +18,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QQuickWindow>
+#include <QRegularExpression>
 
 #include <algorithm>
 
@@ -274,6 +275,8 @@ void AppMenuModel::updateApplicationMenu()
     closeMenu();
     releaseCurrentMenu();
     m_importer.reset();
+    m_prefetched.clear();
+    m_prefetching = false;
     deleteDetachedMenus();
 
     if (serviceName.isEmpty() || menuObjectPath.isEmpty()) {
@@ -343,6 +346,175 @@ void AppMenuModel::updateApplicationMenu()
     });
 
     Q_EMIT modelNeedsUpdate();
+}
+
+// ---- the whole tree: prefetching, search, the app's own About/Settings/Quit ----------------
+
+static QString plainText(const QAction *action)
+{
+    QString text = action->text();
+    text.remove(QRegularExpression(QStringLiteral("&(?!&)")));
+    return text.replace(QStringLiteral("&&"), QStringLiteral("&")).trimmed();
+}
+
+void AppMenuModel::prefetchChildren(QMenu *menu, int depth)
+{
+    if (!menu || !m_importer || depth > 5 || m_prefetched.size() > 400) {
+        return;
+    }
+    const auto actions = menu->actions();
+    for (QAction *a : actions) {
+        QMenu *sub = a->menu();
+        if (sub && !m_prefetched.contains(sub)) {
+            m_prefetched.insert(sub);
+            m_importer->updateMenu(sub);
+        }
+        if (sub) {
+            prefetchChildren(sub, depth + 1);
+        }
+    }
+}
+
+void AppMenuModel::prefetchAll()
+{
+    if (!m_importer || !m_menu || m_prefetching) {
+        return;
+    }
+    m_prefetching = true;
+    // Each submenu as it arrives: its own submenus next
+    connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
+        if (m_prefetching && menu != m_menu) {
+            prefetchChildren(menu, 1);
+        }
+    });
+    prefetchChildren(m_menu, 0);
+}
+
+void AppMenuModel::collect(QMenu *menu, const QString &path, QList<Found> &out, int depth) const
+{
+    if (!menu || depth > 6) {
+        return;
+    }
+    const auto actions = menu->actions();
+    for (QAction *a : actions) {
+        if (a->isSeparator() || !a->isVisible()) {
+            continue;
+        }
+        const QString text = plainText(a);
+        if (text.isEmpty()) {
+            continue;
+        }
+        const QString here = path.isEmpty() ? text : path + QStringLiteral(" › ") + text;
+        if (a->menu()) {
+            collect(a->menu(), here, out, depth + 1);
+        } else {
+            out.append({a, here});
+        }
+    }
+}
+
+QVariantList AppMenuModel::search(const QString &text, int limit) const
+{
+    QVariantList result;
+    const QStringList words = text.simplified().toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    if (!m_menuAvailable || !m_menu || words.isEmpty()) {
+        return result;
+    }
+    QList<Found> all;
+    collect(m_menu, QString(), all, 0);
+    // The item's own name matching first, then its path's
+    QList<Found> first;
+    QList<Found> second;
+    for (const Found &f : std::as_const(all)) {
+        const QString path = f.path.toLower();
+        if (!std::ranges::all_of(words, [&](const QString &w) { return path.contains(w); })) {
+            continue;
+        }
+        const QString name = plainText(f.action).toLower();
+        (std::ranges::any_of(words, [&](const QString &w) { return name.contains(w); }) ? first : second).append(f);
+    }
+    first.append(second);
+    for (const Found &f : std::as_const(first)) {
+        if (result.size() >= limit) {
+            break;
+        }
+        result.append(QVariantMap{
+            {QStringLiteral("action"), QVariant::fromValue(f.action)},
+            {QStringLiteral("text"), plainText(f.action)},
+            {QStringLiteral("path"), f.path},
+            {QStringLiteral("shortcut"), f.action->shortcut().toString(QKeySequence::NativeText)},
+            {QStringLiteral("enabled"), f.action->isEnabled()},
+            {QStringLiteral("checkable"), f.action->isCheckable()},
+            {QStringLiteral("checked"), f.action->isChecked()},
+        });
+    }
+    return result;
+}
+
+QVariantList AppMenuModel::appActions(const QString &appName) const
+{
+    QVariantList result;
+    if (!m_menuAvailable || !m_menu) {
+        return result;
+    }
+    QList<Found> all;
+    collect(m_menu, QString(), all, 0);
+    // Best match per kind: a name that starts with the word beats one that only has it
+    struct Kind {
+        QString id;
+        QStringList words;
+    };
+    const QList<Kind> kinds = {
+        {QStringLiteral("about"), {QStringLiteral("about")}},
+        {QStringLiteral("settings"), {QStringLiteral("preferences"), QStringLiteral("settings"), QStringLiteral("configure"), QStringLiteral("options")}},
+        // Some apps only close their window ("Close Window" in Konsole)
+        {QStringLiteral("quit"), {QStringLiteral("quit"), QStringLiteral("exit"), QStringLiteral("close window")}},
+    };
+    for (const Kind &kind : kinds) {
+        QAction *best = nullptr;
+        int bestScore = 0;
+        for (const Found &f : std::as_const(all)) {
+            if (!f.action->isEnabled()) {
+                continue;
+            }
+            const QString name = plainText(f.action).toLower();
+            int score = 0;
+            for (int i = 0; i < kind.words.size(); ++i) {
+                const QString &w = kind.words.at(i);
+                // Earlier words are the likelier ones ("Preferences" over "Options")
+                const int weight = kind.words.size() - i;
+                if (name.startsWith(w)) {
+                    score = std::max(score, 20 + weight);
+                } else if (name.contains(w)) {
+                    score = std::max(score, 10 + weight);
+                }
+            }
+            // The app's own name in it: its own ("About Konsole", "Configure Konsole…"); the
+            // toolkit's About ("About KDE", "About Qt") last. Else the shorter, the likelier
+            // ("Configure Keyboard Shortcuts…" isn't the app's settings)
+            if (score > 0) {
+                const QString app = appName.toLower();
+                if (!app.isEmpty() && name.contains(app)) {
+                    score += 30;
+                } else if (name.contains(QLatin1String("kde")) || name.contains(QLatin1String(" qt"))) {
+                    score -= 5;
+                }
+                score = score * 100 - name.size();
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                best = f.action;
+            }
+        }
+        if (best) {
+            result.append(QVariantMap{
+                {QStringLiteral("kind"), kind.id},
+                {QStringLiteral("action"), QVariant::fromValue(best)},
+                {QStringLiteral("text"), plainText(best)},
+            });
+        }
+    }
+    return result;
 }
 
 QMenu *AppMenuModel::menuForIndex(int idx) const
