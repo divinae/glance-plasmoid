@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0 — 2026-11-05
+
+**No break during meetings.** Focus no longer pauses when a meeting starts: it goes on, and a
+session that ends during the meeting waits ("Break after the meeting"); its break begins as the
+meeting ends. A flow just keeps counting. The setting is "No break during meetings" (on).
+
+**Menu search, in the menu bar.** The magnifier turns the bar into a search field across it,
+growing out of the magnifier as the menus fade; the results in a card under it, each with its
+path and its shortcut as a key cap. ← goes back to the menus, ✕ clears what's typed.
+
+**The panel.** A paused Focus session shows what's paused: the wedge where it stopped (a
+stopwatch for a flow) with a pause badge, and no time. While the desk moves, the strip says
+so ("Moving the desk to sitting…", "Connecting to the desk… (try 3)").
+
+**README** brought up to date: the pills and their cards, the menu bar, Focus and Shift with
+meetings, the keys, and what to check when something's off.
+
 ## 1.5.0 — 2026-11-05
 
 **The window's menus.** In the drawer's menu bar:

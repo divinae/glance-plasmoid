@@ -165,23 +165,17 @@ Item {
         return i18np("A meeting starts in %1 minute", "A meeting starts in %1 minutes", minutes);
     }
 
-    // Paused for a meeting (Glance pauses the block at its start): offered back at its end
-    property bool pausedForMeeting: false
-    function pauseForMeeting() {
-        if (!timer.running || isBreak())
-            return;
-        pause(); // A flow too: it goes on after the meeting, as a pomodoro does
-        pausedForMeeting = true;
-    }
-    function meetingEnded() {
-        if (!pausedForMeeting)
-            return;
-        pausedForMeeting = false;
-        if (timer.running)
-            return;
-        notificationManager.notifyActions(i18n("The meeting is over."), [
-            { label: i18n("Resume focus"), action: function() { if (!timer.running) root.start(); } }
-        ], "chronometer");
+    // In a meeting (Glance sets it, with "No break during meetings"): focus goes on, but a break
+    // doesn't start. A session that runs out meanwhile holds at its end, and the break begins as
+    // the meeting ends. A flow has no break of its own to start, so it just keeps counting
+    property bool holdBreak: false
+    property bool breakHeldForMeeting: false
+    onHoldBreakChanged: {
+        if (!holdBreak && breakHeldForMeeting) {
+            breakHeldForMeeting = false;
+            if (timer.running)
+                end();
+        }
     }
 
     // The popup and the sound are independent: either, both or neither. Previously
@@ -219,6 +213,8 @@ Item {
         return flowmodoroModeEnabled ? i18n("Flow") : i18n("Focus");
     }
     function phaseTime() {
+        if (breakHeldForMeeting)
+            return i18n("Break after the meeting");
         if (breakOvertime)
             return i18n("%1 over", TimerLogic.formatCounter(-counterSeconds));
         if (flowmodoroModeEnabled && !isBreak())
@@ -504,6 +500,7 @@ Item {
         // Every transition ends up here, so this is the one place an overrun can
         // be cleared - except postpone(), which sets its own time.
         breakOvertime = false;
+        breakHeldForMeeting = false;
         // A new session starts a new stretch, whatever the task was before.
         taskSegmentStartSeconds = 0;
         var kind = TimerLogic.sessionKind(stateVal, numberOfSessions, flowmodoroModeEnabled);
@@ -576,6 +573,15 @@ Item {
             counterMilliseconds += timeDiff;
         } else {
             counterMilliseconds -= timeDiff;
+            if (counterMilliseconds <= 0 && !breakOvertime && !isBreak() && holdBreak) {
+                // Its break waits for the meeting to end (onHoldBreakChanged)
+                counterMilliseconds = 0;
+                if (!breakHeldForMeeting) {
+                    breakHeldForMeeting = true;
+                    statusText = i18n("break after the meeting");
+                }
+                return;
+            }
             if (counterMilliseconds <= 0 && !breakOvertime) {
                 if (isBreak() && !settings.focus_timer_auto_focus_enabled)
                     beginBreakOvertime();

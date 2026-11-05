@@ -83,17 +83,11 @@ PlasmoidItem {
             if (!notificationWatcher.doNotDisturb) {
                 root.pulseRequested(ev.color || Kirigami.Theme.highlightColor);
             }
-            if (root.focusTimer && root.cfg.focus_meeting_pause) {
-                root.focusTimer.pauseForMeeting();
-            }
             if (root.stand) {
                 root.stand.meetingStarted();
             }
         }
         function onMeetingEnded(ev) {
-            if (root.focusTimer) {
-                root.focusTimer.meetingEnded();
-            }
             // A beat later: Shift's hold for the meeting lifts first, so a reminder isn't held back
             Qt.callLater(() => {
                 if (root.stand) {
@@ -140,7 +134,12 @@ PlasmoidItem {
     // Time to sit down or stand up asks for something: it goes before media and the window
     readonly property bool standDue: stand !== null && stand !== undefined && stand.switchDue && !stand.pendingPosition
     readonly property bool focusActive: focusTimer !== null && focusTimer !== undefined && focusTimer.active
+    // The desk moving (a click on Sit Down / Stand Up, or a switch): it can take a while to
+    // connect, so the strip says it's on it, ahead of the reminder
+    readonly property var deskDriver: stand ? stand.deskDriver : null
+    readonly property bool deskMoving: !!deskDriver && deskDriver.moving
     readonly property string stripMode: noticeText !== "" ? "notice"
+        : deskMoving ? "desk"
         : standDue ? "stand"
         : meetingInStrip ? "event"
         : showMediaInPanel ? "media"
@@ -149,6 +148,10 @@ PlasmoidItem {
     readonly property string stripText: {
         switch (stripMode) {
         case "notice": return noticeText;
+        case "desk":
+            // Past the first try: still getting through to it (Bluetooth desks often take a few)
+            return deskDriver.attempt > 1 ? i18n("Connecting to the desk… (try %1)", deskDriver.attempt)
+                : deskDriver.target === "stand" ? i18n("Moving the desk to standing…") : i18n("Moving the desk to sitting…");
         case "stand": return stand.cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
         case "media": return mediaText;
         case "event": return calendarSource.label(stripEvent, root.truncate);
@@ -498,6 +501,8 @@ PlasmoidItem {
             Focus.FocusController {
                 settings: root.cfg
                 nextMeeting: root.cfg.calendarEnabled ? calendarSource.meetingNext : null
+                // A break doesn't start during a meeting (the session holds at its end until it's over)
+                holdBreak: root.cfg.focus_meeting_pause && root.inMeeting
                 expanded: root.open
             }
         }

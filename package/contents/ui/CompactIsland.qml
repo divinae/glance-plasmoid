@@ -51,6 +51,7 @@ MouseArea {
         switch (mode) {
         case "media": return null; // no cover in the panel: the track's text (and its bars) say it
         case "notice": return "notifications";
+        case "desk": return Qt.resolvedUrl(island.deskDriver.target === "stand" ? "stand/icons/person-stand.svg" : "stand/icons/person-sit.svg");
         case "window": return island.cfg.showAppIcon && island.activeTask && island.activeTask.icon ? island.activeTask.icon : null;
         default: return null;
         }
@@ -108,11 +109,13 @@ MouseArea {
             out.push({color: jobsColor, action: "jobs", hasText: "jobs", icon: "download-symbolic", card: transfersCard,
                 tip: i18n("File transfers")});
         }
-        // Focus: the session's time left beside its icon (a break has its own icon), also while
-        // paused; a click does what the Focus tab's main button does. The title stays in the strip.
-        // The time and tooltip are bound in the segment, so the model isn't rebuilt every second
+        // Focus: the session's time left beside its icon (a break has its own icon); paused, only
+        // a pause icon (the time stands still: the card has it). A click does what the Focus tab's
+        // main button does. The time and tooltip are bound in the segment, so the model isn't
+        // rebuilt every second
         if (island.focusTimer && (island.focusActive || island.focusTimer.paused) && island.cfg.pillFocus) {
-            out.push({color: Kirigami.Theme.highlightColor, action: "focus", hasText: "focus", card: focusCard,
+            const paused = !island.focusActive;
+            out.push({color: Kirigami.Theme.highlightColor, action: "focus", hasText: paused ? "" : "focus", card: focusCard,
                 icon: island.focusOnBreak ? "chronometer-pause-symbolic" : "chronometer-symbolic", tip: i18n("Focus")});
         }
         // A meeting on now (one coming up is in the strip's text instead), in its colour; a click
@@ -397,6 +400,16 @@ MouseArea {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: compact.hasLeadIcon && !compact.barsMini
                     source: compact.leadIcon
+                    // The desk's person in the text colour, breathing while it works (only then)
+                    isMask: compact.mode === "desk"
+                    color: compact.foreground
+                    SequentialAnimation on opacity {
+                        running: compact.mode === "desk"
+                        loops: Animation.Infinite
+                        alwaysRunToEnd: true
+                        NumberAnimation { to: 0.35; duration: Kirigami.Units.veryLongDuration; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1; duration: Kirigami.Units.veryLongDuration; easing.type: Easing.InOutSine }
+                    }
                 }
                 // While music plays: a little equalizer where the icon was, the text left alone
                 CavaBars {
@@ -538,13 +551,17 @@ MouseArea {
                             // in a flow or a break past its end: no fraction to show there, and its
                             // spinning sweep was restless; the stopwatch instead
                             readonly property bool focusIndicator: modelData.action === "focus" && !!compact.island.focusTimer
-                                && !compact.island.focusTimer.progressIndeterminate
+                                && compact.island.focusActive && !compact.island.focusTimer.progressIndeterminate
+                            // Paused: what's paused (the wedge where it stopped, or the stopwatch
+                            // for a flow, which has no fraction), a pause badge on it, one colour
+                            readonly property bool focusPaused: modelData.action === "focus" && !!compact.island.focusTimer
+                                && !compact.island.focusActive
                             // Transfers: the same wedge, filling as they go (the plain icon until a
                             // percent is known)
                             readonly property bool jobsIndicator: modelData.action === "jobs" && compact.notifications.jobsPercent > 0
                             Kirigami.Icon {
                                 id: segmentIcon
-                                opacity: segment.focusIndicator || segment.jobsIndicator ? 0 : 1
+                                opacity: segment.focusIndicator || segment.jobsIndicator || segment.focusPaused ? 0 : 1
                                 x: segment.modelData.hasText ? 6 : Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
@@ -564,6 +581,54 @@ MouseArea {
                                     paused: timer.sessionPaused
                                     progress: timer.progressFraction()
                                     tint: Kirigami.Theme.textColor
+                                }
+                            }
+                            Loader {
+                                anchors.fill: segmentIcon
+                                active: segment.focusPaused
+                                sourceComponent: Item {
+                                    readonly property Item timer: compact.island.focusTimer
+                                    readonly property bool hasFraction: !(timer.flowmodoroModeEnabled && !timer.isBreak())
+                                    Focus.IndicatorIcon {
+                                        anchors.fill: parent
+                                        visible: parent.hasFraction
+                                        style: Focus.IndicatorIcon.Style.Pie
+                                        // Drawn as counting (no glyph of its own in the middle)
+                                        running: true
+                                        progress: parent.timer.progressFraction()
+                                        tint: Kirigami.Theme.textColor
+                                    }
+                                    Kirigami.Icon {
+                                        anchors.fill: parent
+                                        visible: !parent.hasFraction
+                                        source: "chronometer-symbolic"
+                                        isMask: true
+                                        color: Kirigami.Theme.textColor
+                                    }
+                                    // The badge: two bars on a disc of the pill's tint, at the
+                                    // bottom right, clear of the drawing under it
+                                    Rectangle {
+                                        readonly property int side: Math.max(7, Math.round(parent.width * 0.55))
+                                        width: side
+                                        height: side
+                                        radius: side / 2
+                                        x: parent.width - side + 2
+                                        y: parent.height - side + 2
+                                        color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.alpha(Kirigami.Theme.highlightColor, 0.35))
+                                        Row {
+                                            anchors.centerIn: parent
+                                            spacing: Math.max(1, Math.round(parent.side / 7))
+                                            Repeater {
+                                                model: 2
+                                                Rectangle {
+                                                    width: Math.max(1, Math.round(parent.parent.side / 6))
+                                                    height: Math.round(parent.parent.side * 0.5)
+                                                    radius: width / 2
+                                                    color: Kirigami.Theme.textColor
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             Loader {

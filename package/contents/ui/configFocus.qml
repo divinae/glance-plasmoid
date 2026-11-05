@@ -565,8 +565,8 @@ KCMUtils.SimpleKCM {
             FormCard.FormSwitchDelegate {
                 id: meeting_pause
 
-                text: i18n("Pause for meetings")
-                description: i18n("A meeting from Event Calendar pauses a focus session (or a flow) when it starts, and offers to resume when it ends.")
+                text: i18n("No break during meetings")
+                description: i18n("Focus goes on through a meeting from Event Calendar; a session that ends during it waits, and its break starts when the meeting ends.")
             }
 
             FormCard.FormDelegateSeparator {}

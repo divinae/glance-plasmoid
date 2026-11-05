@@ -610,7 +610,9 @@
             <default>false</default>
         </entry>
 
-        <!-- A meeting's start (Event Calendar) pauses a focus block; its end offers to resume -->
+        <!-- During a meeting (Event Calendar) no break starts: a session that runs out holds at its
+             end, and the break begins as the meeting ends. (The key's name is from when it paused
+             the session instead) -->
         <entry name="focus_meeting_pause" type="Bool">
             <default>true</default>
         </entry>

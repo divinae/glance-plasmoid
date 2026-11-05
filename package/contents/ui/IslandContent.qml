@@ -106,8 +106,11 @@ Item {
         function onOpenChanged() {
             if (content.island.open) {
                 content.pickTab();
-            } else if (content.currentKey === "notifications") {
-                content.notifications.markRead();
+            } else {
+                content.searching = false;
+                if (content.currentKey === "notifications") {
+                    content.notifications.markRead();
+                }
             }
         }
         // Asked for while open: switch now. While closed, opening picks it (openOn() asks
@@ -132,33 +135,22 @@ Item {
     // for just before isn't spent while it is still closed)
     Component.onCompleted: if (island.open) pickTab()
 
-    // Search the active window's menus, under the menu bar
+    // The window has menus to show on the bar
+    readonly property bool hasMenus: island.cfg.showAppMenu && appMenu.menuAvailable && stripMenu.count > 0
+    // Searching them: the field takes the menus' place across the bar (MenuSearch). Typing takes
+    // the keyboard, which read as leaving and closed the drawer: it's held while searching
+    property bool searching: false
+    onSearchingChanged: searching ? hold("menuSearch") : release("menuSearch")
+    Component.onDestruction: release("menuSearch")
     function openMenuSearch() {
-        if (!stripMenu.visible) {
-            return;
+        if (hasMenus) {
+            searching = true;
         }
-        menuSearch.x = Math.max(0, Math.min(width - menuSearch.width, searchButton.mapToItem(content, 0, 0).x
-            + searchButton.width - menuSearch.width));
-        menuSearch.y = menuStrip.y + menuStrip.height + Kirigami.Units.smallSpacing;
-        // Typing takes the keyboard, which read as leaving and closed the drawer: it's held
-        // while the search is up
-        menuSearch.open();
-    }
-    MenuSearch {
-        id: menuSearch
-        appMenu: content.appMenu
-        onOpened: content.hold("menuSearch")
-        onClosed: {
-            content.release("menuSearch");
-            content.appMenu.stopPrefetch();
-        }
-        Component.onDestruction: content.release("menuSearch")
-        onRan: content.island.setOpen(false)
     }
     // Keys while the drawer has the keyboard: Alt+letter opens that menu (its mnemonic),
     // Alt+/ (or Ctrl+F) searches them. True when used
     function menuKey(event): bool {
-        if (!stripMenu.visible) {
+        if (!hasMenus) {
             return false;
         }
         const alt = (event.modifiers & Qt.AltModifier) && !(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier));
@@ -263,8 +255,8 @@ Item {
             // the app's own About, Settings and Quit, as macOS's app menu (found in its menus)
             PlasmaComponents.Label {
                 id: appName
-                Layout.fillWidth: !stripMenu.visible
-                Layout.maximumWidth: stripMenu.visible ? Kirigami.Units.gridUnit * 10 : -1
+                Layout.fillWidth: !content.hasMenus
+                Layout.maximumWidth: content.hasMenus ? Kirigami.Units.gridUnit * 10 : -1
                 text: content.task ? content.task.appName : ""
                 textFormat: Text.PlainText
                 font.weight: Font.Bold
@@ -301,16 +293,64 @@ Item {
                     }
                 }
             }
-            AppMenuBar {
-                id: stripMenu
+            // The menus, or the search in their place: the field grows out of the magnifier
+            // (from the right, across) as the menus fade, and back
+            Item {
+                id: menuArea
                 Layout.fillWidth: true
-                appMenu: content.appMenu
-                visible: content.island.cfg.showAppMenu && content.appMenu.menuAvailable && count > 0
+                visible: content.hasMenus || content.searching
+                implicitHeight: Math.max(stripMenu.implicitHeight, menuSearch.implicitHeight)
+
+                AppMenuBar {
+                    id: stripMenu
+                    anchors.fill: parent
+                    appMenu: content.appMenu
+                    opacity: content.searching ? 0 : 1
+                    visible: content.hasMenus && opacity > 0
+                    Behavior on opacity {
+                        NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                    }
+                }
+                // Back to the menus, at the field's start
+                Common.PillButton {
+                    id: backButton
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: content.searching ? 1 : 0
+                    visible: opacity > 0
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Back to the menus")
+                    icon.name: "go-previous-symbolic"
+                    onClicked: menuSearch.finish()
+                    Behavior on opacity {
+                        NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                    }
+                }
+                MenuSearch {
+                    id: menuSearch
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    // Out of the magnifier's place to the whole bar after the back arrow
+                    width: content.searching ? parent.width - backButton.width - Kirigami.Units.smallSpacing : height
+                    opacity: content.searching ? 1 : 0
+                    visible: opacity > 0
+                    active: content.searching
+                    appMenu: content.appMenu
+                    onFinished: content.searching = false
+                    onRan: content.island.setOpen(false)
+                    Behavior on width {
+                        NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on opacity {
+                        NumberAnimation { duration: Kirigami.Units.shortDuration }
+                    }
+                }
             }
             // Search the menus (as the old HUD)
             Common.PillButton {
                 id: searchButton
-                visible: stripMenu.visible
+                visible: content.hasMenus && !content.searching
                 bare: true
                 display: PlasmaComponents.AbstractButton.IconOnly
                 text: i18n("Search the menus")
