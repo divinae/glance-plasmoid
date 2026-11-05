@@ -21,3 +21,13 @@ function baseName(path) {
     var cut = text.lastIndexOf("/");
     return cut >= 0 ? text.substring(cut + 1) : text;
 }
+
+// A track's time in microseconds as "3:07", or "1:02:07" past an hour (MPRIS's unit)
+function formatTrackTime(us) {
+    const total = Math.max(0, Math.floor(us / 1000000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const ss = s < 10 ? "0" + s : "" + s;
+    return h > 0 ? h + ":" + (m < 10 ? "0" + m : m) + ":" + ss : m + ":" + ss;
+}

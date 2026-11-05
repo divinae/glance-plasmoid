@@ -22,6 +22,8 @@ Item {
     property bool centered: false
     property color color: Kirigami.Theme.highlightColor
     property int minimumBarHeight: 2
+    // How long a bar takes to its new height: longer is calmer (the panel's music pill)
+    property int smoothMs: 60
     // Fill the width with evenly sized bars instead of using barWidth
     property bool stretch: false
     // Fade towards the top (bars grow from the bottom): solid at the base, faint at full height
@@ -45,16 +47,18 @@ Item {
     // Fewer, wider bands (0: all of cava's): each the average of a group of bars, from the low
     // end, where music has most of its energy
     property int bands: 0
-    readonly property var values: {
-        const all = cava.values;
-        if (bands <= 0 || all.length <= bands) {
+    // Mirrored: the low end in the middle, the highs out to both sides, the same either way
+    // (with `bands`: half of them computed, mirrored; an odd count has one bar in the middle)
+    property bool mirrored: false
+    function grouped(all, n) {
+        if (n <= 0 || all.length <= n) {
             return all;
         }
-        const used = Math.max(bands, Math.round(all.length * 0.75)); // the top quarter is mostly empty
+        const used = Math.max(n, Math.round(all.length * 0.75)); // the top quarter is mostly empty
         const out = [];
-        for (let b = 0; b < bands; ++b) {
-            const from = Math.floor(b * used / bands);
-            const to = Math.max(from + 1, Math.floor((b + 1) * used / bands));
+        for (let b = 0; b < n; ++b) {
+            const from = Math.floor(b * used / n);
+            const to = Math.max(from + 1, Math.floor((b + 1) * used / n));
             let sum = 0;
             for (let i = from; i < to; ++i) {
                 sum += all[i] ?? 0;
@@ -62,6 +66,16 @@ Item {
             out.push(sum / (to - from));
         }
         return out;
+    }
+    readonly property var values: {
+        const all = cava.values;
+        if (!mirrored) {
+            return grouped(all, bands);
+        }
+        const n = bands > 0 ? bands : all.length;
+        const half = grouped(all, Math.ceil(n / 2));
+        const left = half.slice(n % 2 === 1 ? 1 : 0).reverse();
+        return left.concat(half);
     }
     readonly property int count: values.length
     readonly property int effectiveBarWidth: stretch && count > 0
@@ -112,7 +126,7 @@ Item {
                     }
 
                     Behavior on height {
-                        NumberAnimation { duration: 60 }
+                        NumberAnimation { duration: barsRoot.smoothMs; easing.type: Easing.OutQuad }
                     }
                 }
             }

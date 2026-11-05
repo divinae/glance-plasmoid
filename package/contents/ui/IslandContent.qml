@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 
+import org.kde.bluezqt as BluezQt
 import org.kde.draganddrop as DragDrop
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -37,6 +38,8 @@ Item {
     property bool drawerStyle: false
 
     readonly property Item task: island.activeTask
+    // A Bluetooth adapter there: the Devices tab can list paired devices
+    readonly property bool hasBluetooth: BluezQt.Manager.adapters.length > 0
     // For what opens inside (DrawerMenu, the search): the drawer stays while it's up
     function hold(key) {
         island.hold(key);
@@ -68,6 +71,11 @@ Item {
             // The posture you're in, sitting or standing
             t.push({key: "stand", label: island.stand.cycle.position === "stand" ? i18n("Standing") : i18n("Sitting"),
                 icon: Qt.resolvedUrl(island.stand.cycle.position === "stand" ? "stand/icons/person-stand.svg" : "stand/icons/person-sit.svg")});
+        }
+        // Controls: the screens' brightness, dark mode, Night Light, the devices (batteries,
+        // Bluetooth)
+        if (island.cfg.showDevices) {
+            t.push({key: "devices", label: i18n("Controls"), icon: "adjustlevels-symbolic"});
         }
         if (island.cfg.showSystem) {
             t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
@@ -436,6 +444,7 @@ Item {
                 interactive: contentHeight > height
                 boundsBehavior: Flickable.StopAtBounds
                 QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {
+                    id: pageBar
                     visible: page.interactive
                 }
                 // keep pages loaded after first view so switching back is instant
@@ -450,7 +459,8 @@ Item {
 
                 Loader {
                     id: loader
-                    width: page.width
+                    // Narrower by the scrollbar while there is one, so it covers nothing
+                    width: page.width - (page.interactive ? pageBar.width + Kirigami.Units.smallSpacing : 0)
                     // at least the page height, so tabs can lay out to fill it
                     height: Math.max(item ? item.implicitHeight : 0, page.height)
                     active: page.current || page.shown
@@ -506,6 +516,12 @@ Item {
                 sourceComponent: WorkTab {
                     focusTimer: content.island.focusTimer
                     stand: content.island.stand
+                }
+            }
+            Page {
+                key: "devices"
+                sourceComponent: DevicesTab {
+                    island: content.island
                 }
             }
             Page {

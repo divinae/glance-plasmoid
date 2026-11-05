@@ -12,8 +12,7 @@ import org.kde.kirigami as Kirigami
 // image's source showed the placeholder for as long as the new one took (long for Spotify's
 // covers, fetched over https). Two RoundedImages take turns.
 //
-// `ready`: a cover is shown. `accent`: a colour from it for the controls (the theme's highlight
-// when there's none, or it's too close to the background to read).
+// `ready`: a cover is shown. Its colours are main.qml's (albumAccent), one extraction for all.
 Item {
     id: root
 
@@ -22,23 +21,6 @@ Item {
     property real radius: width / 2
 
     readonly property bool ready: front.status === Image.Ready && front.source.toString() !== ""
-    readonly property color accent: {
-        if (!ready || colors.highlight === undefined) {
-            return Kirigami.Theme.highlightColor;
-        }
-        const c = colors.highlight;
-        // Too faint against the card (a near-white or near-black cover): the theme's own
-        const bg = Kirigami.Theme.backgroundColor;
-        const contrast = Math.abs(luminance(c) - luminance(bg));
-        return contrast < 0.25 ? Kirigami.Theme.highlightColor : c;
-    }
-    // What reads on the accent: dark text on a light one
-    readonly property color onAccent: luminance(accent) > 0.6 ? "#202020" : "white"
-
-    function luminance(c) {
-        return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-    }
-
     property bool aInFront: true
     readonly property Item front: aInFront ? a : b
     readonly property Item back: aInFront ? b : a
@@ -97,9 +79,4 @@ Item {
         onStatusChanged: root.swapIfReady(b)
     }
 
-    Kirigami.ImageColors {
-        id: colors
-        source: root.ready ? root.front.source : ""
-        onSourceChanged: update()
-    }
 }

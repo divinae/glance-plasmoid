@@ -15,20 +15,12 @@ import com.dv.glance.private as Island
 
 KCM.SimpleKCM {
     property alias cfg_mediaInPanel: mediaInPanel.checked
+    property alias cfg_mediaAsPill: mediaAsPill.checked
     property alias cfg_showProgressInPanel: showProgressInPanel.checked
     property alias cfg_cavaInPanel: cavaInPanel.checked
     property alias cfg_cavaStyle: cavaStyle.currentIndex
     property alias cfg_cavaPanelStyle: cavaPanelStyle.currentIndex
-    property alias cfg_cavaPopupStyle: cavaPopupStyle.currentIndex
-    property alias cfg_cavaRounded: cavaRounded.checked
-    property alias cfg_cavaBackgroundOpacity: cavaBackgroundOpacity.value
     property alias cfg_cavaEdge: cavaEdge.currentIndex
-    property alias cfg_cavaPanelOpacity: cavaPanelOpacity.value
-    property alias cfg_cavaBars: cavaBars.value
-    property alias cfg_cavaFramerate: cavaFramerate.value
-    property alias cfg_cavaMonstercat: cavaMonstercat.checked
-    property alias cfg_cavaNoiseReduction: cavaNoiseReduction.value
-    property alias cfg_pauseOnFullscreen: pauseOnFullscreen.checked
 
     Island.CavaSource {
         id: cavaProbe
@@ -39,6 +31,11 @@ KCM.SimpleKCM {
             id: mediaInPanel
             Kirigami.FormData.label: i18n("While playing:")
             text: i18n("Show track in panel")
+        }
+        QQC2.CheckBox {
+            id: mediaAsPill
+            enabled: mediaInPanel.checked
+            text: i18n("As a pill, keeping the window's name")
         }
         QQC2.CheckBox {
             id: showProgressInPanel
@@ -80,71 +77,6 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Edge:")
             enabled: cavaStyle.enabled && cavaStyle.currentIndex === 3
             model: [i18n("Outer (the screen's side)"), i18n("Inner (the windows' side)")]
-        }
-        RowLayout {
-            Kirigami.FormData.label: i18n("Bars opacity:")
-            enabled: cavaStyle.enabled && cavaStyle.currentIndex !== 0
-            QQC2.Slider {
-                id: cavaPanelOpacity
-                from: 10
-                to: 100
-                stepSize: 5
-            }
-            QQC2.Label {
-                text: i18nc("percent", "%1%", cavaPanelOpacity.value)
-            }
-        }
-        QQC2.SpinBox {
-            id: cavaBackgroundOpacity
-            Kirigami.FormData.label: i18n("Opacity behind text (%):")
-            enabled: cavaStyle.enabled && cavaStyle.currentIndex === 0
-            from: 5
-            to: 100
-            stepSize: 5
-        }
-        QQC2.ComboBox {
-            id: cavaPopupStyle
-            Kirigami.FormData.label: i18n("Popup style:")
-            enabled: cavaProbe.available
-            model: [i18n("Bars"), i18n("Wave")]
-        }
-        QQC2.CheckBox {
-            id: cavaRounded
-            enabled: cavaProbe.available
-            text: i18n("Rounded bars")
-        }
-        QQC2.SpinBox {
-            id: cavaBars
-            Kirigami.FormData.label: i18n("Number of bars:")
-            enabled: cavaProbe.available
-            from: 2
-            to: 64
-        }
-        QQC2.SpinBox {
-            id: cavaFramerate
-            Kirigami.FormData.label: i18n("Framerate:")
-            enabled: cavaProbe.available
-            from: 5
-            to: 144
-        }
-        QQC2.CheckBox {
-            id: cavaMonstercat
-            Kirigami.FormData.label: i18n("Smoothing:")
-            enabled: cavaProbe.available
-            text: i18n("Monstercat (softer, connected peaks)")
-        }
-        QQC2.SpinBox {
-            id: cavaNoiseReduction
-            Kirigami.FormData.label: i18n("Noise reduction:")
-            enabled: cavaProbe.available
-            from: 0
-            to: 100
-        }
-        QQC2.CheckBox {
-            id: pauseOnFullscreen
-            Kirigami.FormData.label: i18n("Performance:")
-            enabled: cavaProbe.available
-            text: i18n("Stop bars while a fullscreen window is active")
         }
     }
 }

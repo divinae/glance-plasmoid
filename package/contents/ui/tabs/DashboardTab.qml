@@ -33,8 +33,9 @@ GridLayout {
     readonly property bool showNotifications: island.cfg.showNotifications
     readonly property bool showShelf: island.cfg.showShelf
     readonly property bool showSystem: island.cfg.showSystem
+    readonly property bool showControls: island.cfg.showDevices
 
-    columns: 3
+    columns: 2
     rowSpacing: Kirigami.Units.largeSpacing
     columnSpacing: Kirigami.Units.largeSpacing
 
@@ -112,38 +113,30 @@ GridLayout {
             }
         }
     }
-    ResourcesTile {
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
-        visible: tab.showSystem
-        Layout.fillHeight: true
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 5
-        monitor: tab.monitor
-        onClicked: tab.openTab("system")
-    }
-    MediaTile {
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
-        visible: tab.showMedia
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 9
-        // Takes the places of what's hidden in this row, so it never leaves a gap
-        Layout.columnSpan: 1 + (tab.showSystem ? 0 : 1)
-        island: tab.island
-        cava: tab.cava
-        mediaState: tab.mediaState
-        onOpenMedia: tab.openTab("media")
-    }
-
-    // ---- notifications, focus, stand, shelf ---------------------------------------------
-    // Notifications get most of the room, the shelf what it needs
+    // ---- controls, system, notifications: notifications take what the other two leave ----
     RowLayout {
-        visible: tab.showNotifications || tab.showShelf || !!tab.island.stand || !!tab.island.focusTimer
+        visible: tab.showSystem || tab.showNotifications || tab.showControls
         Layout.fillWidth: true
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 7
         Layout.fillHeight: true
-        Layout.columnSpan: 2
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 9
         spacing: Kirigami.Units.largeSpacing
 
+        // Bluetooth, Wi-Fi…, the brightness, the batteries in rings
+        DevicesTile {
+            visible: tab.showControls
+            Layout.fillWidth: !tab.showNotifications
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 9
+            island: tab.island
+            onClicked: tab.openTab("devices")
+        }
+        ResourcesTile {
+            visible: tab.showSystem
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 5
+            monitor: tab.monitor
+            onClicked: tab.openTab("system")
+        }
         NotificationsTile {
             visible: tab.showNotifications
             Layout.fillWidth: true
@@ -152,9 +145,32 @@ GridLayout {
             watcher: tab.notifications
             onClicked: tab.openTab("notifications")
         }
+    }
+
+    // ---- music, focus, stand, shelf ------------------------------------------------------
+    // Music gets most of the room, the shelf what it needs
+    RowLayout {
+        visible: (tab.showMedia && tab.island.hasPlayer) || tab.showShelf || !!tab.island.stand || !!tab.island.focusTimer
+        Layout.fillWidth: true
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 7
+        Layout.fillHeight: true
+        spacing: Kirigami.Units.largeSpacing
+
+        // Only with a player: an empty "Nothing playing" card gives its room to Focus and Stand
+        MediaTile {
+            visible: tab.showMedia && tab.island.hasPlayer
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 9
+            island: tab.island
+            cava: tab.cava
+            mediaState: tab.mediaState
+            onOpenMedia: tab.openTab("media")
+        }
         // Focus and Stand share a card, one row each
         WorkTile {
             visible: !!tab.island.focusTimer || !!tab.island.stand
+            Layout.fillWidth: !(tab.showMedia && tab.island.hasPlayer) && !tab.showShelf
             Layout.fillHeight: true
             Layout.preferredWidth: Kirigami.Units.gridUnit * 10.5
             timer: tab.island.focusTimer
@@ -163,7 +179,7 @@ GridLayout {
         }
         ShelfTile {
             visible: tab.showShelf
-            Layout.fillWidth: !tab.showNotifications
+            Layout.fillWidth: !(tab.showMedia && tab.island.hasPlayer)
             Layout.fillHeight: true
             Layout.preferredWidth: Kirigami.Units.gridUnit * 5
             island: tab.island

@@ -16,19 +16,13 @@ KCMUtils.SimpleKCM {
     property alias cfg_stand_sit_minutes: sit_minutes.value
     property alias cfg_stand_stand_minutes: stand_minutes.value
     property alias cfg_stand_daily_goal_minutes: daily_goal_minutes.value
-    property alias cfg_stand_snooze_minutes: snooze_minutes.value
     property alias cfg_stand_notification_enabled: notification_enabled.checked
     property alias cfg_stand_sfx_enabled: sfx_enabled.checked
-    property alias cfg_stand_sfx_filepath: sfx_filepath.path
-    property alias cfg_stand_sound_volume: sound_volume.value
-    property alias cfg_stand_away_on_lock_enabled: away_on_lock_enabled.checked
     property alias cfg_stand_focus_sync_enabled: focus_sync_enabled.checked
-    property alias cfg_stand_meeting_hold: meeting_hold.checked
     property alias cfg_stand_stand_for_meetings: stand_for_meetings.checked
     property alias cfg_stand_work_hours_enabled: work_hours_enabled.checked
     property alias cfg_stand_work_start_minutes: work_start_minutes.value
     property alias cfg_stand_work_end_minutes: work_end_minutes.value
-    property alias cfg_stand_work_weekdays_only: work_weekdays_only.checked
 
     function clockText(minutes) {
         return Qt.formatTime(new Date(2000, 0, 1, Math.floor(minutes / 60), minutes % 60), Locale.ShortFormat);
@@ -59,7 +53,6 @@ KCMUtils.SimpleKCM {
     property alias cfg_stand_desk_save_cmd: desk_save_cmd.text
     property alias cfg_stand_sit_height_cm: sit_height_cm.value
     property alias cfg_stand_stand_height_cm: stand_height_cm.value
-    property alias cfg_stand_desk_poll_seconds: desk_poll_seconds.value
     property alias cfg_stand_auto_move_enabled: auto_move_enabled.checked
 
     property string testResult: ""
@@ -163,15 +156,6 @@ KCMUtils.SimpleKCM {
 
             FormCard.FormDelegateSeparator {}
 
-            FormCard.FormSpinBoxDelegate {
-                id: snooze_minutes
-
-                label: i18n("Snooze for (minutes)")
-                from: 1
-                to: 120
-            }
-
-            FormCard.FormDelegateSeparator {}
 
             FormCard.FormSpinBoxDelegate {
                 id: daily_goal_minutes
@@ -205,38 +189,14 @@ KCMUtils.SimpleKCM {
 
             FormCard.FormDelegateSeparator {}
 
-            FormPathDelegate {
-                id: sfx_filepath
 
-                label: i18n("Sound")
-                enabled: sfx_enabled.checked
-                currentFolder: "file:///usr/share/sounds"
-                nameFilters: [i18n("Sound files (*.oga *.ogg *.wav *.mp3 *.flac)"), i18n("All files (*)")]
-            }
-
-            FormCard.FormDelegateSeparator {}
-
-            FormCard.FormSpinBoxDelegate {
-                id: sound_volume
-
-                label: i18n("Volume (%)")
-                enabled: sfx_enabled.checked
-                from: 0
-                to: 100
-            }
         }
 
         FormCard.FormHeader {
-            title: i18n("Away")
+            title: i18n("Focus and meetings")
         }
 
         FormCard.FormCard {
-            FormCard.FormSwitchDelegate {
-                id: away_on_lock_enabled
-
-                text: i18n("Pause while the screen is locked")
-                description: i18n("Away for 5 minutes or more starts the cycle over: you have moved.")
-            }
             FormCard.FormDelegateSeparator {}
             FormCard.FormSwitchDelegate {
                 id: focus_sync_enabled
@@ -245,12 +205,6 @@ KCMUtils.SimpleKCM {
                 description: i18n("With Focus on, reminders and desk moves wait for the break, and a switch due within 10 minutes is made at the break. Breaks count as neither sitting nor standing.")
             }
             FormCard.FormDelegateSeparator {}
-            FormCard.FormSwitchDelegate {
-                id: meeting_hold
-
-                text: i18n("Wait for meetings")
-                description: i18n("No reminders or desk moves during a meeting from Event Calendar; a switch due soon is made when it ends.")
-            }
             FormCard.FormDelegateSeparator {}
             FormCard.FormSwitchDelegate {
                 id: stand_for_meetings
@@ -302,12 +256,6 @@ KCMUtils.SimpleKCM {
 
             FormCard.FormDelegateSeparator {}
 
-            FormCard.FormSwitchDelegate {
-                id: work_weekdays_only
-
-                text: i18n("Monday to Friday only")
-                enabled: work_hours_enabled.checked
-            }
         }
 
 
@@ -420,14 +368,6 @@ KCMUtils.SimpleKCM {
 
             FormCard.FormDelegateSeparator {}
 
-            FormCard.FormSpinBoxDelegate {
-                id: desk_poll_seconds
-
-                label: i18n("Read the height every (seconds)")
-                description: i18n("Catches the desk's own buttons, so standing time stays right.")
-                from: 10
-                to: 3600
-            }
         }
 
         FormCard.FormSectionText {

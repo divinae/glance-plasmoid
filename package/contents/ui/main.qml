@@ -6,6 +6,7 @@
 
 import QtQuick
 
+import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.mpris as Mpris
@@ -58,7 +59,33 @@ PlasmoidItem {
     // More than one: the Media tab stays even when this one is empty, to switch to another
     readonly property int playerCount: mprisModel.count
     readonly property bool playing: mediaStateItem.playing
-    readonly property bool showMediaInPanel: cfg.showMedia && cfg.mediaInPanel && playing
+    // While playing: the track in the strip's text, or (mediaAsPill) a pill beside the window's name
+    readonly property bool showMediaInPanel: cfg.showMedia && cfg.mediaInPanel && !cfg.mediaAsPill && playing
+    // ---- the album's colours, one extraction for everything (the music pill, its card, the Media
+    // tab). Here, as long as the widget lives: Kirigami's ImageColors crashed plasmashell when one
+    // was destroyed while it was still working (the cards and the drawer's pages come and go)
+    Kirigami.ImageColors {
+        id: albumColors
+        source: root.hasPlayer ? root.player.artUrl : ""
+        onSourceChanged: update()
+    }
+    readonly property bool albumHasColors: albumColors.source.toString() !== ""
+        && albumColors.highlight !== undefined && albumColors.highlight.a > 0
+    // The pill's tint: the cover's vivid colour, pink without one
+    readonly property color albumColor: albumHasColors ? albumColors.highlight : "#d6409f"
+    // The controls' colour: the cover's, unless it's too faint against the background (a
+    // near-white or near-black cover): the theme's own then
+    function luminance(c) {
+        return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+    }
+    readonly property color albumAccent: albumHasColors
+        && Math.abs(luminance(albumColors.highlight) - luminance(Kirigami.Theme.backgroundColor)) >= 0.25
+        ? albumColors.highlight : Kirigami.Theme.highlightColor
+    // What reads on it: dark text on a light one
+    readonly property color onAlbumAccent: luminance(albumAccent) > 0.6 ? "#202020" : "white"
+
+    // The pill stays while paused (a player with something in it): a click plays again
+    readonly property bool mediaPill: cfg.showMedia && cfg.mediaInPanel && cfg.mediaAsPill && hasPlayer
     readonly property string mediaText: {
         if (!hasPlayer) {
             return "";
@@ -77,6 +104,17 @@ PlasmoidItem {
     readonly property QtObject headphones: BluetoothAudio {}
     // Mouse, keyboard, headphones… running low: a pill each
     readonly property Item peripherals: PeripheralBatteries {}
+    // Them and the Bluetooth devices together (the Devices tab, the dashboard's card)
+    readonly property QtObject devices: DeviceList {
+        peripherals: root.peripherals
+    }
+    // Wi-Fi, the sound output, the microphone, the power profile (the Controls tab, the card)
+    readonly property Item controls: ControlsState {}
+    // Do Not Disturb, for the Controls tab
+    readonly property bool doNotDisturb: notificationWatcher.doNotDisturb
+    function toggleDoNotDisturb() {
+        notificationWatcher.toggleDoNotDisturb();
+    }
     // At a meeting's real start and end (CalendarSource tells them apart from one that merely
     // appears or vanishes)
     Connections {
@@ -301,8 +339,11 @@ PlasmoidItem {
     }
 
     // ---- keep awake: no screen-off, lock or sleep while focusing (its break too, but not one
-    // run past its end: nobody may be there) or in a meeting
-    readonly property bool keepAwake: (cfg.focus_keep_awake && !!focusTimer && focusTimer.active && !focusTimer.breakOvertime)
+    // run past its end: nobody may be there), in a meeting, or when asked to (the Controls tab's
+    // toggle; until a restart, as Plasma's own "block sleep")
+    property bool keepAwakeManual: false
+    readonly property bool keepAwake: keepAwakeManual
+        || (cfg.focus_keep_awake && !!focusTimer && focusTimer.active && !focusTimer.breakOvertime)
         || (cfg.keepAwakeMeetings && inMeeting)
     Common.Inhibitor {
         what: "--power --screenSaver"

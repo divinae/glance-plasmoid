@@ -15,6 +15,7 @@ import org.kde.plasma.private.mpris as Mpris
 
 import ".."
 import "../common"
+import "../common/Utils.js" as Utils
 
 // Now playing, after Caelestia's media tab: a round cover inside the spectrum's rays on the left
 // (tap: raise the player, swipe: next or previous), and centred on the right the track, album and
@@ -33,7 +34,7 @@ Item {
     readonly property bool hasVolume: hasPlayer && player.canControl && player.volume >= 0
     property real volumeBeforeMute: 0.5
     // The controls in a colour from the cover (CoverArt picks one that reads, else the theme's)
-    readonly property color accent: art.accent
+    readonly property color accent: island.albumAccent
     // The right-hand time: the track's length, or (tapped) what's left of it
     property bool showRemaining: false
 
@@ -327,7 +328,7 @@ Item {
                         height: width
                         source: tab.isPlaying ? "media-playback-pause" : "media-playback-start"
                         isMask: true
-                        color: art.onAccent
+                        color: tab.island.onAlbumAccent
                     }
                     HoverHandler {
                         id: playHover
@@ -571,11 +572,6 @@ Item {
     }
 
     function formatTime(us: real): string {
-        const total = Math.max(0, Math.floor(us / 1000000));
-        const h = Math.floor(total / 3600);
-        const m = Math.floor((total % 3600) / 60);
-        const s = total % 60;
-        const ss = s < 10 ? "0" + s : "" + s;
-        return h > 0 ? h + ":" + (m < 10 ? "0" + m : m) + ":" + ss : m + ":" + ss;
+        return Utils.formatTrackTime(us);
     }
 }

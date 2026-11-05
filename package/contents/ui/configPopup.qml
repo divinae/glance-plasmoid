@@ -14,15 +14,8 @@ import org.kde.kirigami as Kirigami
 KCM.SimpleKCM {
     property alias cfg_popupStyle: popupStyle.currentIndex
     property alias cfg_drawerEdge: drawerEdge.currentIndex
-    property alias cfg_drawerRadius: drawerRadius.value
-    property alias cfg_drawerWidth: drawerWidth.value
     property alias cfg_drawerBlur: drawerBlur.checked
-    property alias cfg_drawerOpacity: drawerOpacity.value
     property alias cfg_openOnHover: openOnHover.checked
-    property alias cfg_hoverDelay: hoverDelay.value
-    property alias cfg_closeDelay: closeDelay.value
-    property alias cfg_popupHeight: popupHeight.value
-    property alias cfg_switchTabOnHover: switchTabOnHover.checked
     property alias cfg_showWindowButtons: showWindowButtons.checked
     property alias cfg_showAppMenu: showAppMenu.checked
     property alias cfg_showMedia: showMedia.checked
@@ -30,6 +23,7 @@ KCM.SimpleKCM {
     property alias cfg_calendarEnabled: calendarEnabled.checked
     property alias cfg_showShelf: showShelf.checked
     property alias cfg_showSystem: showSystem.checked
+    property alias cfg_showDevices: showDevices.checked
 
     Kirigami.FormLayout {
         QQC2.ComboBox {
@@ -51,38 +45,11 @@ KCM.SimpleKCM {
             enabled: popupStyle.currentIndex === 0
             model: [i18n("From the panel, beside Glance"), i18n("From the top of the screen")]
         }
-        QQC2.SpinBox {
-            id: drawerWidth
-            Kirigami.FormData.label: i18n("Drawer width (grid units):")
-            enabled: popupStyle.currentIndex === 0
-            from: 20
-            to: 50
-        }
         QQC2.CheckBox {
             id: drawerBlur
             Kirigami.FormData.label: i18n("Background:")
             enabled: popupStyle.currentIndex === 0
             text: i18n("Translucent with blur, like the panel")
-        }
-        RowLayout {
-            Kirigami.FormData.label: i18n("Opacity:")
-            enabled: popupStyle.currentIndex === 0 && drawerBlur.checked
-            QQC2.Slider {
-                id: drawerOpacity
-                from: 20
-                to: 100
-                stepSize: 5
-            }
-            QQC2.Label {
-                text: i18nc("percent", "%1%", drawerOpacity.value)
-            }
-        }
-        QQC2.SpinBox {
-            id: drawerRadius
-            Kirigami.FormData.label: i18n("Corner radius (px):")
-            enabled: popupStyle.currentIndex === 0
-            from: 0
-            to: 48
         }
 
         Item {
@@ -93,32 +60,6 @@ KCM.SimpleKCM {
             id: openOnHover
             Kirigami.FormData.label: i18n("Open:")
             text: i18n("On hover")
-        }
-        QQC2.SpinBox {
-            id: hoverDelay
-            Kirigami.FormData.label: i18n("Open delay (ms):")
-            enabled: openOnHover.checked
-            from: 0
-            to: 2000
-            stepSize: 50
-        }
-        QQC2.SpinBox {
-            id: closeDelay
-            Kirigami.FormData.label: i18n("Close delay (ms):")
-            from: 0
-            to: 2000
-            stepSize: 50
-        }
-        QQC2.SpinBox {
-            id: popupHeight
-            Kirigami.FormData.label: i18n("Height (grid units):")
-            from: 10
-            to: 40
-        }
-        QQC2.CheckBox {
-            id: switchTabOnHover
-            Kirigami.FormData.label: i18n("Tabs:")
-            text: i18n("Switch on hover")
         }
 
         Item {
@@ -156,6 +97,10 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: showShelf
             text: i18n("Shelf tab")
+        }
+        QQC2.CheckBox {
+            id: showDevices
+            text: i18n("Controls tab (Wi-Fi, Do Not Disturb, power profile, brightness, Night Light, sound output, Bluetooth, devices)")
         }
         QQC2.CheckBox {
             id: showSystem

@@ -86,6 +86,12 @@ MouseArea {
     onPillsChanged: Qt.callLater(() => compact.shownPills = compact.pills.map(p => p.action))
     readonly property var pills: {
         const out = [];
+        // What's playing (with "As a pill"): the equalizer, a card with the controls on hover;
+        // a click plays or pauses
+        if (island.mediaPill) {
+            out.push({color: compact.mediaColor, action: "media", icon: "audio-x-generic-symbolic", card: mediaCard,
+                tip: island.player ? (island.player.track || island.player.identity || "") : ""});
+        }
         if (privacy.cameraActive && island.cfg.pillCamera) {
             out.push({color: privacy.cameraColor, icon: "camera-video-symbolic", action: "privacy",
                 tip: i18n("Camera in use: %1", privacy.cameraNames.join(", "))});
@@ -163,6 +169,14 @@ MouseArea {
         }
     }
     Component {
+        id: mediaCard
+        Popouts.MediaPopout {
+            island: compact.island
+            mediaState: compact.mediaState
+            cava: compact.cava
+        }
+    }
+    Component {
         id: meetingCard
         Popouts.MeetingPopout {
             island: compact.island
@@ -189,6 +203,35 @@ MouseArea {
             watcher: compact.notifications
         }
     }
+    // The music pill's colour: the album cover's (main.qml's, one for all), pink without a cover
+    readonly property color mediaColor: island.albumColor
+
+    // A pause badge for a pill's drawing (Focus, music): two bars on a disc of the pill's tint, at
+    // the bottom right, clear of what's under it
+    component PauseBadge: Rectangle {
+        property color tint: Kirigami.Theme.highlightColor
+        readonly property int side: Math.max(7, Math.round(parent.width * 0.55))
+        width: side
+        height: side
+        radius: side / 2
+        x: parent.width - side + 2
+        y: parent.height - side + 2
+        color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.alpha(tint, 0.35))
+        Row {
+            anchors.centerIn: parent
+            spacing: Math.max(1, Math.round(parent.side / 7))
+            Repeater {
+                model: 2
+                Rectangle {
+                    width: Math.max(1, Math.round(parent.parent.side / 6))
+                    height: Math.round(parent.parent.side * 0.5)
+                    radius: width / 2
+                    color: Kirigami.Theme.textColor
+                }
+            }
+        }
+    }
+
     // The pill under the pointer (its action); "" when none. One place, so moving between two
     // pills (the next entered before the last left) or a pill going away under it can't leave a
     // stale value
@@ -243,8 +286,14 @@ MouseArea {
     readonly property int pillEndShift: Math.max(0, margin - pillSideGap)
     readonly property int trailLength: pills.length > 0
         ? capsuleLength + Kirigami.Units.largeSpacing - pillEndShift : 0
-    readonly property real targetLength: Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
-        + trailLength + 2 * margin + 2 * inset)
+    // The strip turns about its middle on a vertical panel: its length and the panel's thickness
+    // of the same parity keep it on whole pixels; else it all sat half a pixel off, and hairlines
+    // such as the music pill's bars went soft, depending on the title's length
+    readonly property real targetLength: {
+        const n = Math.ceil(metrics.advanceWidth + barsLength + dotLength + iconLength
+            + trailLength + 2 * margin + 2 * inset);
+        return vertical && (n - Math.round(thickness)) % 2 !== 0 ? n + 1 : n;
+    }
     property real animatedLength: targetLength
     Behavior on animatedLength {
         NumberAnimation {
@@ -576,6 +625,11 @@ MouseArea {
                             // Focus: the time left as a wedge in a thin outline (Fokus's indicator). Not
                             // in a flow or a break past its end: no fraction to show there, and its
                             // spinning sweep was restless; the stopwatch instead
+                            // Music: the small equalizer in the pill, when cava runs
+                            readonly property bool mediaBars: modelData.action === "media" && compact.island.playing
+                                && compact.cava.available && compact.cava.running
+                            // Paused: the same hairlines at rest, short and even (not the note)
+                            readonly property bool mediaResting: modelData.action === "media" && !mediaBars
                             readonly property bool focusIndicator: modelData.action === "focus" && !!compact.island.focusTimer
                                 && compact.island.focusActive && !compact.island.focusTimer.progressIndeterminate
                             // Paused: what's paused (the wedge where it stopped, or the stopwatch
@@ -587,7 +641,8 @@ MouseArea {
                             readonly property bool jobsIndicator: modelData.action === "jobs" && compact.notifications.jobsPercent > 0
                             Kirigami.Icon {
                                 id: segmentIcon
-                                opacity: segment.focusIndicator || segment.jobsIndicator || segment.focusPaused ? 0 : 1
+                                opacity: segment.focusIndicator || segment.jobsIndicator || segment.focusPaused
+                                    || segment.mediaBars || segment.mediaResting ? 0 : 1
                                 x: segment.modelData.hasText ? 6 : Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
@@ -607,6 +662,54 @@ MouseArea {
                                     paused: timer.sessionPaused
                                     progress: timer.progressFraction()
                                     tint: Kirigami.Theme.textColor
+                                }
+                            }
+                            Loader {
+                                anchors.fill: segmentIcon
+                                active: segment.mediaBars
+                                sourceComponent: CavaBars {
+                                    cava: compact.cava
+                                    bands: 7
+                                    mirrored: true
+                                    // Hairline bars, centred, gliding rather than jumping
+                                    barWidth: 1
+                                    spacing: 1
+                                    smoothMs: 220
+                                    centered: true
+                                    boost: true
+                                    rounded: true
+                                    minimumBarHeight: 2
+                                    color: Kirigami.Theme.textColor
+                                }
+                            }
+                            Loader {
+                                anchors.fill: segmentIcon
+                                active: segment.mediaResting
+                                sourceComponent: Item {
+                                    Row {
+                                        id: restingBars
+                                        anchors.centerIn: parent
+                                        spacing: 1
+                                        // Paused: dimmed under the badge
+                                        opacity: compact.island.playing ? 1 : 0.55
+                                        Repeater {
+                                            model: 7
+                                            Rectangle {
+                                                required property int index
+                                                width: 1
+                                                // A still, symmetric shape: short at the ends, taller in
+                                                // the middle, as the bars stand when the music stops
+                                                height: Math.round(restingBars.parent.height * [0.25, 0.4, 0.55, 0.7, 0.55, 0.4, 0.25][index])
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                radius: 0.5
+                                                color: Kirigami.Theme.textColor
+                                            }
+                                        }
+                                    }
+                                    PauseBadge {
+                                        visible: !compact.island.playing
+                                        tint: compact.mediaColor
+                                    }
                                 }
                             }
                             Loader {
@@ -631,29 +734,8 @@ MouseArea {
                                         isMask: true
                                         color: Kirigami.Theme.textColor
                                     }
-                                    // The badge: two bars on a disc of the pill's tint, at the
-                                    // bottom right, clear of the drawing under it
-                                    Rectangle {
-                                        readonly property int side: Math.max(7, Math.round(parent.width * 0.55))
-                                        width: side
-                                        height: side
-                                        radius: side / 2
-                                        x: parent.width - side + 2
-                                        y: parent.height - side + 2
-                                        color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.alpha(Kirigami.Theme.highlightColor, 0.35))
-                                        Row {
-                                            anchors.centerIn: parent
-                                            spacing: Math.max(1, Math.round(parent.side / 7))
-                                            Repeater {
-                                                model: 2
-                                                Rectangle {
-                                                    width: Math.max(1, Math.round(parent.parent.side / 6))
-                                                    height: Math.round(parent.parent.side * 0.5)
-                                                    radius: width / 2
-                                                    color: Kirigami.Theme.textColor
-                                                }
-                                            }
-                                        }
+                                    PauseBadge {
+                                        tint: Kirigami.Theme.highlightColor
                                     }
                                 }
                             }
@@ -747,6 +829,11 @@ MouseArea {
                                         break;
                                     case "jobs":
                                         compact.island.openOn("notifications", true);
+                                        break;
+                                    case "media":
+                                        if (compact.island.player) {
+                                            compact.island.player.PlayPause();
+                                        }
                                         break;
                                     }
                                 }

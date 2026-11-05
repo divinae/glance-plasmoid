@@ -13,6 +13,9 @@ import org.kde.kirigami as Kirigami
 // theme and lightened on a light one so the text keeps reading; fades with the cover.
 Item {
     id: root
+    // Never past its card: the blur pads itself outward by its radius, and spilled over the
+    // dashboard's other cards
+    clip: true
 
     property url source
     property bool shown: true
@@ -45,6 +48,7 @@ Item {
         Behavior on opacity {
             NumberAnimation { duration: Kirigami.Units.longDuration }
         }
+        autoPaddingEnabled: false
         blurEnabled: true
         blurMax: 64
         blur: 1.0

@@ -16,10 +16,16 @@ Item {
 
     property real cardWidth: Kirigami.Units.gridUnit * 15
     default property alias content: layout.data
+    // What goes behind it all, filling the card (the music card's blurred cover)
+    property alias underlay: underlay.data
 
     implicitWidth: cardWidth
     implicitHeight: layout.implicitHeight + Kirigami.Units.largeSpacing * 2
 
+    Item {
+        id: underlay
+        anchors.fill: parent
+    }
     ColumnLayout {
         id: layout
         anchors.fill: parent
