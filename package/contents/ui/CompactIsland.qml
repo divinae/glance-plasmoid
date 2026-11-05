@@ -450,6 +450,11 @@ MouseArea {
                 width: Math.min(metrics.advanceWidth + 1, parent.width - leadLength - compact.trailLength)
                 height: textA.implicitHeight
                 x: leadLength + Math.max(0, (parent.width - leadLength - compact.trailLength - width) / 2)
+                // While the strip grows to a new text (another window, a new track) the box is
+                // still short: the text is cut at its edge then, not shortened with "…" for a
+                // moment; "…" only when it doesn't fit at the strip's full length either
+                clip: true
+                readonly property bool growing: compact.animatedLength < compact.targetLength - 1
 
                 property bool showA: true
                 property string current: compact.island.stripText
@@ -463,11 +468,16 @@ MouseArea {
                 }
 
                 component StripLabel: PlasmaComponents.Label {
+                    // The one fading in; the one fading out is cut at the box's edge, never "…"
+                    // (the box is already the new text's width)
+                    property bool incoming: false
                     anchors.fill: parent
-                    elide: Text.ElideRight
+                    elide: incoming && !textBox.growing ? Text.ElideRight : Text.ElideNone
                     wrapMode: Text.NoWrap
                     textFormat: Text.PlainText
-                    horizontalAlignment: Text.AlignHCenter
+                    // From its start (revealed as the strip grows); at rest the box is the text's
+                    // width, so it sits where it did
+                    horizontalAlignment: Text.AlignLeft
                     // Normal weight; bold only when set (General > Font)
                     font.weight: compact.island.cfg.boldFont ? Font.Bold : Font.Normal
                     font.capitalization: compact.island.cfg.capitalFont ? Font.Capitalize : Font.MixedCase
@@ -481,10 +491,12 @@ MouseArea {
                 StripLabel {
                     id: textA
                     text: compact.island.stripText
+                    incoming: textBox.showA
                     opacity: textBox.showA ? 1 : 0
                 }
                 StripLabel {
                     id: textB
+                    incoming: !textBox.showA
                     opacity: textBox.showA ? 0 : 1
                 }
             }
