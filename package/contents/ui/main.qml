@@ -128,7 +128,7 @@ PlasmoidItem {
         return Island.CalendarBus.openEventCalendar(Plasmoid, ev ? ev.calendarId : "", ev ? ev.id : "");
     }
     // Event Calendar is there to show an event (its events come over D-Bus, from the widget itself)
-    readonly property bool eventCalendarLinked: calendarSource.origin === "bus"
+    readonly property bool eventCalendarLinked: Island.CalendarBus.connected
     // The meeting given, else the one on now or next
     function joinMeeting(ev) {
         calendarSource.join(ev || meeting);
@@ -503,6 +503,7 @@ PlasmoidItem {
         id: calendarSource
         active: root.cfg.calendarEnabled
         leadMinutes: root.cfg.calendarLeadMinutes
+        applet: Plasmoid
     }
 
     Island.AppMenuModel {

@@ -89,6 +89,9 @@ public:
     // (Plasmoid), the way to the shell's containments. Looked up on each call, no pointer kept.
     // False when there's no Event Calendar.
     Q_INVOKABLE bool openEventCalendar(QObject *applet, const QString &calendarId = QString(), const QString &eventId = QString()) const;
+    // Asks Event Calendar to send its events now (Glance may have started after its last send):
+    // its publishToGlance(), in-process. False without an Event Calendar that has it
+    Q_INVOKABLE bool requestPublish(QObject *applet) const;
 
 Q_SIGNALS:
     void changed();

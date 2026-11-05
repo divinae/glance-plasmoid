@@ -95,6 +95,24 @@ Item {
         }
     }
 
+    // The widget (Plasmoid), to find Event Calendar in the same shell and ask it to send
+    property var applet: null
+    // Asks Event Calendar to send its events now, at most once a minute: at start (it may have
+    // sent before Glance was there), and while the bus has brought nothing for today
+    property real _askedMs: 0
+    function askEventCalendar() {
+        const t = Date.now();
+        if (applet && t - _askedMs > 60000) {
+            _askedMs = t;
+            Island.CalendarBus.requestPublish(applet);
+        }
+    }
+    Timer {
+        interval: 5000
+        running: source.active && source.applet !== null
+        onTriggered: source.askEventCalendar()
+    }
+
     function reload() {
         if (!active) {
             _events = [];
@@ -108,6 +126,17 @@ Item {
             events = Calendar.fromBus(Island.CalendarBus.eventsJson);
             if (events !== null) {
                 origin = "bus";
+            }
+        }
+        // An empty list over the bus while the cache has events: an Event Calendar that sent
+        // before its events had loaded (an older one does at every start). The cache meanwhile,
+        // and ask it again
+        if (events !== null && events.length === 0) {
+            const cached = Calendar.fromCache(Island.CalendarBus.readCacheFile());
+            if (cached && cached.length > 0) {
+                events = cached;
+                origin = "file";
+                askEventCalendar();
             }
         }
         if (events === null) {

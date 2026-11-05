@@ -27,7 +27,8 @@ Item {
     property double stamp: Date.now()
 
     function estimate(): real {
-        if (!hasPlayer) {
+        // `player` as well: it can go before hasPlayer follows
+        if (!hasPlayer || !player) {
             return 0;
         }
         if (!playing) {

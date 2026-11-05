@@ -203,38 +203,61 @@ QString CalendarBus::readCacheFile() const
     if (files.isEmpty()) {
         return QString();
     }
-    QSettings ini(files.first().absoluteFilePath(), QSettings::IniFormat);
-    return ini.value(QStringLiteral("events/json")).toString();
+    // The newest with any calendars in it: each Event Calendar widget writes its own, and one
+    // that shows none (another instance, a preview) may well be the newest
+    for (const QFileInfo &file : files) {
+        QSettings ini(file.absoluteFilePath(), QSettings::IniFormat);
+        const QString json = ini.value(QStringLiteral("events/json")).toString();
+        const QJsonObject calendars = QJsonDocument::fromJson(json.toUtf8()).object().value(QStringLiteral("calendars")).toObject();
+        if (!calendars.isEmpty()) {
+            return json;
+        }
+    }
+    return QString();
 }
 
-bool CalendarBus::openEventCalendar(QObject *applet, const QString &calendarId, const QString &eventId) const
+// The Event Calendar widget in the same shell as `applet` (the first one), or null
+static PlasmaQuick::AppletQuickItem *eventCalendarItem(QObject *applet)
 {
     auto *self = qobject_cast<Plasma::Applet *>(applet);
     Plasma::Containment *containment = self ? self->containment() : nullptr;
     Plasma::Corona *corona = containment ? containment->corona() : nullptr;
     if (!corona) {
-        return false;
+        return nullptr;
     }
     const auto containments = corona->containments();
     for (Plasma::Containment *c : containments) {
         const auto applets = c->applets();
         for (Plasma::Applet *a : applets) {
-            if (a->pluginMetaData().pluginId() != QLatin1String("org.kde.plasma.eventcalendar")) {
-                continue;
-            }
-            if (PlasmaQuick::AppletQuickItem *item = PlasmaQuick::AppletQuickItem::itemForApplet(a)) {
-                // An Event Calendar with showEvent (1.18+): it opens on the event; an older
-                // one: only its popup
-                if (!eventId.isEmpty()
-                    && QMetaObject::invokeMethod(item, "showEvent", Q_ARG(QVariant, calendarId), Q_ARG(QVariant, eventId))) {
-                    return true;
+            if (a->pluginMetaData().pluginId() == QLatin1String("org.kde.plasma.eventcalendar")) {
+                if (PlasmaQuick::AppletQuickItem *item = PlasmaQuick::AppletQuickItem::itemForApplet(a)) {
+                    return item;
                 }
-                item->setExpanded(true);
-                return true;
             }
         }
     }
-    return false;
+    return nullptr;
+}
+
+bool CalendarBus::requestPublish(QObject *applet) const
+{
+    PlasmaQuick::AppletQuickItem *item = eventCalendarItem(applet);
+    return item && QMetaObject::invokeMethod(item, "publishToGlance");
+}
+
+bool CalendarBus::openEventCalendar(QObject *applet, const QString &calendarId, const QString &eventId) const
+{
+    PlasmaQuick::AppletQuickItem *item = eventCalendarItem(applet);
+    if (!item) {
+        return false;
+    }
+    // An Event Calendar with showEvent (1.18+): it opens on the event; an older one: only its popup
+    if (!eventId.isEmpty()
+        && QMetaObject::invokeMethod(item, "showEvent", Q_ARG(QVariant, calendarId), Q_ARG(QVariant, eventId))) {
+        return true;
+    }
+    item->setExpanded(true);
+    return true;
 }
 
 void CalendarBus::updateConnected()
