@@ -1,5 +1,6 @@
 # Glance for Plasma 6
 
+[![KDE Store](https://img.shields.io/badge/KDE%20Store-Glance-1d99f3?logo=kde&logoColor=white)](https://store.kde.org/p/2381246/)
 [![Release](https://img.shields.io/github/v/release/divinae/glance-plasmoid?logo=kde&logoColor=white&color=1d99f3)](https://github.com/divinae/glance-plasmoid/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](#license)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/divinae4535)
