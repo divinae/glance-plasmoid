@@ -132,8 +132,8 @@ Plasma's usual popup instead (Settings > Popup > Style).
 ### Focus and Shift
 
 Both are off until turned on in their settings. They take over from the separate
-[Fokus](https://gitlab.com/divinae/focus-plasmoid) and
-[Shift](https://gitlab.com/divinae/shift-plasmoid) widgets (their settings aren't imported).
+[Fokus](https://github.com/divinae/focus-plasmoid) and
+[Shift](https://github.com/divinae/shift-plasmoid) widgets (their settings aren't imported).
 
 - **Focus:** a pomodoro or flowmodoro timer, a break overlay on every screen, Do Not Disturb
   while you focus, media paused for breaks, sounds and scripts. Locking the screen pauses a
