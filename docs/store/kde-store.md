@@ -80,7 +80,11 @@ With Event Calendar NG (1.21 or later) and "Share events with Glance" on there: 
 
 Requirements: Plasma 6 with plasma-pa and layer-shell-qt; optionally cava for the audio bars, Event Calendar NG for events, plasma-nm, bluedevil and power-profiles-daemon for their controls.
 
-Source, issues and the full README: https://github.com/divinae/glance-plasmoid
+Source and the full README: https://github.com/divinae/glance-plasmoid
+
+Bugs and ideas: https://github.com/divinae/glance-plasmoid/issues
+
+Support: https://ko-fi.com/divinae4535
 ```
 
 **Changelog** (the store's field, for this version)

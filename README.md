@@ -5,6 +5,8 @@ playing, your notifications and today's events, the system's load, a focus timer
 reminders for a standing desk, and who's using your camera, microphone or screen, in a strip
 along the panel and a drawer that slides out of it.
 
+[![Support me on Ko-fi](https://img.shields.io/badge/Ko--fi-support%20Glance-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/divinae4535)
+
 ![The tour: the pills' cards, then the drawer's tabs](docs/screenshots/tour.gif)
 
 | | |
@@ -191,6 +193,12 @@ menu bars. Turn the option off to get in-window menu bars back.
   off in Glance's settings, then restart the app.
 - **No drawer, only Plasma's popup:** install `layer-shell-qt`.
 - **A widget shortcut:** Glance's (Settings > Keyboard Shortcuts) opens and closes the drawer.
+
+## Support
+
+Glance is free and made in spare time. If it's useful to you, you can buy me a coffee on
+[Ko-fi](https://ko-fi.com/divinae4535). Bugs and ideas are just as welcome, in the
+[issues](https://github.com/divinae/glance-plasmoid/issues).
 
 ## License
 
