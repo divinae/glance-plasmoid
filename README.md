@@ -5,10 +5,21 @@ playing, your notifications and today's events, the system's load, a focus timer
 reminders for a standing desk, and who's using your camera, microphone or screen, in a strip
 along the panel and a drawer that slides out of it.
 
+![The tour: the pills' cards, then the drawer's tabs](docs/screenshots/tour.gif)
+
 | | |
 | --- | --- |
-| ![Dashboard](docs/dashboard.png) | ![System](docs/system.png) |
-| The dashboard | The system tab |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Controls](docs/screenshots/controls.png) |
+| The dashboard | The Controls tab |
+| ![Media](docs/screenshots/media.png) | ![Notifications](docs/screenshots/notifications.png) |
+| The Media tab | Notifications |
+| ![Focus and the desk](docs/screenshots/work.png) | ![System](docs/screenshots/system.png) |
+| Focus and the standing desk | The System tab |
+
+| | | |
+| --- | --- | --- |
+| ![Music](docs/screenshots/card-media.png) | ![Meeting](docs/screenshots/card-meeting.png) | ![Unread](docs/screenshots/card-unread.png) |
+| The music pill's card | A meeting on now | Unread notifications |
 
 ## What it does
 
@@ -158,6 +169,10 @@ plasmashell.
 `make package` builds `glance-v<version>.plasmoid` (QML and translations only: the plugin still
 has to be installed with `make install`). `make test` runs the tests, `make lint` the QML linter,
 `make messages` collects the strings to translate into `po/`.
+
+`tools/screenshots.sh` takes the screenshots above with made-up data: a person, a day of
+meetings, a player and its cover, notifications (`GLANCE_DEMO=1`, see the script's header). It
+restarts Plasma, so not in a call.
 
 ## Global menu
 

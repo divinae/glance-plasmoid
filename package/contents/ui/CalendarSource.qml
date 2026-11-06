@@ -136,6 +136,15 @@ Item {
             recompute();
             return;
         }
+        // Screenshots: a made-up day instead of Event Calendar's
+        if (Island.SystemInfo.demo) {
+            const demo = Calendar.demoJson(Date.now());
+            weather = Calendar.weatherFromBus(demo);
+            _events = Calendar.fromBus(demo);
+            origin = "bus";
+            recompute();
+            return;
+        }
         let events = null;
         weather = Island.CalendarBus.connected ? Calendar.weatherFromBus(Island.CalendarBus.eventsJson) : null;
         if (Island.CalendarBus.connected) {

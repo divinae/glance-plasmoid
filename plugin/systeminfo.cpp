@@ -28,7 +28,17 @@ QString SystemInfo::plasmaVersion() const
 
 QString SystemInfo::hostName() const
 {
-    return QSysInfo::machineHostName();
+    return demo() ? QStringLiteral("workstation") : QSysInfo::machineHostName();
+}
+
+bool SystemInfo::demo() const
+{
+    return qEnvironmentVariable("GLANCE_DEMO") == QLatin1String("1");
+}
+
+QString SystemInfo::demoTour() const
+{
+    return demo() ? qEnvironmentVariable("GLANCE_DEMO_TOUR") : QString();
 }
 
 qint64 SystemInfo::uptime() const

@@ -1,3 +1,4 @@
 build/
 *.plasmoid
 package/contents/locale/
+__pycache__/

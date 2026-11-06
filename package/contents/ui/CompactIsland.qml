@@ -21,6 +21,9 @@ import "popouts" as Popouts
 MouseArea {
     id: compact
 
+    // The screenshots' tour: show this pill's card ("" hides them all)
+    signal demoCard(string action)
+
     required property PlasmoidItem island
     required property QtObject cava
     required property Item mediaState
@@ -83,7 +86,10 @@ MouseArea {
     // The pills shown last time: a segment not among them is new and grows in (the model is
     // rebuilt whenever one comes or goes, so every segment is created again)
     property var shownPills: []
-    onPillsChanged: Qt.callLater(() => compact.shownPills = compact.pills.map(p => p.action))
+    onPillsChanged: {
+        syncPillKeys();
+        Qt.callLater(() => compact.shownPills = compact.pills.map(p => p.action));
+    }
     readonly property var pills: {
         const out = [];
         // What's playing (with "As a pill"): the equalizer, a card with the controls on hover;
@@ -155,8 +161,25 @@ MouseArea {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
                 tip: i18n("Do not disturb: %1. Click to turn it off.", notifications.dndText)});
         }
+        // Each its key: its action, and a number for a second of the same (two batteries low)
+        const seen = {};
+        for (const p of out) {
+            seen[p.action] = (seen[p.action] || 0) + 1;
+            p.key = seen[p.action] > 1 ? p.action + ":" + seen[p.action] : p.action;
+        }
         return out;
     }
+    // The pills' keys, for the Repeater: a new list only when pills come or go, so a pill (and its
+    // open card) isn't rebuilt each time what it shows changes (a minute, a battery, the player)
+    property var pillKeys: []
+    readonly property var noPill: ({action: "", key: "", color: "transparent"})
+    function syncPillKeys() {
+        const keys = pills.map(p => p.key);
+        if (keys.join("|") !== pillKeys.join("|")) {
+            pillKeys = keys;
+        }
+    }
+    Component.onCompleted: syncPillKeys()
     // The pills' hover cards (focus/FocusPopout.qml, popouts/), each pill's `card`: shown in its
     // tooltip's window in place of a tooltip, and staying while hovered. A segment builds its
     // card only as it's about to show (see the segment's Loader)
@@ -575,17 +598,20 @@ MouseArea {
                 Row {
                     spacing: compact.pillGap
                     Repeater {
-                        model: compact.pills
+                        model: compact.pillKeys
                         // A segment of the capsule: a light tint of its colour, rounded at the
                         // capsule's two ends; the icons all in the text colour
                         delegate: Rectangle {
                             id: segment
                             required property int index
-                            required property var modelData
+                            // Its key ("media", "info:1"…); its data, current, by key: the delegate (and a card open on it)
+                            // stays when the pills are recomputed
+                            required property string modelData
+                            readonly property var pill: compact.pills.find(p => p.key === modelData) || compact.noPill
                             readonly property bool first: index === 0
                             readonly property bool last: index === compact.pills.length - 1
                             readonly property real end: height / 2
-                            width: compact.segmentLengthOf(modelData)
+                            width: compact.segmentLengthOf(pill)
                             height: compact.pillHeight
                             topLeftRadius: first ? end : 3
                             bottomLeftRadius: first ? end : 3
@@ -593,9 +619,9 @@ MouseArea {
                             bottomRightRadius: last ? end : 3
                             // Under the pointer: a deeper tint
                             readonly property bool hot: pillHover.hovered
-                            readonly property bool clickable: modelData.action !== "privacy" && modelData.action !== "info"
-                            color: modelData.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, hot ? 0.2 : 0.1)
-                                : Qt.alpha(modelData.color, hot ? 0.42 : 0.22)
+                            readonly property bool clickable: pill.action !== "privacy" && pill.action !== "info"
+                            color: pill.action === "dnd" ? Qt.alpha(Kirigami.Theme.textColor, hot ? 0.2 : 0.1)
+                                : Qt.alpha(pill.color, hot ? 0.42 : 0.22)
                             Behavior on color {
                                 ColorAnimation { duration: Kirigami.Units.shortDuration }
                             }
@@ -605,7 +631,7 @@ MouseArea {
                                 id: cardLoader
                                 visible: false
                                 active: false
-                                sourceComponent: segment.modelData.card || null
+                                sourceComponent: segment.pill.card || null
                             }
                             Timer {
                                 id: cardRelease
@@ -616,8 +642,8 @@ MouseArea {
                                 id: pillHover
                                 onHoveredChanged: {
                                     if (hovered) {
-                                        compact.hoveredAction = segment.modelData.action;
-                                    } else if (compact.hoveredAction === segment.modelData.action) {
+                                        compact.hoveredAction = segment.pill.action;
+                                    } else if (compact.hoveredAction === segment.pill.action) {
                                         compact.hoveredAction = "";
                                     }
                                 }
@@ -626,29 +652,29 @@ MouseArea {
                             // in a flow or a break past its end: no fraction to show there, and its
                             // spinning sweep was restless; the stopwatch instead
                             // Music: the small equalizer in the pill, when cava runs
-                            readonly property bool mediaBars: modelData.action === "media" && compact.island.playing
+                            readonly property bool mediaBars: pill.action === "media" && compact.island.playing
                                 && compact.cava.available && compact.cava.running
                             // Paused: the same hairlines at rest, short and even (not the note)
-                            readonly property bool mediaResting: modelData.action === "media" && !mediaBars
-                            readonly property bool focusIndicator: modelData.action === "focus" && !!compact.island.focusTimer
+                            readonly property bool mediaResting: pill.action === "media" && !mediaBars
+                            readonly property bool focusIndicator: pill.action === "focus" && !!compact.island.focusTimer
                                 && compact.island.focusActive && !compact.island.focusTimer.progressIndeterminate
                             // Paused: what's paused (the wedge where it stopped, or the stopwatch
                             // for a flow, which has no fraction), a pause badge on it, one colour
-                            readonly property bool focusPaused: modelData.action === "focus" && !!compact.island.focusTimer
+                            readonly property bool focusPaused: pill.action === "focus" && !!compact.island.focusTimer
                                 && !compact.island.focusActive
                             // Transfers: the same wedge, filling as they go (the plain icon until a
                             // percent is known)
-                            readonly property bool jobsIndicator: modelData.action === "jobs" && compact.notifications.jobsPercent > 0
+                            readonly property bool jobsIndicator: pill.action === "jobs" && compact.notifications.jobsPercent > 0
                             Kirigami.Icon {
                                 id: segmentIcon
                                 opacity: segment.focusIndicator || segment.jobsIndicator || segment.focusPaused
                                     || segment.mediaBars || segment.mediaResting ? 0 : 1
-                                x: segment.modelData.hasText ? 6 : Math.round((parent.width - width) / 2)
+                                x: segment.pill.hasText ? 6 : Math.round((parent.width - width) / 2)
                                 y: Math.round((parent.height - height) / 2)
                                 width: compact.pillIconSize
                                 height: width
-                                source: segment.modelData.action === "mic" && compact.micMuted
-                                    ? "audio-input-microphone-muted-symbolic" : segment.modelData.icon
+                                source: segment.pill.action === "mic" && compact.micMuted
+                                    ? "audio-input-microphone-muted-symbolic" : segment.pill.icon
                                 isMask: true
                                 color: Kirigami.Theme.textColor
                             }
@@ -750,15 +776,15 @@ MouseArea {
                                 }
                             }
                             PlasmaComponents.Label {
-                                visible: !!segment.modelData.hasText
+                                visible: !!segment.pill.hasText
                                 // 6 px either end of the segment, 4 between icon and text
                                 anchors.left: segmentIcon.right
                                 anchors.leftMargin: 4
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: segment.modelData.hasText === "focus" && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText
-                                    : segment.modelData.hasText === "meeting" ? compact.island.meetingCountdown
-                                    : segment.modelData.hasText === "jobs" ? compact.jobsText
-                                    : segment.modelData.hasText === "battery" ? i18nc("a battery's level", "%1%", segment.modelData.percent) : ""
+                                text: segment.pill.hasText === "focus" && compact.island.focusTimer ? compact.island.focusTimer.panelTimeText
+                                    : segment.pill.hasText === "meeting" ? compact.island.meetingCountdown
+                                    : segment.pill.hasText === "jobs" ? compact.jobsText
+                                    : segment.pill.hasText === "battery" ? i18nc("a battery's level", "%1%", segment.pill.percent) : ""
                                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                                 font.features: { "tnum": 1 }
                                 color: Kirigami.Theme.textColor
@@ -780,7 +806,7 @@ MouseArea {
                                 easing.type: Easing.OutBack
                             }
                             Component.onCompleted: {
-                                if (compact.shownPills.indexOf(modelData.action) === -1) {
+                                if (compact.shownPills.indexOf(pill.action) === -1) {
                                     appear = 0.6;
                                     growIn.start();
                                 }
@@ -795,7 +821,7 @@ MouseArea {
                                 // portal's "End" for screen sharing, Plasma's "Mute" for the
                                 // microphone; the camera's only lists who uses it
                                 onClicked: {
-                                    switch (segment.modelData.action) {
+                                    switch (segment.pill.action) {
                                     case "dnd":
                                         compact.notifications.toggleDoNotDisturb();
                                         break;
@@ -841,13 +867,32 @@ MouseArea {
                             // Plasma's own tooltip window, as the tray's: a Controls tooltip is drawn
                             // inside the narrow, rotated panel and came out turned and cut off
                             PlasmaCore.ToolTipArea {
+                                id: pillTip
                                 anchors.fill: parent
+                                // The screenshots' tour (DemoTour.qml) opens a pill's card
+                                Connections {
+                                    target: compact
+                                    function onDemoCard(action) {
+                                        if (segment.pill.action === action) {
+                                            // The card first, so the tooltip opens with it
+                                            if (segment.pill.card) {
+                                                cardRelease.stop();
+                                                cardLoader.active = true;
+                                            }
+                                            pillTip.showToolTip();
+                                        } else if (action === "") {
+                                            // One tooltip window for them all: only "none" hides it,
+                                            // or a pill after the one shown would hide its card
+                                            pillTip.hideImmediately();
+                                        }
+                                    }
+                                }
                                 // A card to act on (stays while hovered) instead of a tooltip, where the
                                 // pill has one; its tip only until the card has loaded
                                 mainItem: cardLoader.item
-                                interactive: !!segment.modelData.card
+                                interactive: !!segment.pill.card
                                 onAboutToShow: {
-                                    if (segment.modelData.card) {
+                                    if (segment.pill.card) {
                                         cardRelease.stop();
                                         cardLoader.active = true;
                                     }
@@ -857,9 +902,9 @@ MouseArea {
                                         cardRelease.restart();
                                     }
                                 }
-                                mainText: segment.modelData.action === "mic" && compact.micMuted
+                                mainText: segment.pill.action === "mic" && compact.micMuted
                                     ? i18n("Microphone muted. Click to unmute it.")
-                                    : (segment.modelData.tip || "")
+                                    : (segment.pill.tip || "")
                                 location: Plasmoid.location
                             }
                         }

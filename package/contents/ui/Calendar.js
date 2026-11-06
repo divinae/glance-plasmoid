@@ -263,3 +263,32 @@ function weatherFromBus(text) {
     };
     return out.temp === null && out.high === null ? null : out;
 }
+
+// A made-up day for screenshots (SystemInfo.demo), in Event Calendar's bus format, around now
+// whatever the hour: a standup done, a review on now, lunch, a 1:1 later, planning tomorrow;
+// and the weather
+function demoJson(nowMs) {
+    const day = new Date(nowMs);
+    day.setHours(0, 0, 0, 0);
+    const at = (h, m, days) => day.getTime() + ((days || 0) * 24 + h) * 3600000 + m * 60000;
+    const minute = 60000;
+    const now = Math.floor(nowMs / (5 * minute)) * 5 * minute;
+    const meet = (code) => "https://meet.example.com/" + code;
+    const ev = (id, summary, start, end, extra) => Object.assign({
+        id: id, summary: summary, start: start, end: end, allDay: false, location: "",
+        color: "#3f8ae0", calendar: "Work", calendarId: "demo", meetingUrl: "", meetingLabel: "",
+        response: "accepted", guests: 0, busy: true, htmlLink: "",
+    }, extra || {});
+    return JSON.stringify({
+        version: 1,
+        savedAt: nowMs,
+        events: [
+            ev("standup", "Team standup", now - 150 * minute, now - 135 * minute, { meetingUrl: meet("standup"), meetingLabel: "Meet", guests: 6 }),
+            ev("review", "Design review", now - 15 * minute, now + 30 * minute, { meetingUrl: meet("review"), meetingLabel: "Meet", guests: 4 }),
+            ev("lunch", "Lunch with Sam", now + 90 * minute, now + 150 * minute, { location: "Corner Café", color: "#2ec27e", calendar: "Personal", guests: 1 }),
+            ev("oneonone", "1:1 with Priya", now + 240 * minute, now + 270 * minute, { meetingUrl: meet("one-on-one"), meetingLabel: "Meet", guests: 1 }),
+            ev("planning", "Sprint planning", at(10, 0, 1), at(11, 0, 1), { meetingUrl: meet("planning"), meetingLabel: "Meet", guests: 8 }),
+        ],
+        weather: { temp: 18, text: "Partly cloudy", iconName: "weather-few-clouds", high: 21, low: 12, place: "Lisbon", units: "metric" },
+    });
+}

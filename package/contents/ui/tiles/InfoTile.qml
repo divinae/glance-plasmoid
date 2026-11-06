@@ -48,7 +48,7 @@ Tile {
 
     // The picture: the user's own (~/.face.icon), the one from the login screen's accounts, or
     // an icon
-    readonly property var faces: [
+    readonly property var faces: Island.SystemInfo.demo ? [] : [
         String(user.faceIconUrl || ""),
         "file:///var/lib/AccountsService/icons/" + user.loginName,
     ].filter(u => u !== "" && u !== "file:")
@@ -124,7 +124,7 @@ Tile {
                 spacing: 0
                 AccentLabel {
                     Layout.fillWidth: true
-                    text: user.fullName || user.loginName
+                    text: Island.SystemInfo.demo ? "Alex Morgan" : (user.fullName || user.loginName)
                     textFormat: Text.PlainText
                     font.weight: Font.Bold
                     elide: Text.ElideRight

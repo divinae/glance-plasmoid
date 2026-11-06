@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+**Fixes.** A pill's card no longer closes while it's open when what the pill shows changes (the
+music's position, a meeting's minutes, a battery): the pills keep their place instead of being
+rebuilt.
+
+**Screenshots** with made-up data, `tools/screenshots.sh`: a demo mode (`GLANCE_DEMO=1`) with a
+made-up person, day and weather, a mock music player, a tour of the tabs and cards. New
+screenshots and a GIF in the README; a logo and the KDE Store's text in `docs/store/`.
+
 ## 1.7.0 — 2026-11-05
 
 **The Controls tab**, what Plasma spreads over several widgets, in one place:

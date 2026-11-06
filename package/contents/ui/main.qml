@@ -108,6 +108,14 @@ PlasmoidItem {
     readonly property QtObject devices: DeviceList {
         peripherals: root.peripherals
     }
+    // Screenshots only (GLANCE_DEMO=1 and GLANCE_DEMO_TOUR): the tabs and cards in turn
+    readonly property var demoTourSteps: Island.SystemInfo.demoTour.split(",").map(s => s.trim()).filter(s => s !== "")
+    Loader {
+        active: root.demoTourSteps.length > 0
+        sourceComponent: DemoTour {
+            island: root
+        }
+    }
     // Wi-Fi, the sound output, the microphone, the power profile (the Controls tab, the card)
     readonly property Item controls: ControlsState {}
     // Do Not Disturb, for the Controls tab
