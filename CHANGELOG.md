@@ -137,7 +137,7 @@ timer you stopped stopped.
 
 ## 1.2.0 — 2026-11-04
 
-Glance and [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar) work
+Glance and [Event Calendar NG](https://github.com/divinae/event-calendar-ng-plasmoid) work
 together: with "Share events with Glance" on in Event Calendar (Calendars), it sends today's
 and tomorrow's events, from every calendar, with meeting links and your response, over D-Bus
 whenever they change. Only widgets in Plasma itself can send them. Without it, Glance reads

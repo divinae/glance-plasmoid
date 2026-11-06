@@ -149,7 +149,7 @@ Both are off until turned on in their settings. They take over from the separate
 
 ### Meetings and events
 
-Events and the weather come from the [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar)
+Events and the weather come from the [Event Calendar NG](https://github.com/divinae/event-calendar-ng-plasmoid)
 widget, 1.21 or later, with "Share events with Glance" on there. They come over D-Bus, with
 meeting links, within seconds of Plasma starting. Before a meeting, its name takes the panel
 text; while it's on, its pill shows the time left.
@@ -183,7 +183,7 @@ optionally `cava` for the audio bars.
 Build: CMake, extra-cmake-modules, Qt 6 (Quick, DBus, Widgets, Concurrent), KF6 WindowSystem and
 Service, libplasma (with PlasmaQuick), libpipewire, gettext.
 
-At run time, for what uses them: [Event Calendar NG](https://github.com/divinae/plasma-applet-eventcalendar)
+At run time, for what uses them: [Event Calendar NG](https://github.com/divinae/event-calendar-ng-plasmoid)
 1.21 or later for events and meetings, `kde-inhibit` (Plasma's) to keep the screen on, and
 `gdbus` (GLib's) for KWin's window menu. The Controls tab uses Plasma's own modules: bluez-qt
 and bluedevil for Bluetooth, plasma-nm for Wi-Fi, power-profiles-daemon for the power profile;
