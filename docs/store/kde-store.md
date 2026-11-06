@@ -28,7 +28,7 @@ version, the changelog and the file for each release.
 
 **Version**
 
-    1.7.0
+    1.7.1
 
 **License**
 
@@ -86,6 +86,9 @@ Source, issues and the full README: https://github.com/divinae/glance-plasmoid
 **Changelog** (the store's field, for this version)
 
 ```
+1.7.1
+A pill's card stays open while what the pill shows changes (the music's position, a meeting's minutes).
+
 1.7.0
 The Controls tab: Wi-Fi, Do Not Disturb, keep awake, the microphone and the power profile; the screens' brightness, the keyboard's light, dark mode and Night Light; where sound goes; Bluetooth with its devices and pairing; the batteries on a USB receiver.
 The dashboard: a Controls card; music only with a player.

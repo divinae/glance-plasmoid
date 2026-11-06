@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.7.1 — 2026-11-06
 
 **Fixes.** A pill's card no longer closes while it's open when what the pill shows changes (the
 music's position, a meeting's minutes, a battery): the pills keep their place instead of being
