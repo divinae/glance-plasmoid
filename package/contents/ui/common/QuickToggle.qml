@@ -71,6 +71,9 @@ Rectangle {
     TapHandler {
         id: toggleTap
         enabled: toggle.enabled
+        // Takes the press for itself: on a clickable dashboard card the card's own tap (open
+        // the tab) would fire too
+        gesturePolicy: TapHandler.WithinBounds
         onTapped: toggle.toggled()
     }
     PlasmaComponents.ToolTip.text: tip
