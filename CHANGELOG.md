@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.8.0 — 2026-11-09
+
+**Light, dark or automatic.** The Display card on the Controls tab has an Appearance row: Light |
+Dark | Automatic across the card, Night Light beside its name. Automatic is Plasma's own "Change
+automatically" (sunrise and sunset), offered where Plasma has it. The dashboard's toggle goes
+Light, Dark, Automatic, its icon saying which.
+
+**Shift: not on weekends.** Settings > Shift > Working hours > "Not on weekends": no reminders,
+no desk moves and no standing time counted on Saturdays and Sundays, with or without the working
+hours. Left alone, it stays as it was: weekends off along with the working hours. On a weekend
+the status says so, and when reminders start again (Monday).
+
+**The tabs** in a new order: Dashboard, Controls, Notifications, Media, Shelf, System, and Work
+(Focus and Shift) last.
+
+**Bluetooth.** Connecting and disconnecting show a spinner, and the card no longer shrinks while
+a device connects.
+
+**Fixes.** A toggle on the dashboard's Controls card no longer opens the Controls tab as well.
+
 ## 1.7.1 — 2026-11-06
 
 **Fixes.** A pill's card no longer closes while it's open when what the pill shows changes (the

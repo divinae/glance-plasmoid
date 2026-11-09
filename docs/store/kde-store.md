@@ -30,7 +30,7 @@ version, the changelog and the file for each release.
 
 **Version**
 
-    1.7.1
+    1.8.0
 
 **License**
 
@@ -103,6 +103,16 @@ Support: https://ko-fi.com/divinae4535
 **Changelog** (the store's field, for this version)
 
 ```
+1.8.0
+
+Light, dark or automatic (Plasma's own switching at sunrise and sunset), on the Controls tab and the dashboard.
+
+Shift: "Not on weekends", with or without the working hours.
+
+The tabs in a new order: Controls and Notifications next to the dashboard, Focus and Shift last.
+
+Bluetooth shows a spinner while connecting and disconnecting. A dashboard toggle no longer opens the Controls tab.
+
 1.7.1
 
 A pill's card stays open while what the pill shows changes (the music's position, a meeting's minutes).
