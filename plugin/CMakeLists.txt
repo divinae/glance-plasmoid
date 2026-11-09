@@ -12,6 +12,8 @@ find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED
 )
 find_package(KF6WindowSystem ${KF6_MIN_VERSION} REQUIRED)
 find_package(KF6Service ${KF6_MIN_VERSION} REQUIRED)
+find_package(KF6Config ${KF6_MIN_VERSION} REQUIRED)
+find_package(KF6CoreAddons ${KF6_MIN_VERSION} REQUIRED)
 find_package(Plasma REQUIRED)
 find_package(PlasmaQuick REQUIRED)
 find_package(PkgConfig REQUIRED)
@@ -63,6 +65,8 @@ target_sources(glanceplugin PRIVATE
     trayactions.h
     shelfhelper.cpp
     shelfhelper.h
+    thememode.cpp
+    thememode.h
 )
 
 target_link_libraries(glanceplugin PRIVATE
@@ -75,6 +79,8 @@ target_link_libraries(glanceplugin PRIVATE
     Qt::Concurrent
     KF6::WindowSystem
     KF6::Service
+    KF6::ConfigCore
+    KF6::CoreAddons
     Plasma::Plasma
     Plasma::PlasmaQuick
     PkgConfig::PipeWire

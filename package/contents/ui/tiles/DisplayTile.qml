@@ -33,7 +33,9 @@ Tile {
         isSilent: false
     }
     // Plasma's own, one each (singletons)
-    readonly property QtObject darkMode: Brightness.DarkModeControl
+    ColorMode {
+        id: colorMode
+    }
     readonly property QtObject nightLight: Brightness.NightLightInhibitor
 
     // A slider row: an icon, a name, the slider, the percent
@@ -123,21 +125,55 @@ Tile {
             maximum: keyboard.brightnessMax
             onMoved: value => keyboard.brightness = Math.round(value)
         }
-        // Dark mode, and Night Light held off for now (as Plasma's widget has them), named
+        // Appearance: light, dark, or switching by itself at sunrise and sunset. Its name on one
+        // line with Night Light (held off for now, as Plasma's widget has it) at the end, then the
+        // three choices across the card's width: side by side they squeezed the name.
         RowLayout {
+            Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.smallSpacing
-            PillButton {
-                checked: tile.darkMode.darkMode
-                text: i18n("Dark mode")
-                icon.name: "weather-clear-night-symbolic"
-                onClicked: tile.darkMode.darkMode = !tile.darkMode.darkMode
+            spacing: Kirigami.Units.largeSpacing
+            Kirigami.Icon {
+                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                source: colorMode.iconName
+                isMask: true
+                color: Kirigami.Theme.textColor
+                opacity: 0.8
+            }
+            PlasmaComponents.Label {
+                text: i18n("Appearance")
+            }
+            // Automatic: which of the two is on now
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: colorMode.mode !== "auto" ? ""
+                    : colorMode.dark ? i18nc("appearance, automatic", "dark now") : i18nc("appearance, automatic", "light now")
+                font: Kirigami.Theme.smallFont
+                opacity: 0.6
+                elide: Text.ElideRight
             }
             PillButton {
                 checked: tile.nightLight.inhibited
                 text: tile.nightLight.inhibited ? i18n("Night Light off") : i18n("Night Light")
                 icon.name: tile.nightLight.inhibited ? "redshift-status-off-symbolic" : "redshift-status-on-symbolic"
                 onClicked: tile.nightLight.toggleInhibition()
+            }
+        }
+        SegmentedControl {
+            Layout.fillWidth: true
+            Repeater {
+                model: colorMode.modes
+                delegate: PillButton {
+                    required property string modelData
+                    // Equal thirds of the card
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    bare: true
+                    checked: colorMode.mode === modelData
+                    text: colorMode.label(modelData)
+                    icon.name: colorMode.iconFor(modelData)
+                    onClicked: colorMode.set(modelData)
+                }
             }
         }
     }

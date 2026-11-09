@@ -81,7 +81,7 @@ Media: the cover in the spectrum's rays, the controls in a colour from the cover
 
 Notifications: the history grouped by app, with actions, replies and file transfers; Do Not Disturb for an hour, until tomorrow…
 
-Controls: Wi-Fi, Do Not Disturb, keep awake, the microphone, the power profile; each screen's brightness, the keyboard's light, dark mode and Night Light; where sound goes; Bluetooth with its devices and pairing; the batteries of mice and keyboards on a USB receiver.
+Controls: Wi-Fi, Do Not Disturb, keep awake, the microphone, the power profile; each screen's brightness, the keyboard's light, the appearance (light, dark or automatic) and Night Light; where sound goes; Bluetooth with its devices and pairing; the batteries of mice and keyboards on a USB receiver.
 
 Work: a pomodoro or flowmodoro timer with a break overlay, and sit/stand reminders for a motorized standing desk (idasen or any command line tool). Breaks wait for the end of a meeting.
 

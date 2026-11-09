@@ -35,7 +35,9 @@ Tile {
         id: screens
         isSilent: false
     }
-    readonly property QtObject darkMode: Brightness.DarkModeControl
+    ColorMode {
+        id: colorMode
+    }
     readonly property QtObject nightLight: Brightness.NightLightInhibitor
     Instantiator {
         id: firstScreen
@@ -87,10 +89,12 @@ Tile {
                 onToggled: tile.island.toggleDoNotDisturb()
             }
             QuickToggle {
-                on: tile.darkMode.darkMode
-                iconName: "weather-clear-night-symbolic"
-                tip: on ? i18n("Light mode") : i18n("Dark mode")
-                onToggled: tile.darkMode.darkMode = !tile.darkMode.darkMode
+                // Lit while dark; the icon says light, dark or automatic. A click goes on to the next.
+                on: colorMode.dark
+                iconName: colorMode.iconName
+                tip: i18n("Appearance: %1 (click for %2)", colorMode.label(colorMode.mode),
+                          colorMode.label(colorMode.next))
+                onToggled: colorMode.cycle()
             }
             QuickToggle {
                 // On while Night Light works, off while it's held off
