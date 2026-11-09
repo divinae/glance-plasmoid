@@ -42,6 +42,17 @@ GridLayout {
     component DeviceCard: Rectangle {
         id: card
         required property var modelData
+        // Letting it go: the card stays until BlueZ is done, a spinner in the button's place
+        property bool working: false
+        function disconnect() {
+            card.working = true;
+            const call = card.modelData.device.disconnectFromDevice();
+            if (call) {
+                call.finished.connect(() => card.working = false);
+            } else {
+                card.working = false;
+            }
+        }
         readonly property bool low: modelData.percent >= 0 && modelData.percent <= tab.island.peripherals.lowAt
             && !modelData.charging
         readonly property color ringColor: low ? Kirigami.Theme.negativeTextColor
@@ -103,25 +114,42 @@ GridLayout {
                 }
                 PlasmaComponents.Label {
                     Layout.fillWidth: true
-                    text: card.modelData.percent < 0 ? i18n("Connected")
+                    text: card.working ? i18n("Disconnecting…")
+                        : card.modelData.percent < 0 ? i18n("Connected")
                         : card.modelData.charging ? i18nc("a battery charging, its level", "Charging · %1%", card.modelData.percent)
                         : i18nc("a battery's level", "%1%", card.modelData.percent)
                     font: Kirigami.Theme.smallFont
-                    color: card.low ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
-                    opacity: card.low ? 1 : 0.65
+                    color: card.low && !card.working ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
+                    opacity: card.low && !card.working ? 1 : 0.65
                     elide: Text.ElideRight
                 }
             }
-            PillButton {
+            // Disconnect (on hover), and a spinner in its place, the same size, while it works
+            Item {
                 visible: !!card.modelData.device
-                opacity: cardHover.hovered ? 1 : 0
-                bare: true
-                display: PlasmaComponents.AbstractButton.IconOnly
-                text: i18n("Disconnect")
-                icon.name: "network-disconnect-symbolic"
-                onClicked: card.modelData.device.disconnectFromDevice()
-                Behavior on opacity {
-                    NumberAnimation { duration: Kirigami.Units.shortDuration }
+                implicitWidth: disconnectButton.implicitWidth
+                implicitHeight: disconnectButton.implicitHeight
+                PillButton {
+                    id: disconnectButton
+                    anchors.centerIn: parent
+                    visible: !card.working
+                    opacity: cardHover.hovered ? 1 : 0
+                    bare: true
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Disconnect")
+                    icon.name: "network-disconnect-symbolic"
+                    onClicked: card.disconnect()
+                    Behavior on opacity {
+                        NumberAnimation { duration: Kirigami.Units.shortDuration }
+                    }
+                }
+                PlasmaComponents.BusyIndicator {
+                    anchors.centerIn: parent
+                    width: Kirigami.Units.iconSizes.small
+                    height: width
+                    padding: 0
+                    visible: card.working
+                    running: card.working
                 }
             }
         }
@@ -305,23 +333,46 @@ GridLayout {
                                 elide: Text.ElideRight
                                 opacity: 0.8
                             }
-                            PlasmaComponents.Label {
-                                visible: other.working
-                                text: i18n("Connecting…")
-                                font: Kirigami.Theme.smallFont
-                                opacity: 0.6
-                            }
                             // Connect, a button proper on the row under the pointer (the row's click
-                            // does the same)
-                            PillButton {
-                                visible: !other.working
-                                opacity: otherHover.hovered ? 1 : 0
-                                highlighted: true
-                                text: i18n("Connect")
-                                icon.name: "network-connect-symbolic"
-                                onClicked: other.connect()
-                                Behavior on opacity {
-                                    NumberAnimation { duration: Kirigami.Units.shortDuration }
+                            // does the same), and "Connecting…" in its place while it works. One
+                            // slot the button's size either way: the label alone is shorter, and
+                            // swapping them made the row, and the whole card, jump.
+                            Item {
+                                implicitWidth: Math.max(connectButton.implicitWidth, connectingLabel.implicitWidth)
+                                implicitHeight: Math.max(connectButton.implicitHeight, connectingLabel.implicitHeight)
+                                PillButton {
+                                    id: connectButton
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: !other.working
+                                    opacity: otherHover.hovered ? 1 : 0
+                                    highlighted: true
+                                    text: i18n("Connect")
+                                    icon.name: "network-connect-symbolic"
+                                    onClicked: other.connect()
+                                    Behavior on opacity {
+                                        NumberAnimation { duration: Kirigami.Units.shortDuration }
+                                    }
+                                }
+                                // A spinner beside the words, the text's own height so the row
+                                // keeps its size; running only while shown
+                                RowLayout {
+                                    id: connectingLabel
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: other.working
+                                    spacing: Kirigami.Units.smallSpacing
+                                    PlasmaComponents.BusyIndicator {
+                                        Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                        Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                        padding: 0
+                                        running: other.working
+                                    }
+                                    PlasmaComponents.Label {
+                                        text: i18n("Connecting…")
+                                        font: Kirigami.Theme.smallFont
+                                        opacity: 0.6
+                                    }
                                 }
                             }
                         }
