@@ -5,6 +5,7 @@ import org.kde.kcmutils as KCMUtils
 import org.kde.kirigamiaddons.formcard as FormCard
 import "common"
 import "stand/lib/desk.js" as DeskLogic
+import "stand/lib/cycle.js" as Cycle
 import org.kde.kirigami as Kirigami
 
 // Stand: the sit/stand cycle, and the motorized desk under it, on one page
@@ -23,6 +24,10 @@ KCMUtils.SimpleKCM {
     property alias cfg_stand_work_hours_enabled: work_hours_enabled.checked
     property alias cfg_stand_work_start_minutes: work_start_minutes.value
     property alias cfg_stand_work_end_minutes: work_end_minutes.value
+    // Weekends: 0 never set, 1 off, 2 on (cycle.js weekendsOff). While unset, the switch shows
+    // what applies: off along with the working hours, as before it existed.
+    property int cfg_stand_weekends
+    property bool cfg_stand_work_weekdays_only
 
     function clockText(minutes) {
         return Qt.formatTime(new Date(2000, 0, 1, Math.floor(minutes / 60), minutes % 60), Locale.ShortFormat);
@@ -256,6 +261,15 @@ KCMUtils.SimpleKCM {
 
             FormCard.FormDelegateSeparator {}
 
+            FormCard.FormSwitchDelegate {
+                id: work_weekdays_only
+
+                checked: Cycle.weekendsOff(root.cfg_stand_weekends, work_hours_enabled.checked,
+                                           root.cfg_stand_work_weekdays_only)
+                onToggled: root.cfg_stand_weekends = checked ? Cycle.WEEKENDS_OFF : Cycle.WEEKENDS_ON
+                text: i18n("Not on weekends")
+                description: i18n("Saturdays and Sundays the cycle stops and standing time is not counted, with or without working hours.")
+            }
         }
 
 

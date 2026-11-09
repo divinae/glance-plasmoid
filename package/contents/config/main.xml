@@ -386,8 +386,17 @@
             <default>1020</default>
         </entry>
 
+        <!-- From before the "Not on weekends" switch: weekends off along with the working hours.
+             Read only while stand_weekends is unset. -->
         <entry name="stand_work_weekdays_only" type="Bool">
             <default>true</default>
+        </entry>
+
+        <!-- Weekends: 0 never set (as before: off along with the working hours), 1 off, 2 on -->
+        <entry name="stand_weekends" type="Int">
+            <min>0</min>
+            <max>2</max>
+            <default>0</default>
         </entry>
 
         <entry name="stand_cycle_state" type="String">

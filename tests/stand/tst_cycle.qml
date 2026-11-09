@@ -216,6 +216,9 @@ TestCase {
             { tag: "at the end", cfg: day, date: new Date(2026, 9, 19, 17, 0), expected: false },
             { tag: "before", cfg: day, date: new Date(2026, 9, 19, 8, 59), expected: false },
             { tag: "weekend", cfg: day, date: new Date(2026, 9, 24, 12, 0), expected: false },
+            { tag: "weekend, no hours", cfg: { enabled: false, weekdaysOnly: true }, date: new Date(2026, 9, 24, 12, 0), expected: false },
+            { tag: "weekday, no hours", cfg: { enabled: false, weekdaysOnly: true }, date: new Date(2026, 9, 19, 3, 0), expected: true },
+            { tag: "weekend allowed", cfg: { enabled: false, weekdaysOnly: false }, date: new Date(2026, 9, 25, 12, 0), expected: true },
             { tag: "across midnight, late", cfg: night, date: new Date(2026, 9, 19, 23, 0), expected: true },
             { tag: "across midnight, early", cfg: night, date: new Date(2026, 9, 20, 5, 0), expected: true },
             { tag: "across midnight, day", cfg: night, date: new Date(2026, 9, 20, 12, 0), expected: false }
@@ -224,6 +227,28 @@ TestCase {
 
     function test_inWorkHours(data) {
         compare(Cycle.inWorkHours(data.date, data.cfg), data.expected);
+    }
+
+    function test_offReason() {
+        var cfg = { enabled: true, startMinutes: 9 * 60, endMinutes: 17 * 60, weekdaysOnly: true };
+        compare(Cycle.offReason(new Date(2026, 9, 24, 12, 0), cfg), "weekend");
+        compare(Cycle.offReason(new Date(2026, 9, 19, 20, 0), cfg), "hours");
+        compare(Cycle.offReason(new Date(2026, 9, 19, 12, 0), cfg), "");
+    }
+
+    function test_weekendsOff_data() {
+        return [
+            { tag: "unset, no hours", mode: 0, hours: false, legacy: true, expected: false },
+            { tag: "unset, hours on", mode: 0, hours: true, legacy: true, expected: true },
+            { tag: "unset, hours on, legacy off", mode: 0, hours: true, legacy: false, expected: false },
+            { tag: "unset, legacy never read", mode: 0, hours: true, legacy: undefined, expected: true },
+            { tag: "off", mode: 1, hours: false, legacy: false, expected: true },
+            { tag: "on", mode: 2, hours: true, legacy: true, expected: false }
+        ];
+    }
+
+    function test_weekendsOff(data) {
+        compare(Cycle.weekendsOff(data.mode, data.hours, data.legacy), data.expected);
     }
 
     function test_lastDays() {

@@ -18,9 +18,12 @@ Item {
         enabled: settings.stand_work_hours_enabled,
         startMinutes: settings.stand_work_start_minutes,
         endMinutes: settings.stand_work_end_minutes,
-        weekdaysOnly: settings.stand_work_weekdays_only
+        weekdaysOnly: Cycle.weekendsOff(settings.stand_weekends, settings.stand_work_hours_enabled,
+                                        settings.stand_work_weekdays_only)
     })
-    readonly property bool offHours: !Cycle.inWorkHours(new Date(nowMs), workHours)
+    // "weekend", "hours", or "" inside the working hours
+    readonly property string offReason: Cycle.offReason(new Date(nowMs), workHours)
+    readonly property bool offHours: offReason !== ""
     readonly property var cfg: ({
         sitMinutes: settings.stand_sit_minutes,
         standMinutes: settings.stand_stand_minutes,
@@ -114,7 +117,7 @@ Item {
         case "paused":
             return i18n("Paused");
         case "off":
-            return i18n("Outside working hours");
+            return offReason === "weekend" ? i18n("Weekend") : i18n("Outside working hours");
         case "due":
         case "snoozed":
             return cycle.position === "stand" ? i18n("Time to sit down") : i18n("Time to stand up");
@@ -134,6 +137,10 @@ Item {
             return cycle.pausedUntilMs === Cycle.UNTIL_RESUMED
                 ? i18n("Until you resume")
                 : i18n("Until %1", Qt.formatTime(new Date(cycle.pausedUntilMs), Locale.ShortFormat));
+        if (status === "off" && offReason === "weekend")
+            return workHours.enabled
+                ? i18n("Reminders start again on Monday at %1", formatClock(workHours.startMinutes))
+                : i18n("Reminders start again on Monday");
         if (status === "off")
             return i18n("Reminders start again at %1", formatClock(workHours.startMinutes));
         if (status === "snoozed")

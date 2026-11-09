@@ -173,15 +173,43 @@ function status(state, nowMs, ctx) {
     return "due";
 }
 
-// Whether `date` falls in the working hours. cfg is
+// Saturday or Sunday.
+function isWeekend(date) {
+    var day = date.getDay();
+    return day === 0 || day === 6;
+}
+
+// Weekends off, from the stand_weekends setting: 1 off, 2 on, 0 never set - then as before
+// that switch existed, off only along with the working hours (and their own
+// stand_work_weekdays_only, true unless changed in an older version).
+var WEEKENDS_UNSET = 0;
+var WEEKENDS_OFF = 1;
+var WEEKENDS_ON = 2;
+function weekendsOff(mode, workHoursEnabled, legacyWeekdaysOnly) {
+    if (mode === WEEKENDS_OFF)
+        return true;
+    if (mode === WEEKENDS_ON)
+        return false;
+    return !!workHoursEnabled && legacyWeekdaysOnly !== false;
+}
+
+// Why `date` is outside the working hours: "weekend", "hours", or "" when it is inside. cfg is
 // { enabled, startMinutes, endMinutes, weekdaysOnly }, minutes counted from midnight.
+// weekdaysOnly takes the weekend off whether or not the hours are on.
 // An end before the start is a window across midnight.
+function offReason(date, cfg) {
+    if (cfg.weekdaysOnly && isWeekend(date))
+        return "weekend";
+    return inHours(date, cfg) ? "" : "hours";
+}
+
 function inWorkHours(date, cfg) {
+    return offReason(date, cfg) === "";
+}
+
+function inHours(date, cfg) {
     if (!cfg.enabled)
         return true;
-    var day = date.getDay();
-    if (cfg.weekdaysOnly && (day === 0 || day === 6))
-        return false;
     var m = date.getHours() * 60 + date.getMinutes();
     if (cfg.startMinutes <= cfg.endMinutes)
         return m >= cfg.startMinutes && m < cfg.endMinutes;

@@ -127,8 +127,10 @@ All via the `Makefile` (wraps CMake; `PREFIX ?= ~/.local`, `BUILD_DIR ?= build`)
   `focus_*`/`stand_*`, shared helpers deduplicated into `ui/common/` (`0de60d1`). No sync
   mechanism; copies have diverged (Glance's `focus/lib/timer.js` has `savedThisBoot`;
   `stand/Desk.qml` differs only in its import). Byte-identical with the standalone repos (as of
-  `fb907ba`): `focus/lib/tasks.js`, `stand/lib/{cycle,desk}.js`, `stand/WeekChart.qml`, `focus/TaskListView.qml`, the break overlay layers,
-  `common/ProgressCircle.qml`, `common/Sfx.qml` (= Fokus), `common/ExecUtil.qml` (= Shift). Each repo
+  `fb907ba`): `focus/lib/tasks.js`, `stand/lib/desk.js`, `stand/WeekChart.qml`, `focus/TaskListView.qml`, the break overlay layers,
+  `common/ProgressCircle.qml`, `common/Sfx.qml` (= Fokus), `common/ExecUtil.qml` (= Shift).
+  `stand/lib/cycle.js` was too until 1.8.0, which added `offReason` and `weekendsOff` (Shift's
+  "Not on weekends"); Shift's own copy hasn't got them. Each repo
   is the source of truth for its own copy; port fixes by hand. Glance doesn't import their settings.
 - `../eventcalendar-plasmoid` (Event Calendar NG): publishes events and weather to Glance over D-Bus
   (`ui/GlancePublisher.qml`/`.js` there, `plugin/calendarbus.*` here). Change both sides together.
