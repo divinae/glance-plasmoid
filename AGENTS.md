@@ -2,8 +2,8 @@
 
 Glance is a KDE Plasma 6 panel widget for a vertical panel: a strip showing one thing at a time
 (window title, track, meeting, notice), status pills with hover cards, and a layer-shell drawer
-that slides out with tabs (Dashboard, Media, Notifications, Controls, Shelf, Work = Focus + Shift,
-System) and the active window's global menu with search. Plugin Id `com.dv.glance` (was
+that slides out with tabs (Dashboard, Controls, Notifications, Media, Shelf, System, Work =
+Focus + Shift) and the active window's global menu with search. Plugin Id `com.dv.glance` (was
 `com.dv.island` before 1.0.0), GPL-2.0-or-later, author Jakub Lipiński (GitHub `divinae`).
 Published on GitHub (`divinae/glance-plasmoid`, releases from `vX.Y.Z` tags) and the KDE Store
 (https://store.kde.org/p/2381246/). Push to `origin` (git@github.com:divinae/glance-plasmoid.git);

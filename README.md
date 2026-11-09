@@ -28,7 +28,8 @@ in its menu bar, and a drawer that slides out of it.
   the time left while it's on, Join in one click, the screen kept awake, no focus break in the
   middle of a call.
 - 🎛️ **Controls in one place.** Wi-Fi, Bluetooth and its devices, Do Not Disturb, keep awake, the
-  microphone, the power profile, brightness, dark mode, Night Light and where sound goes.
+  microphone, the power profile, brightness, light, dark or automatic, Night Light and where
+  sound goes.
 - 🍅 **Focus and a standing desk.** A pomodoro or flowmodoro timer with a break overlay, and
   sit/stand reminders that can move a motorized desk (idasen or any command line tool).
 - 🔒 **No servers, no tracking.** Glance talks to Plasma and to your apps over D-Bus; the only
@@ -117,18 +118,19 @@ Plasma's usual popup instead (Settings > Popup > Style).
   playing, over its blurred cover (with a player); who you are and what you run; your
   notifications; quick controls (Bluetooth, Wi-Fi, Do Not Disturb, dark mode, Night Light, the
   microphone, the brightness, the batteries); focus and posture; the shelf.
+- **Controls:** Wi-Fi, Do Not Disturb, keep awake, the microphone and the power profile; each
+  screen's brightness, the keyboard's light, the appearance (light, dark or automatic) and Night
+  Light; where sound goes; Bluetooth with its devices and Pair; the batteries of devices on a USB
+  receiver.
+- **Notifications:** the history grouped by app, with actions, replies, thumbnails and file
+  transfers; Do Not Disturb for an hour, four hours, until tomorrow…
 - **Media:** the cover inside the spectrum's rays and blurred behind it all, the controls in a
   colour from the cover, the seek bar (scroll for 5 s, tap the length for the time left), the
   volume (scroll on the cover), shuffle, repeat, and the player when there's more than one.
-- **Notifications:** the history grouped by app, with actions, replies, thumbnails and file
-  transfers; Do Not Disturb for an hour, four hours, until tomorrow…
-- **Controls:** Wi-Fi, Do Not Disturb, keep awake, the microphone and the power profile; each
-  screen's brightness, the keyboard's light, dark mode and Night Light; where sound goes;
-  Bluetooth with its devices and Pair; the batteries of devices on a USB receiver.
 - **Shelf:** drop files to keep them at hand, drag them out into any app.
+- **System:** processor, graphics, memory, disk and network.
 - **Work** (Focus and Shift together, or each alone): the timer and its stats, where you are
   and what's next, today against your goal, the week, the desk.
-- **System:** processor, graphics, memory, disk and network.
 
 ### Focus and Shift
 

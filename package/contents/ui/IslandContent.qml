@@ -53,15 +53,24 @@ Item {
         const t = [];
         // The dashboard always; the window's menus and buttons are in the strip on top
         t.push({key: "dashboard", label: i18n("Dashboard"), icon: "view-grid"});
-        if (island.cfg.showMedia && (island.hasPlayer || island.playerCount > 1)) {
-            t.push({key: "media", label: i18n("Media"), icon: "media-playback-start"});
+        // Controls second, the one reached for most after the dashboard: the screens' brightness,
+        // light and dark, Night Light, the devices (batteries, Bluetooth)
+        if (island.cfg.showDevices) {
+            t.push({key: "devices", label: i18n("Controls"), icon: "adjustlevels-symbolic"});
         }
         if (island.cfg.showNotifications) {
             t.push({key: "notifications", label: i18n("Notifications"), icon: "notifications"});
         }
+        if (island.cfg.showMedia && (island.hasPlayer || island.playerCount > 1)) {
+            t.push({key: "media", label: i18n("Media"), icon: "media-playback-start"});
+        }
         if (island.cfg.showShelf) {
             t.push({key: "shelf", label: i18n("Shelf"), icon: "folder-download"});
         }
+        if (island.cfg.showSystem) {
+            t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
+        }
+        // Focus and Shift last: reached from their own pill in the panel more than from here
         if (content.workTab) {
             // Focus and Shift together, in one tab
             t.push({key: "work", label: i18n("Work"), icon: "chronometer"});
@@ -71,14 +80,6 @@ Item {
             // The posture you're in, sitting or standing
             t.push({key: "stand", label: island.stand.cycle.position === "stand" ? i18n("Standing") : i18n("Sitting"),
                 icon: Qt.resolvedUrl(island.stand.cycle.position === "stand" ? "stand/icons/person-stand.svg" : "stand/icons/person-sit.svg")});
-        }
-        // Controls: the screens' brightness, dark mode, Night Light, the devices (batteries,
-        // Bluetooth)
-        if (island.cfg.showDevices) {
-            t.push({key: "devices", label: i18n("Controls"), icon: "adjustlevels-symbolic"});
-        }
-        if (island.cfg.showSystem) {
-            t.push({key: "system", label: i18n("System"), icon: "view-statistics"});
         }
         return t;
     }
