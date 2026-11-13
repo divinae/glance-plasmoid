@@ -188,6 +188,20 @@ TestCase {
         compare(Cycle.status(s, 1000 * min), "sit");
     }
 
+    function test_pauseForToday() {
+        var now = new Date(2026, 10, 13, 15, 30).getTime();
+        var s = Cycle.pauseForToday(Cycle.fresh("sit"), now);
+        compare(s.pausedUntilMs, new Date(2026, 10, 14, 0, 0).getTime());
+        compare(Cycle.status(s, new Date(2026, 10, 13, 23, 59).getTime()), "paused");
+        verify(Cycle.pausedForToday(s, now));
+        // Over at midnight, and no longer "for today" after it.
+        compare(Cycle.status(s, new Date(2026, 10, 14, 0, 0).getTime()), "sit");
+        verify(!Cycle.pausedForToday(Cycle.pause(Cycle.fresh("sit"), now, 30), now));
+        // Kept across a Plasma restart the same evening.
+        var r = Cycle.restore(Cycle.serialize(s, now), now + 60 * min);
+        compare(Cycle.status(r, now + 60 * min), "paused");
+    }
+
     function test_pauseSurvivesMoveAndRestore() {
         var s = Cycle.pause(Cycle.fresh("sit"), 0, 0);
         s = Cycle.moveTo(s, "stand");

@@ -103,6 +103,24 @@ function pause(state, nowMs, minutes) {
     return next;
 }
 
+// Local midnight after `nowMs`: when a pause for the rest of the day ends.
+function nextMidnight(nowMs) {
+    var d = new Date(nowMs);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+}
+
+// Paused for the rest of the day: until the next midnight, then the cycle carries on.
+function pauseForToday(state, nowMs) {
+    var next = copy(state);
+    next.pausedUntilMs = nextMidnight(nowMs);
+    return next;
+}
+
+// Whether a pause runs to the end of the day (for the text: "for the rest of today").
+function pausedForToday(state, nowMs) {
+    return state.pausedUntilMs > 0 && state.pausedUntilMs === nextMidnight(nowMs);
+}
+
 function resume(state) {
     var next = copy(state);
     next.pausedUntilMs = 0;

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+**Shift: pause for the rest of today.** Pause… > "For the rest of today": no reminders and no
+desk moves until midnight, then Shift carries on by itself the next day.
+
 ## 1.8.0 — 2026-11-09
 
 **Light, dark or automatic.** The Display card on the Controls tab has an Appearance row: Light |

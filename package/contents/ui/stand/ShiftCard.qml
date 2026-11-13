@@ -204,6 +204,10 @@ Tile {
                         onTriggered: card.root.pause(120)
                     }
                     PlasmaComponents.MenuItem {
+                        text: i18n("For the rest of today")
+                        onTriggered: card.root.pauseForToday()
+                    }
+                    PlasmaComponents.MenuItem {
                         text: i18n("Until I resume")
                         onTriggered: card.root.pause(0)
                     }

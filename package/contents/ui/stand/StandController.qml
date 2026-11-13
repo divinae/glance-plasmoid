@@ -136,6 +136,7 @@ Item {
         if (status === "paused")
             return cycle.pausedUntilMs === Cycle.UNTIL_RESUMED
                 ? i18n("Until you resume")
+                : Cycle.pausedForToday(cycle, nowMs) ? i18n("For the rest of today")
                 : i18n("Until %1", Qt.formatTime(new Date(cycle.pausedUntilMs), Locale.ShortFormat));
         if (status === "off" && offReason === "weekend")
             return workHours.enabled
@@ -240,6 +241,12 @@ Item {
     // minutes <= 0 pauses until resume().
     function pause(minutes) {
         cycle = Cycle.pause(cycle, Date.now(), minutes);
+        saveCycle();
+    }
+
+    // Until midnight: done standing for today, back tomorrow on its own.
+    function pauseForToday() {
+        cycle = Cycle.pauseForToday(cycle, Date.now());
         saveCycle();
     }
 

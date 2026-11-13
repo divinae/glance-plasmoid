@@ -189,6 +189,11 @@ GridLayout {
                             }
 
                             PlasmaComponents.MenuItem {
+                                text: i18n("For the rest of today")
+                                onTriggered: root.pauseForToday()
+                            }
+
+                            PlasmaComponents.MenuItem {
                                 text: i18n("Until I resume")
                                 onTriggered: root.pause(0)
                             }
