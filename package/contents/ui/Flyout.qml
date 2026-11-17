@@ -24,15 +24,16 @@ Item {
     required property Item calendar
     required property Item monitor
 
-    // fixed size, so the popup never jumps between tabs
-    readonly property real fixedHeight: Kirigami.Units.gridUnit * island.cfg.popupHeight
+    // A preferred size that doesn't follow the content, so the popup never jumps between tabs; the
+    // limits are wide, so its edges can be dragged (Plasma remembers the size the user gives it)
+    readonly property real startHeight: Kirigami.Units.gridUnit * island.cfg.popupHeight
 
-    Layout.minimumWidth: Kirigami.Units.gridUnit * 22
+    Layout.minimumWidth: Kirigami.Units.gridUnit * 16
     Layout.preferredWidth: Kirigami.Units.gridUnit * 26
-    Layout.maximumWidth: Kirigami.Units.gridUnit * 40
-    Layout.minimumHeight: fixedHeight
-    Layout.preferredHeight: fixedHeight
-    Layout.maximumHeight: fixedHeight
+    Layout.maximumWidth: Kirigami.Units.gridUnit * 100
+    Layout.minimumHeight: Kirigami.Units.gridUnit * 12
+    Layout.preferredHeight: startHeight
+    Layout.maximumHeight: Kirigami.Units.gridUnit * 80
 
     HoverHandler {
         onHoveredChanged: flyout.island.flyoutHovered = hovered
