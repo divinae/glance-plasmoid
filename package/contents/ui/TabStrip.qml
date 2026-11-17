@@ -62,7 +62,7 @@ Item {
     Timer {
         id: dwell
         property string key
-        interval: 150
+        interval: 350   // hover dwell: long enough that passing over the tabs doesn't switch them
         onTriggered: strip.activated(key)
     }
 

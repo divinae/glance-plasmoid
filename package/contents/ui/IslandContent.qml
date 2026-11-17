@@ -207,7 +207,7 @@ Item {
     Timer {
         id: hoverSwitch
         property string target
-        interval: 150
+        interval: 350   // the same dwell as TabStrip's
         onTriggered: content.currentKey = target
     }
 
