@@ -5,8 +5,8 @@
 **Shift: pause for the rest of today.** Pause… > "For the rest of today": no reminders and no
 desk moves until midnight, then Shift carries on by itself the next day.
 
-**Where sound goes, in the panel.** A pill while sound is on headphones (wired or Bluetooth, with
-their battery when they report it); hover it for the outputs, a click switches. Settings > General
+**Where sound goes, in the panel.** A pill while sound is on headphones (wired or Bluetooth), just
+the icon; hover it for the outputs (a click switches) and the headphones' battery. Settings > General
 > "Sound output": not shown, when sound is on headphones (the default), or always.
 
 ## 1.8.0 — 2026-11-09

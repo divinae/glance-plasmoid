@@ -87,7 +87,7 @@ show, and which may show at all is up to you:
 | Meeting on now | the time left in it, "20 min" | opens it in Event Calendar (joins without it) |
 | Sit/stand (amber) | a switch is due | switches |
 | Unread (purple) | notifications you haven't seen | opens them |
-| Sound output (teal) | sound is on headphones (or, if you like, where it is always), their battery over Bluetooth | opens the Controls tab |
+| Sound output (teal) | sound is on headphones (or, if you like, where it is always) | opens the Controls tab |
 | Do Not Disturb (grey) | how long it lasts | turns it off |
 
 **Hover cards.** Hover the music pill for the track, the seek and volume sliders and the
@@ -95,7 +95,7 @@ controls. Hover the Focus, meeting, transfers, sit/stand, unread or sound pill a
 beside it, without the drawer: what's left and today's total with Start, Pause, Skip and Stop;
 the meeting's times and guests with Join and Details; each transfer with Pause and Cancel;
 Move the desk (or Done) and Snooze; the latest notifications with Open and Clear All; the sound
-outputs, a click switching.
+outputs, a click switching, and the headphones' battery.
 
 Middle-click on the strip plays or pauses, the wheel skips tracks.
 

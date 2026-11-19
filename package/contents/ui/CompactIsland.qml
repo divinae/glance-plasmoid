@@ -157,14 +157,13 @@ MouseArea {
                     percent: b.percent, tip: i18n("%1: battery low, %2%", b.name, b.percent)});
             }
         }
-        // Where sound goes (Settings > General): while it's on headphones, or always. Bluetooth
-        // ones with their battery; the card lists the outputs, a click opens the Controls tab
+        // Where sound goes (Settings > General): while it's on headphones, or always. Only the
+        // icon: the headphones' battery is in the card (and a low one has its own pill); the card
+        // lists the outputs, a click opens the Controls tab
         const audio = island.controls.audio;
         const soundMode = island.cfg.pillSoundOutput;
         if (audio && audio.output && (soundMode === 2 || (soundMode === 1 && audio.outputKind === "headphones"))) {
-            const battery = audio.outputBluetooth && island.headphones.percent >= 0;
             out.push({color: "#30b0c7", icon: audio.outputIcon, action: "sound", card: soundCard,
-                hasText: battery ? "battery" : "", percent: battery ? island.headphones.percent : -1,
                 tip: i18n("Sound: %1", audio.outputName)});
         }
         if (dndShown && island.cfg.pillDnd) {
