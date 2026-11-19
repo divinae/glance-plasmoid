@@ -23,20 +23,6 @@ Tile {
     visible: !!audio && outputs.count > 0
     implicitHeight: column.implicitHeight + padding * 2
 
-    // A symbolic icon for an output, by what it is (the system's own are full-colour)
-    function iconFor(sink) {
-        const icon = sink.iconName || "";
-        const props = sink.properties || {};
-        const form = props["device.form_factor"] || "";
-        if (form === "headset" || form === "headphone" || icon.indexOf("headset") >= 0 || icon.indexOf("headphone") >= 0) {
-            return "audio-headphones-symbolic";
-        }
-        if (icon.indexOf("video-display") >= 0 || /hdmi|displayport/i.test(sink.description || "")) {
-            return "tv-symbolic";
-        }
-        return "audio-speakers-symbolic";
-    }
-
     ColumnLayout {
         id: column
         anchors.fill: parent
@@ -82,7 +68,7 @@ Tile {
                     Kirigami.Icon {
                         Layout.preferredWidth: Kirigami.Units.iconSizes.small
                         Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                        source: output.sink ? tile.iconFor(output.sink) : ""
+                        source: output.sink ? tile.audio.iconFor(output.sink) : ""
                         isMask: true
                         color: Kirigami.Theme.textColor
                         opacity: output.current ? 1 : 0.6

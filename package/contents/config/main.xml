@@ -53,6 +53,12 @@
     <entry name="pillDnd" type="Bool">
       <default>true</default>
     </entry>
+    <!-- Where sound goes, as a pill: 0 never, 1 while it's on headphones, 2 always -->
+    <entry name="pillSoundOutput" type="Int">
+      <min>0</min>
+      <max>2</max>
+      <default>1</default>
+    </entry>
     <entry name="showCapsule" type="Bool">
       <default>false</default>
     </entry>

@@ -12,6 +12,42 @@ import org.kde.plasma.private.volume as Vol
 Item {
     // The output devices: each row's PulseObject is the sink (description, default, …)
     readonly property alias sinks: sinkModel
+    // Where sound goes now (the default output), and what it is: "headphones", "display" or
+    // "speakers", its symbolic icon, its name, whether it's Bluetooth
+    readonly property var output: Vol.PreferredDevice.sink
+    readonly property string outputKind: kindOf(output)
+    readonly property string outputIcon: iconFor(output)
+    readonly property string outputName: output ? (output.description || output.name || "") : ""
+    readonly property bool outputBluetooth: !!output && ((output.properties || {})["device.bus"] === "bluetooth"
+        || (output.name || "").indexOf("bluez") === 0)
+
+    // What an output is, from what PipeWire says of it: its form factor, its icon, and the port
+    // in use (a laptop's jack is one output with a speaker port and a headphone port)
+    function kindOf(sink) {
+        if (!sink) {
+            return "";
+        }
+        const props = sink.properties || {};
+        const form = props["device.form_factor"] || "";
+        const icon = sink.iconName || "";
+        const port = sink.ports && sink.activePortIndex >= 0 ? sink.ports[sink.activePortIndex] : null;
+        const portText = port ? (port.name || "") + " " + (port.description || "") : "";
+        if (form === "headset" || form === "headphone" || /headset|headphone/.test(icon)
+                || /headphone|headset/i.test(portText)) {
+            return "headphones";
+        }
+        if (icon.indexOf("video-display") >= 0 || /hdmi|displayport/i.test(sink.description || "")) {
+            return "display";
+        }
+        return "speakers";
+    }
+    // A symbolic icon for an output (the system's own are full-colour)
+    function iconFor(sink) {
+        const kind = kindOf(sink);
+        return kind === "headphones" ? "audio-headphones-symbolic"
+            : kind === "display" ? "tv-symbolic" : "audio-speakers-symbolic";
+    }
+
     // The default microphone
     readonly property var mic: Vol.PreferredDevice.source
     readonly property bool hasMic: !!mic

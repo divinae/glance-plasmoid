@@ -22,6 +22,7 @@ KCM.SimpleKCM {
     property alias cfg_pillDnd: pillDnd.checked
     property alias cfg_unreadDot: unreadDot.checked
     property alias cfg_pillLowBattery: pillLowBattery.checked
+    property alias cfg_pillSoundOutput: pillSoundOutput.currentIndex
     property alias cfg_showAppIcon: showAppIcon.checked
     property alias cfg_filterByScreen: filterByScreen.checked
 
@@ -67,6 +68,12 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: pillDnd
             text: i18n("Do Not Disturb")
+        }
+        QQC2.ComboBox {
+            id: pillSoundOutput
+            // Its own row after the pills' checkboxes: a label among them would split their group
+            Kirigami.FormData.label: i18n("Sound output pill:")
+            model: [i18n("Not shown"), i18n("When sound is on headphones"), i18n("Always")]
         }
         QQC2.CheckBox {
             id: showCapsule
