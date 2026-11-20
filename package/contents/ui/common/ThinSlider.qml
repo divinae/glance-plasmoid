@@ -11,6 +11,9 @@ import org.kde.kirigami as Kirigami
 // A thin slider in a colour of its own (the music card's seek and volume, in the cover's): a
 // track with its fill, thicker and with a knob under the pointer. Click or drag sets it, the
 // wheel nudges it. `moved(value)` as the user sets it; `value` follows what it shows.
+// `live`: `moved` while dragging too (a few times a second), not only on release: brightness
+// follows the finger; a seek stays on release. `valueText` puts what you'd set in a bubble over
+// the knob while dragging; `shownValue` is it, for a label beside it.
 Item {
     id: slider
 
@@ -20,18 +23,47 @@ Item {
     // A wheel notch's step, in the slider's own units
     property real wheelStep: (to - from) / 20
     property color color: Kirigami.Theme.highlightColor
+    property bool live: false
+    // Snaps to multiples of it (a keyboard's few backlight levels); 0 for none
+    property real stepSize: 0
+    // The bubble's text for a value, while dragging (empty: no bubble)
+    property var valueText: null
 
     signal moved(real value)
 
     readonly property bool active: hover.hovered || drag.pressed
-    readonly property real fraction: to > from
-        ? Math.max(0, Math.min(1, ((drag.pressed ? dragValue : value) - from) / (to - from))) : 0
+    // What it shows: where the finger is while dragging, else the value
+    readonly property real shownValue: drag.pressed ? dragValue : value
+    readonly property real targetFraction: to > from
+        ? Math.max(0, Math.min(1, (shownValue - from) / (to - from))) : 0
+    // Follows the finger at once; eases when the value moves by itself (the wheel, a key)
+    property real fraction: targetFraction
+    Behavior on fraction {
+        enabled: !drag.pressed
+        NumberAnimation { duration: Kirigami.Units.shortDuration; easing.type: Easing.OutCubic }
+    }
     property real dragValue: 0
 
     implicitHeight: Kirigami.Units.gridUnit * 0.75
 
     function valueAt(x) {
-        return from + Math.max(0, Math.min(1, x / width)) * (to - from);
+        const v = from + Math.max(0, Math.min(1, x / width)) * (to - from);
+        return stepSize > 0 ? Math.max(from, Math.min(to, from + Math.round((v - from) / stepSize) * stepSize)) : v;
+    }
+    // While dragging, live: the latest position, sent at most every 50 ms (each one a D-Bus call)
+    property real sentValue: NaN
+    function sendLive() {
+        if (live && drag.pressed && dragValue !== sentValue) {
+            sentValue = dragValue;
+            moved(dragValue);
+        }
+    }
+    Timer {
+        id: liveTimer
+        interval: 50
+        repeat: true
+        running: slider.live && drag.pressed
+        onTriggered: slider.sendLive()
     }
 
     Rectangle {
@@ -52,6 +84,7 @@ Item {
         }
     }
     Rectangle {
+        id: knob
         width: Math.round(Kirigami.Units.gridUnit * 0.7)
         height: width
         radius: width / 2
@@ -66,6 +99,27 @@ Item {
         }
     }
 
+    // What you'd set, over the knob while dragging
+    Rectangle {
+        visible: drag.pressed && !!slider.valueText
+        z: 1
+        width: bubbleLabel.implicitWidth + Kirigami.Units.smallSpacing * 2
+        height: bubbleLabel.implicitHeight + 2
+        radius: height / 2
+        x: Math.max(-knob.width / 2, Math.min(slider.width - width + knob.width / 2,
+            slider.fraction * slider.width - width / 2))
+        y: -height - 4
+        color: slider.color
+        Text {
+            id: bubbleLabel
+            anchors.centerIn: parent
+            text: slider.valueText ? slider.valueText(slider.dragValue) : ""
+            color: Kirigami.Theme.highlightedTextColor
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            font.features: { "tnum": 1 }
+        }
+    }
+
     HoverHandler {
         id: hover
         cursorShape: Qt.PointingHandCursor
@@ -76,13 +130,23 @@ Item {
         // A little taller than the track: easy to catch
         anchors.topMargin: -4
         anchors.bottomMargin: -4
-        onPressed: mouse => slider.dragValue = slider.valueAt(mouse.x)
+        // Keep the drag when the pointer strays off the slider's line
+        preventStealing: true
+        onPressed: mouse => {
+            slider.sentValue = NaN;
+            slider.dragValue = slider.valueAt(mouse.x);
+            slider.sendLive();
+        }
         onPositionChanged: mouse => {
             if (pressed) {
                 slider.dragValue = slider.valueAt(mouse.x);
             }
         }
-        onReleased: slider.moved(slider.dragValue)
+        onReleased: {
+            if (slider.dragValue !== slider.sentValue) {
+                slider.moved(slider.dragValue);
+            }
+        }
     }
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad

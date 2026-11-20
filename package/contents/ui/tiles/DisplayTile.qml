@@ -45,6 +45,12 @@ Tile {
         property string label
         property real value: 0
         property real maximum: 100
+        // A few levels (a keyboard's 0–3): snap to them, and say "2 / 3" rather than a percent
+        readonly property bool stepped: maximum > 0 && maximum <= 10
+        function levelText(v) {
+            return stepped ? i18nc("a level of a few", "%1 / %2", Math.round(v), maximum)
+                : i18nc("a level, in percent", "%1%", maximum > 0 ? Math.round(v / maximum * 100) : 0);
+        }
         signal moved(real value)
         Layout.fillWidth: true
         spacing: Kirigami.Units.largeSpacing
@@ -67,18 +73,23 @@ Tile {
                     elide: Text.ElideRight
                 }
                 PlasmaComponents.Label {
-                    text: i18nc("a level, in percent", "%1%", levelRow.maximum > 0 ? Math.round(levelRow.value / levelRow.maximum * 100) : 0)
+                    // Where the slider is, so it says what you're setting as you drag
+                    text: levelRow.levelText(levelSlider.shownValue)
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                     font.features: { "tnum": 1 }
                     opacity: 0.7
                 }
             }
             ThinSlider {
+                id: levelSlider
                 Layout.fillWidth: true
                 from: 0
                 to: Math.max(1, levelRow.maximum)
                 value: levelRow.value
-                wheelStep: Math.max(1, levelRow.maximum / 20)
+                live: true
+                stepSize: levelRow.stepped ? 1 : 0
+                valueText: v => levelRow.levelText(v)
+                wheelStep: levelRow.stepped ? 1 : Math.max(1, levelRow.maximum / 20)
                 onMoved: value => levelRow.moved(value)
             }
         }

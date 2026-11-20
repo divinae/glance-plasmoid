@@ -128,17 +128,20 @@ Tile {
                 opacity: 0.8
             }
             ThinSlider {
+                id: brightnessSlider
                 Layout.fillWidth: true
                 from: 0
                 to: tile.screen ? Math.max(1, tile.screen.maxBrightness) : 1
                 value: tile.screen ? tile.screen.brightness : 0
+                // The screen follows the finger, and the percent beside says where it is
+                live: true
                 wheelStep: tile.screen ? Math.max(1, tile.screen.maxBrightness / 20) : 1
                 onMoved: value => screens.setBrightness(tile.screen.displayName, Math.round(value))
             }
             PlasmaComponents.Label {
                 Layout.minimumWidth: pctMetrics.advanceWidth
                 horizontalAlignment: Text.AlignRight
-                text: tile.screen ? i18nc("a level, in percent", "%1%", Math.round(tile.screen.brightness / Math.max(1, tile.screen.maxBrightness) * 100)) : ""
+                text: tile.screen ? i18nc("a level, in percent", "%1%", Math.round(brightnessSlider.shownValue / Math.max(1, tile.screen.maxBrightness) * 100)) : ""
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 font.features: { "tnum": 1 }
                 opacity: 0.7

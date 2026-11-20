@@ -9,6 +9,10 @@ desk moves until midnight, then Shift carries on by itself the next day.
 the icon; hover it for the outputs (a click switches) and the headphones' battery. Settings > General
 > "Sound output": not shown, when sound is on headphones (the default), or always.
 
+**Brightness follows the finger.** The screen's and the keyboard's sliders set the brightness as
+you drag, not on release; the level beside them, and a bubble over the knob, say what you're
+setting. The keyboard's few levels snap ("2 / 3").
+
 ## 1.8.0 — 2026-11-09
 
 **Light, dark or automatic.** The Display card on the Controls tab has an Appearance row: Light |
