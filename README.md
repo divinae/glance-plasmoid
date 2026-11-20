@@ -294,6 +294,10 @@ language is a `po/<lang>.po` made from it. New screenshots: `tools/screenshots.s
 `GLANCE_DEMO=1`; it restarts Plasma, so not in a call). `make package` builds
 `glance-v<version>.plasmoid`, the QML and translations only.
 
+## AI assistance
+
+Made with AI: most of the code is written with Claude, Anthropic's AI assistant. I decide what goes in and review every change before a release.
+
 ## License
 
 GPL-2.0-or-later. `plugin/dbusmenuqt/` is vendored from plasma-workspace, which doesn't install
