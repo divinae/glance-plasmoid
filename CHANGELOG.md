@@ -7,7 +7,8 @@ desk moves until midnight, then Shift carries on by itself the next day.
 
 **Where sound goes, in the panel.** A pill while sound is on headphones (wired or Bluetooth), just
 the icon; hover it for the outputs (a click switches) and the headphones' battery. Settings > General
-> "Sound output": not shown, when sound is on headphones (the default), or always.
+> "Sound output": not shown, when sound is on headphones (the default), or always. Headphones
+running low while sound is on them: that pill turns red with the battery, not a second one.
 
 **Brightness follows the finger.** The screen's and the keyboard's sliders set the brightness as
 you drag, not on release; the level beside them, and a bubble over the knob, say what you're

@@ -151,20 +151,35 @@ MouseArea {
         }
         // A device running low (20% or less): mouse, keyboard, headphones… a pill each, in red,
         // with its icon and its battery
+        // Where sound goes (Settings > General): while it's on headphones, or always
+        const audio = island.controls.audio;
+        const soundMode = island.cfg.pillSoundOutput;
+        const soundShown = !!audio && !!audio.output
+            && (soundMode === 2 || (soundMode === 1 && audio.outputKind === "headphones"));
+        // Headphones running low while sound is on them: one pill, the sound one turned red with
+        // the battery, not two headphones side by side
+        let lowHeadphones = null;
         if (island.cfg.pillLowBattery) {
             for (const b of island.peripherals.low.slice(0, 3)) {
-                out.push({color: "#e5484d", icon: island.peripherals.iconFor(b), action: "info", hasText: "battery",
+                const icon = island.peripherals.iconFor(b);
+                if (soundShown && audio.outputKind === "headphones" && icon === "audio-headphones-symbolic") {
+                    lowHeadphones = lowHeadphones || b;
+                    continue;
+                }
+                out.push({color: "#e5484d", icon: icon, action: "info", hasText: "battery",
                     percent: b.percent, tip: i18n("%1: battery low, %2%", b.name, b.percent)});
             }
         }
-        // Where sound goes (Settings > General): while it's on headphones, or always. Only the
-        // icon: the headphones' battery is in the card (and a low one has its own pill); the card
-        // lists the outputs, a click opens the Controls tab
-        const audio = island.controls.audio;
-        const soundMode = island.cfg.pillSoundOutput;
-        if (audio && audio.output && (soundMode === 2 || (soundMode === 1 && audio.outputKind === "headphones"))) {
-            out.push({color: "#30b0c7", icon: audio.outputIcon, action: "sound", card: soundCard,
-                tip: i18n("Sound: %1", audio.outputName)});
+        // The sound pill: only the icon (the headphones' battery is in the card), unless they're
+        // low, then red with the battery as the low-battery pill would be; the card lists the
+        // outputs, a click opens the Controls tab
+        if (soundShown) {
+            out.push(lowHeadphones
+                ? {color: "#e5484d", icon: audio.outputIcon, action: "sound", card: soundCard, hasText: "battery",
+                    percent: lowHeadphones.percent,
+                    tip: i18n("Sound: %1", audio.outputName) + "\n" + i18n("%1: battery low, %2%", lowHeadphones.name, lowHeadphones.percent)}
+                : {color: "#30b0c7", icon: audio.outputIcon, action: "sound", card: soundCard,
+                    tip: i18n("Sound: %1", audio.outputName)});
         }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",
