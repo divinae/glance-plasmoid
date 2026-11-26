@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.9.2 — 2026-11-26
 
 **One script to install it:** `./install.sh` installs the packages Glance is built with (pacman,
 dnf, zypper or apt), builds and installs it, lets Plasma find its plugin and restarts Plasma.

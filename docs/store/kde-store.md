@@ -30,7 +30,7 @@ version, the changelog and the file for each release.
 
 **Version**
 
-    1.9.1
+    1.9.2
 
 **License**
 
@@ -103,6 +103,11 @@ Support: https://ko-fi.com/divinae4535
 **Changelog** (the store's field, for this version)
 
 ```
+1.9.2
+
+- One script to install it: ./install.sh installs the build packages (pacman, dnf, zypper or apt), builds and installs Glance, lets Plasma find its plugin and restarts Plasma. --uninstall removes it.
+- Installing on Fedora, openSUSE, Debian and Ubuntu works: the plugin goes where Plasma looks.
+
 1.9.1
 
 - Plasma's popup opens at the size you last dragged it to.

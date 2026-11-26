@@ -274,12 +274,12 @@ git clone https://github.com/divinae/glance-plasmoid.git
 cd glance-plasmoid
 ```
 
-Or a release instead of the latest code (replace `1.9.1` with the
+Or a release instead of the latest code (replace `1.9.2` with the
 [latest release](https://github.com/divinae/glance-plasmoid/releases/latest)):
 
 ```sh
-curl -L https://github.com/divinae/glance-plasmoid/archive/refs/tags/v1.9.1.tar.gz | tar xz
-cd glance-plasmoid-1.9.1
+curl -L https://github.com/divinae/glance-plasmoid/archive/refs/tags/v1.9.2.tar.gz | tar xz
+cd glance-plasmoid-1.9.2
 ```
 
 ### 3. Build and install
