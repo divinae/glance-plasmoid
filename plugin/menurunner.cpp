@@ -10,11 +10,15 @@
 
 #include <QAction>
 #include <QDBusConnection>
+#include <QDBusVariant>
+#include <QLoggingCategory>
 #include <QDBusConnectionInterface>
 #include <QDBusMetaType>
 #include <QIcon>
 #include <QKeySequence>
 #include <QTimer>
+
+Q_LOGGING_CATEGORY(GLANCE_RUNNER, "com.dv.glance.runner", QtInfoMsg)
 
 namespace
 {
@@ -151,7 +155,11 @@ RunnerMatches MenuRunner::matches(AppMenuModel *model, const QString &query)
             {QStringLiteral("category"), QStringLiteral("Application Menu")},
             {QStringLiteral("actions"), QStringList()},
         };
-        m_actions.insert(match.id, action);
+        const QVariant itemId = action->property("_dbusmenu_id");
+        if (!itemId.isValid()) {
+            continue;
+        }
+        m_targets.insert(match.id, {model->loadedServiceName(), model->loadedObjectPath(), itemId.toInt(), text});
         out.append(match);
         if (out.size() >= MaxMatches) {
             break;
@@ -208,20 +216,25 @@ RunnerMatches MenuRunner::Match(const QString &query)
 void MenuRunner::Run(const QString &matchId, const QString &actionId)
 {
     Q_UNUSED(actionId)
-    const QPointer<QAction> action = m_actions.value(matchId);
-    if (!action) {
+    if (!m_targets.contains(matchId)) {
+        qCWarning(GLANCE_RUNNER) << "Run: no item for match" << matchId;
         return;
     }
-    QTimer::singleShot(RunDelayMs, this, [action]() {
-        if (action && action->isEnabled()) {
-            action->trigger();
-        }
+    const Target target = m_targets.value(matchId);
+    qCInfo(GLANCE_RUNNER) << "Run:" << target.text << "→" << target.service << target.path << "item" << target.itemId;
+    // As the menu bar does when it's clicked (DBusMenuImporter::sendClickedEvent), straight to the
+    // app: a moment later, once KRunner has closed and the app has its focus back
+    QTimer::singleShot(RunDelayMs, this, [target]() {
+        QDBusMessage event = QDBusMessage::createMethodCall(target.service, target.path, QStringLiteral("com.canonical.dbusmenu"),
+                                                            QStringLiteral("Event"));
+        event.setArguments({target.itemId, QStringLiteral("clicked"), QVariant::fromValue(QDBusVariant(QString())), 0u});
+        QDBusConnection::sessionBus().asyncCall(event);
     });
 }
 
 void MenuRunner::Teardown()
 {
-    m_actions.clear();
+    m_targets.clear();
     if (m_prefetched) {
         m_prefetched->stopPrefetch();
         m_prefetched = nullptr;

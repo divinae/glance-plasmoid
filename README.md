@@ -247,6 +247,7 @@ were in, so it works only while "Application menu" is on (and the app exports it
 runner of its own, "Application Menu (Glance)", installed by `make install`
 (`~/.local/share/krunner/dbusplugins/`); KRunner's settings can turn it off. KRunner lists it after
 a restart of KRunner (`kquitapp6 krunner`) or a new login.
+Nothing happens on Enter? `journalctl --user -b | grep "Run:"` shows what was sent to which app.
 
 ## When something's off
 

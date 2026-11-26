@@ -86,6 +86,15 @@ public:
     {
         return m_prefetching;
     }
+    // Where the menu shown came from (KRunner clicks an item there by its id)
+    QString loadedServiceName() const
+    {
+        return m_loadedServiceName;
+    }
+    QString loadedObjectPath() const
+    {
+        return m_loadedObjectPath;
+    }
     // The items whose path ("File › Export › PNG…") has every word of `text`, at most `limit`:
     // [{action, text, path, shortcut, enabled, checkable, checked}]. `action` is the QAction:
     // trigger() on it clicks it in the app
