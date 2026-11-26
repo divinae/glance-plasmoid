@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+**One script to install it:** `./install.sh` installs the packages Glance is built with (pacman,
+dnf, zypper or apt), builds and installs it, lets Plasma find its plugin and restarts Plasma.
+`--uninstall` removes it. The README's Install section is step by step now.
+
 ## 1.9.1 — 2026-11-26
 
 **Plasma's popup keeps its size.** Drag its edges and it opens at that size next time.

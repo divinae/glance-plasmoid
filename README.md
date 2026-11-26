@@ -206,6 +206,22 @@ packages in step 1. It takes a few minutes.
 You need **Plasma 6** (check: `plasmashell --version`) and a **vertical panel** for Glance to sit
 in (step 5 shows how to make one).
 
+### Quick: one script
+
+```sh
+git clone https://github.com/divinae/glance-plasmoid.git
+cd glance-plasmoid
+./install.sh
+```
+
+It installs the packages Glance is built with (pacman, dnf, zypper or apt: it shows the command and
+asks first), builds and installs Glance into `~/.local`, lets Plasma find its plugin, and restarts
+Plasma to load it (asking first). Then add the widget (step 5 below). To update: `git pull &&
+./install.sh`; to remove: `./install.sh --uninstall`. `./install.sh --help` lists its options
+(`--no-deps` when the packages are there already or named differently on your system).
+
+Or by hand, step by step:
+
 ### 1. Install the build tools and libraries
 
 **Arch Linux, Manjaro, EndeavourOS:**
@@ -312,10 +328,11 @@ KRunner once: `kquitapp6 krunner`.
 
 ### Update and uninstall
 
-- **Update:** in the source folder, `git pull && make install && make restart` (`make restart`
-  restarts plasmashell). From a release: download the new one and run `make install` in it.
-- **Uninstall:** `make uninstall` in the source folder, then
-  `rm ~/.config/plasma-workspace/env/glance.sh`.
+- **Update:** in the source folder, `git pull && ./install.sh` (or `git pull && make install &&
+  make restart`; `make restart` restarts plasmashell). From a release: download the new one and run
+  `./install.sh` in it.
+- **Uninstall:** `./install.sh --uninstall` in the source folder (or `make uninstall`, then
+  `rm ~/.config/plasma-workspace/env/glance.sh`).
 
 ## Global menu
 
