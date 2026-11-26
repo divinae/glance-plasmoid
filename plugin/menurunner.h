@@ -72,7 +72,7 @@ private:
     RunnerMatches matches(AppMenuModel *model, const QString &query);
 
     QList<QPointer<AppMenuModel>> m_models;
-    // What a match's id runs, until the session ends (Teardown): the item's id in the app's
+    // What a match's id runs: the item's id in the app's
     // exported menu and where that menu is. Not the QAction: an app may export its menus anew as
     // it gets the focus back from KRunner, and the action is gone by then
     struct Target {
@@ -81,6 +81,7 @@ private:
         int itemId = 0;
         QString text;
     };
+    // Kept past Teardown, which KRunner sends before Run: only the latest KeptTargets
     QHash<QString, Target> m_targets;
     quint64 m_nextId = 0;
     // The model this session started fetching the whole tree of, to stop it at the end

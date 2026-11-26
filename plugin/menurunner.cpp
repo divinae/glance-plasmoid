@@ -32,6 +32,9 @@ constexpr int FirstAnswerWaitMs = 400;
 constexpr int RunDelayMs = 150;
 // KRunner::QueryMatch::CategoryRelevance::Moderate
 constexpr int CategoryModerate = 50;
+// The matches remembered for Run: KRunner ends the session (Teardown) before it asks to run one,
+// so they outlive it; only the newest this many, as each key asks again
+constexpr quint64 KeptTargets = 300;
 }
 
 QDBusArgument &operator<<(QDBusArgument &argument, const RunnerMatch &match)
@@ -160,6 +163,9 @@ RunnerMatches MenuRunner::matches(AppMenuModel *model, const QString &query)
             continue;
         }
         m_targets.insert(match.id, {model->loadedServiceName(), model->loadedObjectPath(), itemId.toInt(), text});
+        if (m_nextId > KeptTargets) {
+            m_targets.remove(QString::number(m_nextId - KeptTargets));
+        }
         out.append(match);
         if (out.size() >= MaxMatches) {
             break;
@@ -234,7 +240,7 @@ void MenuRunner::Run(const QString &matchId, const QString &actionId)
 
 void MenuRunner::Teardown()
 {
-    m_targets.clear();
+    // Not the matches: Run comes after this
     if (m_prefetched) {
         m_prefetched->stopPrefetch();
         m_prefetched = nullptr;
