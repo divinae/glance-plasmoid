@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**Shift asks before it moves the desk.** When the desk would move by itself (time to switch, a
+meeting starting or over), a notification asks first: Move now, or Not yet (it asks again after
+the snooze). Settings > Shift > "Ask first", on by default.
+
 **The app's menus from KRunner**, as the old HUD: open KRunner over an app, type a few letters of a
 menu item ("exp png" finds File › Export › PNG…), Enter runs it. It searches the window you were in,
 with Glance's "Application menu" on. A KRunner plugin of its own, "Application Menu (Glance)".

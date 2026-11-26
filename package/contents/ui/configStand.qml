@@ -59,6 +59,7 @@ KCMUtils.SimpleKCM {
     property alias cfg_stand_sit_height_cm: sit_height_cm.value
     property alias cfg_stand_stand_height_cm: stand_height_cm.value
     property alias cfg_stand_auto_move_enabled: auto_move_enabled.checked
+    property alias cfg_stand_auto_move_ask: auto_move_ask.checked
 
     property string testResult: ""
     property string sitSaveResult: ""
@@ -402,6 +403,15 @@ KCMUtils.SimpleKCM {
 
                 text: i18n("Move the desk when it is time to switch")
                 description: i18n("Instead of a reminder. Check that nothing can be caught by the desk before turning this on.")
+            }
+
+            FormCard.FormDelegateSeparator {}
+
+            FormCard.FormSwitchDelegate {
+                id: auto_move_ask
+
+                text: i18n("Ask first")
+                description: i18n("Before the desk moves by itself (time to switch, a meeting), a notification asks whether it's a good moment: it moves only when you say so. Not yet asks again after the snooze.")
             }
         }
     }

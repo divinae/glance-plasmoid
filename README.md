@@ -145,7 +145,8 @@ Both are off until turned on in their settings. They take over from the separate
   session. "Start the timer when Plasma starts" means after a reboot: a timer you stopped stays
   stopped through a Plasma restart.
 - **Shift:** sit/stand reminders and a motorized desk (idasen by default, any command line
-  tool) that moves when you click, or by itself if you want.
+  tool) that moves when you click, or by itself if you want: then it asks first whether it's a
+  good moment ("Move now" / "Not yet"), unless you turn that off.
 - **Together:** Shift waits for your focus breaks, so there's no reminder or desk move in the
   middle of a session, and a switch that's nearly due is made at the break. Breaks count as
   neither sitting nor standing.

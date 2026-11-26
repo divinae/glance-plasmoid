@@ -289,6 +289,12 @@ Item {
             remind();
     }
 
+    // The desk would move by itself now ("Move the desk when it is time to switch")
+    readonly property bool movesByItself: deskEnabled && desk.reachable && settings.stand_auto_move_enabled
+    // …but asks first ("Ask first"): the reminder becomes the question, and the desk moves only
+    // on its Move now. Asked even with the reminders' notifications off: asking is the point.
+    readonly property bool asksFirst: movesByItself && settings.stand_auto_move_ask
+
     function remind() {
         lastNotifiedMs = Date.now();
         if (quiet) {
@@ -298,6 +304,15 @@ Item {
         var standing = cycle.position === "stand";
         if (settings.stand_sfx_enabled && settings.stand_sfx_filepath)
             sfx.play(settings.stand_sfx_filepath, settings.stand_sound_volume / 100);
+        if (asksFirst) {
+            var target = Cycle.opposite(cycle.position);
+            notifications.notifyActions(standing ? i18n("Time to sit down. Move the desk now?")
+                    : i18n("Time to stand up. Move the desk now?"), [
+                { label: i18n("Move now"), action: function() { root.goTo(target); } },
+                { label: i18n("Not yet"), action: root.snooze }
+            ], standing ? "go-down" : "go-up");
+            return;
+        }
         if (!settings.stand_notification_enabled)
             return;
         var next = switchAction();
@@ -329,14 +344,36 @@ Item {
     function meetingStarted() {
         if (!settings.stand_stand_for_meetings || idle || cycle.position === "stand")
             return;
-        if (deskEnabled && desk.reachable && desk.moveTo("stand"))
+        if (!deskEnabled || !desk.reachable)
+            return;
+        if (settings.stand_auto_move_ask) {
+            notifications.notifyActions(i18n("A meeting is starting. Raise the desk?"), [
+                { label: i18n("Raise now"), action: function() {
+                    if (root.deskEnabled && desk.reachable && desk.moveTo("stand"))
+                        root.roseForMeeting = true;
+                } },
+                { label: i18n("Not now"), action: null }
+            ], "go-up");
+            return;
+        }
+        if (desk.moveTo("stand"))
             roseForMeeting = true;
     }
     // switchDueSoon: also make a switch due within 10 minutes now ("Wait for meetings")
     function meetingEnded(switchDueSoon) {
-        if (roseForMeeting && deskEnabled && desk.reachable && cycle.position === "stand")
-            desk.moveTo("sit");
-        else if (switchDueSoon)
+        if (roseForMeeting && deskEnabled && desk.reachable && cycle.position === "stand") {
+            if (settings.stand_auto_move_ask) {
+                notifications.notifyActions(i18n("The meeting is over. Lower the desk?"), [
+                    { label: i18n("Lower now"), action: function() {
+                        if (root.deskEnabled && desk.reachable)
+                            desk.moveTo("sit");
+                    } },
+                    { label: i18n("Not now"), action: null }
+                ], "go-down");
+            } else {
+                desk.moveTo("sit");
+            }
+        } else if (switchDueSoon)
             switchAtBreak(10 * 60 * 1000);
         roseForMeeting = false;
     }
@@ -346,8 +383,7 @@ Item {
     function switchAtBreak(withinMs) {
         if (idle || pendingPosition || switchDue || remainingMs > withinMs)
             return;
-        if (deskEnabled && desk.reachable && settings.stand_auto_move_enabled
-                && desk.moveTo(Cycle.opposite(cycle.position))) {
+        if (movesByItself && !asksFirst && desk.moveTo(Cycle.opposite(cycle.position))) {
             lastNotifiedMs = Date.now();
             return;
         }
@@ -362,10 +398,11 @@ Item {
         }
         // Counted as the reminder, so a move that fails or leaves the desk where it was
         // is followed by the usual nagging rather than a switch due forever in silence.
-        if (deskEnabled && desk.reachable && settings.stand_auto_move_enabled && desk.moveTo(Cycle.opposite(cycle.position))) {
+        if (movesByItself && !asksFirst && desk.moveTo(Cycle.opposite(cycle.position))) {
             lastNotifiedMs = Date.now();
             return;
         }
+        // Asking first: the reminder is the question
         remind();
     }
 

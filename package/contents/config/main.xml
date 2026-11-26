@@ -357,6 +357,11 @@
             <default>false</default>
         </entry>
 
+        <!-- Before the desk moves by itself (a switch due, a meeting): a notification asks first -->
+        <entry name="stand_auto_move_ask" type="Bool">
+            <default>true</default>
+        </entry>
+
 
         <!-- No reminders or desk moves during a meeting (Event Calendar); a switch due soon at its end -->
         <entry name="stand_meeting_hold" type="Bool">
