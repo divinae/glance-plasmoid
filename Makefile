@@ -49,7 +49,8 @@ lint: build
 # The pure JS (drawer geometry, formatting) under node, then every QML file compiled offscreen,
 # and the translations checked
 test: build
-	node --test tests/
+	@# The JS tests need node, which only the dev box has; elsewhere they're skipped, not failed
+	if command -v node >/dev/null; then node --test tests/; else echo "node missing: JS tests skipped"; fi
 	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/stand
 	QT_QPA_PLATFORM=offscreen $(QMLTESTRUNNER) -input tests/focus
 	tests/compile.sh
