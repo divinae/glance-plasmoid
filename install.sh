@@ -14,7 +14,8 @@
 #   ./install.sh --uninstall   remove Glance and its plugin path
 set -euo pipefail
 
-cd "$(dirname "$(readlink -f "$0")")"
+script=$(readlink -f "$0")
+cd "$(dirname "$script")"
 
 deps=1
 restart=1
@@ -26,7 +27,7 @@ for arg in "$@"; do
         --no-restart) restart=0 ;;
         --yes|-y) assume_yes=1 ;;
         --uninstall) uninstall=1 ;;
-        -h|--help) sed -n '5,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '5,14p' "$script" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $arg (see --help)" >&2; exit 2 ;;
     esac
 done
@@ -36,9 +37,13 @@ normal=$(tput sgr0 2>/dev/null || true)
 step() { echo; echo "${bold}==> $*${normal}"; }
 fail() { echo "${bold}Error:${normal} $*" >&2; exit 1; }
 ask() {
-    # ask "question": yes unless the answer starts with n; --yes or no terminal: yes
+    # ask "question": yes unless the answer starts with n. --yes: yes. No terminal to ask on (an
+    # IDE task, a pipe): no, so nothing is installed or restarted unasked
     [ "$assume_yes" = 1 ] && return 0
-    [ -t 0 ] || return 0
+    if [ ! -t 0 ]; then
+        echo "$1 No terminal to ask on: skipped (run with --yes to allow it)."
+        return 1
+    fi
     local answer
     read -r -p "$1 [Y/n] " answer
     [[ ! "$answer" =~ ^[Nn] ]]
@@ -48,6 +53,29 @@ ask() {
 
 env_file="$HOME/.config/plasma-workspace/env/glance.sh"
 qml_path="$HOME/.local/lib/qml"
+
+# The QML_IMPORT_PATH of the running session (systemd's user environment, which Plasma is started
+# with), with our folder added (add) or taken out (remove), the rest kept as it is. A value systemd
+# shows quoted ($'…', special characters) is left alone: the next login reads the env file anyway
+session_path() {
+    command -v systemctl >/dev/null && systemctl --user show-environment >/dev/null 2>&1 || return 0
+    local current kept="" part
+    current=$(systemctl --user show-environment | sed -n 's/^QML_IMPORT_PATH=//p')
+    case "$current" in
+        "\$'"*) echo "QML_IMPORT_PATH has special characters: not changed for this session (log out and back in)."; return 0 ;;
+    esac
+    local IFS=:
+    for part in $current; do
+        [ -n "$part" ] && [ "$part" != "$qml_path" ] && kept="${kept:+$kept:}$part"
+    done
+    if [ "$1" = add ]; then
+        systemctl --user set-environment QML_IMPORT_PATH="$qml_path${kept:+:$kept}"
+    elif [ -n "$kept" ]; then
+        systemctl --user set-environment QML_IMPORT_PATH="$kept"
+    else
+        systemctl --user unset-environment QML_IMPORT_PATH
+    fi
+}
 
 restart_plasma() {
     [ "$restart" = 1 ] || return 0
@@ -66,9 +94,18 @@ restart_plasma() {
 
 if [ "$uninstall" = 1 ]; then
     step "Removing Glance"
-    make uninstall
+    # Not through make (it may be gone): the widget, the plugin wherever an older install put it
+    # (lib64/qml, lib/<multiarch>/qml before 1.9.2), the KRunner search, the plugin path
+    if command -v kpackagetool6 >/dev/null; then
+        kpackagetool6 -t Plasma/Applet -r com.dv.glance >/dev/null 2>&1 || true
+    fi
+    rm -rf "$HOME/.local/share/plasma/plasmoids/com.dv.glance"
+    for dir in "$HOME"/.local/lib/qml "$HOME"/.local/lib64/qml "$HOME"/.local/lib/*/qml; do
+        rm -rf "$dir/com/dv/glance"
+    done
+    rm -f "$HOME/.local/share/krunner/dbusplugins/glance-appmenu-runner.desktop"
     rm -f "$env_file"
-    command -v systemctl >/dev/null && systemctl --user unset-environment QML_IMPORT_PATH 2>/dev/null || true
+    session_path remove
     restart_plasma
     echo; echo "Glance is removed. Its settings stay in Plasma's config until the widget is removed from the panel."
     exit 0
@@ -88,6 +125,7 @@ fi
 # --- 1. The packages ----------------------------------------------------------------------------
 if [ "$deps" = 1 ]; then
     step "1/4 The build tools and libraries"
+    pre=()
     if command -v pacman >/dev/null; then
         cmd=(sudo pacman -S --needed git base-devel cmake extra-cmake-modules qt6-base qt6-declarative
             kwindowsystem kservice kconfig kcoreaddons libplasma libpipewire gettext
@@ -101,9 +139,11 @@ if [ "$deps" = 1 ]; then
             kf6-kwindowsystem-devel kf6-kservice-devel kf6-kconfig-devel kf6-kcoreaddons-devel
             libplasma6-devel pipewire-devel gettext-runtime layer-shell-qt6 kirigami-addons6)
     elif command -v apt-get >/dev/null; then
+        # The package lists first: on a fresh system they're empty and every name is "not found"
+        pre=(sudo apt-get update)
         cmd=(sudo apt-get install git build-essential cmake extra-cmake-modules qt6-base-dev qt6-declarative-dev
             libkf6windowsystem-dev libkf6service-dev libkf6config-dev libkf6coreaddons-dev
-            libplasma-dev libpipewire-0.3-dev gettext layer-shell-qt)
+            libplasma-dev libpipewire-0.3-dev gettext layer-shell-qt qml6-module-org-kde-kirigamiaddons-formcard)
     else
         cmd=()
         echo "No pacman, dnf, zypper or apt here: install the libraries listed under Requirements in"
@@ -116,6 +156,9 @@ if [ "$deps" = 1 ]; then
     esac
     echo "${cmd[*]}"
     if ask "Install these packages? (asks for your password)"; then
+        if [ "${#pre[@]}" -gt 0 ]; then
+            "${pre[@]}" || fail "the package lists didn't update (${pre[*]})."
+        fi
         "${cmd[@]}" || fail "the packages didn't install. A name your distribution doesn't have? Install
        that one under its own name (README.md, Requirements), then run ./install.sh --no-deps.
        Tell us in an issue too: https://github.com/divinae/glance-plasmoid/issues"
@@ -143,13 +186,7 @@ export QML_IMPORT_PATH="$HOME/.local/lib/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH
 EOF
 echo "$env_file (read at each login)"
 # For this session as well, so a restart is enough
-if command -v systemctl >/dev/null && systemctl --user show-environment >/dev/null 2>&1; then
-    current=$(systemctl --user show-environment | sed -n 's/^QML_IMPORT_PATH=//p')
-    case ":$current:" in
-        *":$qml_path:"*) ;;
-        *) systemctl --user set-environment QML_IMPORT_PATH="$qml_path${current:+:$current}" ;;
-    esac
-fi
+session_path add
 
 # --- 4. Load it -----------------------------------------------------------------------------
 step "4/4 Loading it"

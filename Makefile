@@ -18,8 +18,10 @@ MO_FILES = $(patsubst po/%.po,package/contents/locale/%/LC_MESSAGES/$(DOMAIN).mo
 
 all: build
 
+# The plugin in $(PREFIX)/lib/qml on every distribution: left to itself, KDE's install dirs pick
+# lib64/qml (Fedora, openSUSE) or lib/<multiarch>/qml (Debian), where Plasma isn't told to look
 configure:
-	cmake -B $(BUILD_DIR) -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DCMAKE_BUILD_TYPE=Release
+	cmake -B $(BUILD_DIR) -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DCMAKE_BUILD_TYPE=Release -DKDE_INSTALL_QMLDIR=lib/qml
 
 build: configure translations
 	cmake --build $(BUILD_DIR) -j

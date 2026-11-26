@@ -6,6 +6,9 @@
 dnf, zypper or apt), builds and installs it, lets Plasma find its plugin and restarts Plasma.
 `--uninstall` removes it. The README's Install section is step by step now.
 
+**Install on Fedora, openSUSE, Debian and Ubuntu:** the plugin goes to `~/.local/lib/qml` there too
+(it went to `lib64/qml` or `lib/<multiarch>/qml`, where Plasma wasn't told to look).
+
 ## 1.9.1 — 2026-11-26
 
 **Plasma's popup keeps its size.** Drag its edges and it opens at that size next time.

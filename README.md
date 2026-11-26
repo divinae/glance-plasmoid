@@ -255,9 +255,10 @@ sudo zypper install git gcc-c++ make cmake kf6-extra-cmake-modules qt6-base-deve
 **Debian 13, Kubuntu 25.04 or later, KDE neon** (Plasma 6 only):
 
 ```sh
+sudo apt update
 sudo apt install git build-essential cmake extra-cmake-modules qt6-base-dev qt6-declarative-dev \
     libkf6windowsystem-dev libkf6service-dev libkf6config-dev libkf6coreaddons-dev \
-    libplasma-dev libpipewire-0.3-dev gettext layer-shell-qt
+    libplasma-dev libpipewire-0.3-dev gettext layer-shell-qt qml6-module-org-kde-kirigamiaddons-formcard
 ```
 
 </details>
