@@ -32,14 +32,22 @@ Item {
     signal moved(real value)
 
     readonly property bool active: hover.hovered || drag.pressed
-    // What it shows: where the finger is while dragging, else the value
-    readonly property real shownValue: drag.pressed ? dragValue : value
+    // What it shows: where the finger is while dragging, and where it was let go until the value
+    // gets there (a seek answers a moment later: it mustn't spring back first), else the value
+    readonly property real shownValue: drag.pressed || settling ? dragValue : value
+    property bool settling: false
+    onValueChanged: settling = false
+    Timer {
+        id: settleTimer
+        interval: 1500
+        onTriggered: slider.settling = false
+    }
     readonly property real targetFraction: to > from
         ? Math.max(0, Math.min(1, (shownValue - from) / (to - from))) : 0
     // Follows the finger at once; eases when the value moves by itself (the wheel, a key)
     property real fraction: targetFraction
     Behavior on fraction {
-        enabled: !drag.pressed
+        enabled: !drag.pressed && !slider.settling
         NumberAnimation { duration: Kirigami.Units.shortDuration; easing.type: Easing.OutCubic }
     }
     property real dragValue: 0
@@ -143,8 +151,14 @@ Item {
             }
         }
         onReleased: {
+            const changed = slider.dragValue !== slider.value;
             if (slider.dragValue !== slider.sentValue) {
                 slider.moved(slider.dragValue);
+            }
+            // A value already there won't change again: nothing to wait for
+            slider.settling = changed && slider.dragValue !== slider.value;
+            if (slider.settling) {
+                settleTimer.restart();
             }
         }
     }

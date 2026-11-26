@@ -20,7 +20,8 @@ PopoutCard {
 
     required property var island
     readonly property Item audio: island.controls.audio
-    readonly property bool showBattery: !!audio && audio.outputBluetooth && island.headphones.percent >= 0
+    // The battery of the device sound is on, not of another headset that happens to be connected
+    readonly property bool showBattery: island.headphones.outputPercent >= 0
 
     cardWidth: Kirigami.Units.gridUnit * 17
 
@@ -33,7 +34,7 @@ PopoutCard {
     PlasmaComponents.Label {
         Layout.fillWidth: true
         visible: card.showBattery
-        text: i18n("%1: battery %2%", card.island.headphones.name, card.island.headphones.percent)
+        text: card.showBattery ? i18n("%1: battery %2%", card.island.headphones.output.name, card.island.headphones.outputPercent) : ""
         font: Kirigami.Theme.smallFont
         opacity: 0.7
         elide: Text.ElideRight

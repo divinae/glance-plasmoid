@@ -14,6 +14,29 @@ import org.kde.bluezqt as BluezQt
 QtObject {
     id: audio
 
+    // The address of the device sound is going to (Audio.qml's outputAddress), "" when it isn't
+    // on Bluetooth: `output` is that device, for the sound pill and its card
+    property string outputAddress: ""
+    readonly property var output: {
+        if (outputAddress === "") {
+            return null;
+        }
+        const list = BluezQt.Manager.connectedDevices || [];
+        for (let i = 0; i < list.length; ++i) {
+            if (String(list[i].address).toUpperCase() === outputAddress) {
+                return list[i];
+            }
+        }
+        return null;
+    }
+    // Its battery, -1 when it doesn't say (or sound isn't on one)
+    readonly property int outputPercent: output && output.battery ? output.battery.percentage : -1
+    // A battery entry (PeripheralBatteries) that is this device's: UPower names it by the
+    // device's own name, BlueZ by the user's alias, so either
+    function isOutput(battery) {
+        return !!output && !!battery && (battery.name === output.name || battery.name === output.remoteName);
+    }
+
     // The first connected audio device; one that reports its battery first
     readonly property var device: {
         const list = BluezQt.Manager.connectedDevices || [];

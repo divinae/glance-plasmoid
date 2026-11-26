@@ -322,8 +322,16 @@ Item {
         if (settings.stand_sfx_enabled && settings.stand_sfx_filepath)
             sfx.play(settings.stand_sfx_filepath, settings.stand_sound_volume / 100);
         if (asksFirst) {
-            var target = Cycle.opposite(cycle.position);
-            moveDesk(function() { root.goTo(target); return true; },
+            var from = cycle.position;
+            var target = Cycle.opposite(from);
+            // A notification left on screen can be answered much later: by then the switch may
+            // be made already (by hand, or the next one due the other way)
+            moveDesk(function() {
+                if (!root.switchDue || root.cycle.position !== from)
+                    return false;
+                root.goTo(target);
+                return true;
+            },
                 standing ? i18n("Time to sit down. Move the desk now?") : i18n("Time to stand up. Move the desk now?"),
                 i18n("Move now"), { label: i18n("Not yet"), action: root.snooze }, standing ? "go-down" : "go-up");
             return;
@@ -356,13 +364,16 @@ Item {
     // Stand up for a meeting ("Stand up for meetings"): the desk rises at its start, and goes
     // back down at its end if it rose for it
     property bool roseForMeeting: false
+    // Between meetingStarted() and meetingEnded(): a "Raise now" answered after it doesn't count
+    property bool inMeeting: false
     function meetingStarted() {
+        inMeeting = true;
         if (!settings.stand_stand_for_meetings || idle || cycle.position === "stand")
             return;
         if (!deskEnabled || !desk.reachable)
             return;
         moveDesk(function() {
-            if (!desk.moveTo("stand"))
+            if (!root.inMeeting || root.cycle.position === "stand" || !desk.moveTo("stand"))
                 return false;
             root.roseForMeeting = true;
             return true;
@@ -370,8 +381,11 @@ Item {
     }
     // switchDueSoon: also make a switch due within 10 minutes now ("Wait for meetings")
     function meetingEnded(switchDueSoon) {
+        inMeeting = false;
         if (roseForMeeting && deskEnabled && desk.reachable && cycle.position === "stand")
-            moveDesk(function() { return desk.moveTo("sit"); }, i18n("The meeting is over. Lower the desk?"),
+            // Not once the next meeting has begun, or the user has sat down already
+            moveDesk(function() { return !root.inMeeting && root.cycle.position === "stand" && desk.moveTo("sit"); },
+                i18n("The meeting is over. Lower the desk?"),
                 i18n("Lower now"), { label: i18n("Not now"), action: null }, "go-down");
         else if (switchDueSoon)
             switchAtBreak(10 * 60 * 1000);

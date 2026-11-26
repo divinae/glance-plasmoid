@@ -149,21 +149,20 @@ MouseArea {
             out.push({color: "#af52de", icon: "notifications-symbolic", action: "unread", card: unreadCard,
                 tip: i18n("Unread notifications. Click to see them.")});
         }
-        // A device running low (20% or less): mouse, keyboard, headphones… a pill each, in red,
-        // with its icon and its battery
         // Where sound goes (Settings > General): while it's on headphones, or always
         const audio = island.controls.audio;
         const soundMode = island.cfg.pillSoundOutput;
         const soundShown = soundMode !== 0 && !!audio && !!audio.output
             && (soundMode === 2 || audio.outputKind === "headphones");
         // The Bluetooth headphones sound is on, running low: one pill, the sound one turned red
-        // with their battery, not two headphones side by side. That device's battery only (by
-        // its name), not any headset's
-        const soundDevice = soundShown && audio.outputBluetooth ? island.headphones.name : "";
+        // with their battery, not two headphones side by side. That device's battery only (found
+        // by its address), not any headset's
         let lowHeadphones = null;
+        // A device running low (20% or less): mouse, keyboard, headphones… a pill each, in red,
+        // with its icon and its battery
         if (island.cfg.pillLowBattery) {
             for (const b of island.peripherals.low.slice(0, 3)) {
-                if (soundDevice !== "" && b.name === soundDevice) {
+                if (soundShown && island.headphones.isOutput(b)) {
                     lowHeadphones = b;
                     continue;
                 }
@@ -863,7 +862,10 @@ MouseArea {
                                         compact.island.openOn("notifications", true);
                                         break;
                                     case "sound":
-                                        compact.island.openOn("devices", true);
+                                        // The outputs are in its card; the Controls tab only if it's on
+                                        if (compact.island.cfg.showDevices) {
+                                            compact.island.openOn("devices", true);
+                                        }
                                         break;
                                     case "stand":
                                         if (compact.island.stand.pendingPosition) {

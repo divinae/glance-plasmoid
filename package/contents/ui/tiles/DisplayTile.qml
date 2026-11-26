@@ -45,8 +45,9 @@ Tile {
         property string label
         property real value: 0
         property real maximum: 100
-        // A few levels (a keyboard's 0–3): snap to them, and say "2 / 3" rather than a percent
-        readonly property bool stepped: maximum > 0 && maximum <= 10
+        // A few levels (a keyboard's 0–3): snap to them, and say "2 / 3" rather than a percent.
+        // Set on the keyboard's row only: a screen with a coarse backlight still reads in percent
+        property bool stepped: false
         function levelText(v) {
             return stepped ? i18nc("a level of a few", "%1 / %2", Math.round(v), maximum)
                 : i18nc("a level, in percent", "%1%", maximum > 0 ? Math.round(v / maximum * 100) : 0);
@@ -132,6 +133,7 @@ Tile {
             visible: tile.hasKeyboard
             icon: "input-keyboard-symbolic"
             label: i18n("Keyboard backlight")
+            stepped: keyboard.brightnessMax > 0 && keyboard.brightnessMax <= 10
             value: keyboard.brightness
             maximum: keyboard.brightnessMax
             onMoved: value => keyboard.brightness = Math.round(value)

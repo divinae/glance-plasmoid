@@ -101,7 +101,9 @@ PlasmoidItem {
     // The events, for the pills' cards
     readonly property Item calendar: calendarSource
     // The Bluetooth headphones connected, and their battery (the Media tab)
-    readonly property QtObject headphones: BluetoothAudio {}
+    readonly property QtObject headphones: BluetoothAudio {
+        outputAddress: root.controls.audio ? root.controls.audio.outputAddress : ""
+    }
     // Mouse, keyboard, headphones… running low: a pill each
     readonly property Item peripherals: PeripheralBatteries {}
     // Them and the Bluetooth devices together (the Devices tab, the dashboard's card)
