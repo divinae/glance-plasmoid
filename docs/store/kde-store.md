@@ -30,7 +30,7 @@ version, the changelog and the file for each release.
 
 **Version**
 
-    1.8.0
+    1.9.0
 
 **License**
 
@@ -67,13 +67,13 @@ THE STRIP
 
 One thing at a time: a notification, a meeting coming up ("Standup in 5 min"), the time to stand up, what's playing, the next event, or the active window's name.
 
-Status pills after it, only those that apply: music (bars to the beat in the album's colour), camera, microphone and screen sharing in use, file transfers, the focus timer, the meeting on now with its time left, sit/stand, unread notifications, Do Not Disturb, a device's battery running low.
+Status pills after it, only those that apply: music (bars to the beat in the album's colour), camera, microphone and screen sharing in use, file transfers, the focus timer, the meeting on now with its time left, sit/stand, unread notifications, Do Not Disturb, sound on headphones, a device's battery running low.
 
 Hover a pill for its card: the track with seek and volume, the meeting with Join, the transfers with Pause and Cancel, the latest notifications.
 
 THE DRAWER
 
-The window's menu bar, as on macOS: the app's menus (the global menu), search across them in a few letters, its About, Settings and Quit, Alt+letter, the window's buttons.
+The window's menu bar, as on macOS: the app's menus (the global menu), search across them in a few letters (also from KRunner), its About, Settings and Quit, Alt+letter, the window's buttons.
 
 Dashboard: the time and weather, today's meetings with Join, controls, the system's load, notifications, music over its blurred cover, focus and posture.
 
@@ -103,6 +103,15 @@ Support: https://ko-fi.com/divinae4535
 **Changelog** (the store's field, for this version)
 
 ```
+1.9.0
+
+- The app's menus from KRunner, as the old HUD: type a few letters of a menu item ("exp png" finds File › Export › PNG…), Enter runs it. Needs Glance's "Application menu".
+- Shift asks before it moves the desk by itself: Move now, or Not yet. Settings > Shift > "Ask first".
+- Shift: pause for the rest of today.
+- A pill while sound is on headphones; hover it for the outputs and the battery. Low headphones: that pill turns red, not a second one.
+- Brightness sliders follow the finger, with the value shown as you drag; the keyboard's levels snap.
+- Tabs switch on hover after a short wait; Plasma's popup resizes both ways.
+
 1.8.0
 
 Light, dark or automatic (Plasma's own switching at sunrise and sunset), on the Controls tab and the dashboard.

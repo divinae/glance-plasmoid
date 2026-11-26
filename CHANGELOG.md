@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.9.0 — 2026-11-26
 
 **Shift asks before it moves the desk.** When the desk would move by itself (time to switch, a
 meeting starting or over), a notification asks first: Move now, or Not yet (it asks again after
@@ -21,6 +21,10 @@ running low while sound is on them: that pill turns red with the battery, not a 
 **Brightness follows the finger.** The screen's and the keyboard's sliders set the brightness as
 you drag, not on release; the level beside them, and a bubble over the knob, say what you're
 setting. The keyboard's few levels snap ("2 / 3").
+
+**Smaller things.** Tabs switch on hover after a short wait (350 ms), so sweeping the pointer
+across them doesn't flip them. Plasma's popup (the drawer's fallback) resizes both ways, its
+height setting only where it starts.
 
 ## 1.8.0 — 2026-11-09
 
