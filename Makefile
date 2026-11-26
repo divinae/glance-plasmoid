@@ -41,6 +41,7 @@ install: build
 uninstall:
 	kpackagetool6 -t Plasma/Applet -r $(PLUGIN_ID) || true
 	rm -rf $(PREFIX)/lib/qml/com/dv/glance
+	rm -f $(PREFIX)/share/krunner/dbusplugins/glance-appmenu-runner.desktop
 
 lint: build
 	$(QMLLINT) $(QMLLINT_FLAGS) $(QML_SOURCES)

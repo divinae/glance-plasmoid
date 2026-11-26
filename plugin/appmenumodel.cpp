@@ -7,6 +7,7 @@
 */
 
 #include "appmenumodel.h"
+#include "menurunner.h"
 
 #include <QAction>
 #include <QDBusConnection>
@@ -94,10 +95,19 @@ AppMenuModel::AppMenuModel(QObject *parent)
             Q_EMIT modelNeedsUpdate();
         }
     });
+
+    // KRunner searches the menus of the model that last got one (a second panel's Glance)
+    MenuRunner::instance()->addModel(this);
+    connect(this, &AppMenuModel::menuAvailableChanged, this, [this] {
+        if (m_menuAvailable) {
+            MenuRunner::instance()->addModel(this);
+        }
+    });
 }
 
 AppMenuModel::~AppMenuModel()
 {
+    MenuRunner::instance()->removeModel(this);
     // Without telling us (aboutToHide, currentIndex) while we go
     releaseCurrentMenu();
     deleteDetachedMenus();

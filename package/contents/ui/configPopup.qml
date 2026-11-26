@@ -77,7 +77,7 @@ KCM.SimpleKCM {
         }
         QQC2.Label {
             Layout.fillWidth: true
-            text: i18n("Apps that support a global menu hide their own menu bar while this is on.")
+            text: i18n("Apps that support a global menu hide their own menu bar while this is on. Their menus are also searchable from KRunner then.")
             wrapMode: Text.Wrap
             opacity: 0.7
             font: Kirigami.Theme.smallFont

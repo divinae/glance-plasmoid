@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**The app's menus from KRunner**, as the old HUD: open KRunner over an app, type a few letters of a
+menu item ("exp png" finds File › Export › PNG…), Enter runs it. It searches the window you were in,
+with Glance's "Application menu" on. A KRunner plugin of its own, "Application Menu (Glance)".
+
 **Shift: pause for the rest of today.** Pause… > "For the rest of today": no reminders and no
 desk moves until midnight, then Shift carries on by itself the next day.
 

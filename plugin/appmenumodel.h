@@ -81,6 +81,11 @@ public:
     Q_INVOKABLE void prefetchAll();
     // The search closed: no more fetching as submenus arrive
     Q_INVOKABLE void stopPrefetch();
+    // Fetching the whole tree now (a search is on: the drawer's, or KRunner's)
+    bool prefetching() const
+    {
+        return m_prefetching;
+    }
     // The items whose path ("File › Export › PNG…") has every word of `text`, at most `limit`:
     // [{action, text, path, shortcut, enabled, checkable, checked}]. `action` is the QAction:
     // trigger() on it clicks it in the app

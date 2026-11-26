@@ -1,0 +1,18 @@
+[Desktop Entry]
+Name=Application Menu (Glance)
+Comment=Search the menus of the application you were in
+Type=Service
+Icon=application-menu
+X-KDE-PluginInfo-Author=Jakub Lipiński
+X-KDE-PluginInfo-Email=lipinski.j@pm.me
+X-KDE-PluginInfo-Name=glance-appmenu
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-License=GPL
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=DBus
+X-Plasma-DBusRunner-Service=com.dv.glance
+X-Plasma-DBusRunner-Path=/Runner
+X-Plasma-Request-Actions-Once=true
+X-Plasma-Runner-Min-Letter-Count=3
+X-Plasma-Runner-Syntaxes=:q:
+X-Plasma-Runner-Syntax-Descriptions=Finds the items of the active application's menus matching :q: (needs Glance's application menu)

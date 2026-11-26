@@ -65,6 +65,8 @@ target_sources(glanceplugin PRIVATE
     trayactions.h
     shelfhelper.cpp
     shelfhelper.h
+    menurunner.cpp
+    menurunner.h
     thememode.cpp
     thememode.h
 )
@@ -88,3 +90,6 @@ target_link_libraries(glanceplugin PRIVATE
 )
 
 ecm_finalize_qml_module(glanceplugin)
+
+# KRunner finds the active app's menu items through Glance (menurunner.h)
+install(FILES glance-appmenu-runner.desktop DESTINATION ${KDE_INSTALL_DATADIR}/krunner/dbusplugins)

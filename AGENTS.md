@@ -31,7 +31,8 @@ bare `.plasmoid` will not load.
 - `plugin/`: QML module `com.dv.glance.private` (`ecm_add_qml_module`, `QML_ELEMENT`/
   `QML_SINGLETON` classes): `appmenumodel` (global menu, owns `org.kde.kappmenuview`),
   `calendarbus` (D-Bus `com.dv.glance /Calendar`, fed by Event Calendar NG), `cavasource`,
-  `drawereffects` (blur/contrast), `screencastmonitor` (PipeWire: mic/screen/camera in use),
+  `drawereffects` (blur/contrast), `menurunner` (KRunner D-Bus runner `com.dv.glance /Runner`
+  over AppMenuModel's search; `plugin/glance-appmenu-runner.desktop` → `krunner/dbusplugins/`), `screencastmonitor` (PipeWire: mic/screen/camera in use),
   `shelfhelper`, `systeminfo` (also demo mode), `thememode`, `trayactions` (runs other tray
   icons' menu entries). `plugin/dbusmenuqt/` is vendored from plasma-workspace (LGPL, Canonical);
   don't restyle it.

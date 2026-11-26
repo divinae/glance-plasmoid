@@ -20,8 +20,8 @@ in its menu bar, and a drawer that slides out of it.
   use, file transfers, the focus timer, the meeting on now, unread notifications and a battery
   running low. Hover one for its card: seek and volume, Join, Pause and Cancel.
 - 🍎 **The window's menus, as on macOS.** The global menu in the drawer's menu bar, searchable in
-  a few letters ("prof new" finds File › New Tab › Profile…), Alt+letter, the app's About and
-  Quit, the window's buttons.
+  a few letters ("prof new" finds File › New Tab › Profile…), also from KRunner, Alt+letter, the
+  app's About and Quit, the window's buttons.
 - 🎵 **Music that looks the part.** The cover in the spectrum's rays, the controls in a colour
   from the album, bars to the beat in the pill (with `cava`).
 - 🎥 **Meetings on time.** With Event Calendar NG: "Standup in 5 min" in the strip, a pill with
@@ -240,6 +240,13 @@ echo 'export QML_IMPORT_PATH="$HOME/.local/lib/qml${QML_IMPORT_PATH:+:$QML_IMPOR
 While "Application menu" is on, Glance owns the D-Bus name `org.kde.kappmenuview`, like the
 stock Global Menu widget: applications that support it export their menus and hide their own
 menu bars. Turn the option off to get in-window menu bars back.
+
+**From KRunner**, as the old HUD did: open KRunner over an app and type a few letters of a menu
+item ("exp png" finds File › Export › PNG…), Enter runs it. It searches the menus of the window you
+were in, so it works only while "Application menu" is on (and the app exports its menus). It's a
+runner of its own, "Application Menu (Glance)", installed by `make install`
+(`~/.local/share/krunner/dbusplugins/`); KRunner's settings can turn it off. KRunner lists it after
+a restart of KRunner (`kquitapp6 krunner`) or a new login.
 
 ## When something's off
 
