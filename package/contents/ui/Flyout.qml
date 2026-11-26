@@ -25,11 +25,14 @@ Item {
     required property Item monitor
 
     // A preferred size that doesn't follow the content, so the popup never jumps between tabs; the
-    // limits are wide, so its edges can be dragged (Plasma remembers the size the user gives it)
-    readonly property real startHeight: Kirigami.Units.gridUnit * island.cfg.popupHeight
+    // limits are wide, so its edges can be dragged. The size the user drags it to is kept
+    // (flyoutWidth/flyoutHeight) and it opens at that size next time
+    readonly property int savedWidth: island.cfg.flyoutWidth > 0 ? island.cfg.flyoutWidth : 26
+    readonly property int savedHeight: island.cfg.flyoutHeight > 0 ? island.cfg.flyoutHeight : island.cfg.popupHeight
+    readonly property real startHeight: Kirigami.Units.gridUnit * savedHeight
 
     Layout.minimumWidth: Kirigami.Units.gridUnit * 16
-    Layout.preferredWidth: Kirigami.Units.gridUnit * 26
+    Layout.preferredWidth: Kirigami.Units.gridUnit * savedWidth
     Layout.maximumWidth: Kirigami.Units.gridUnit * 100
     Layout.minimumHeight: Kirigami.Units.gridUnit * 12
     Layout.preferredHeight: startHeight
@@ -37,6 +40,29 @@ Item {
 
     HoverHandler {
         onHoveredChanged: flyout.island.flyoutHovered = hovered
+    }
+
+    // Dragged to a new size: kept, in whole grid units, once the dragging has settled. Only a
+    // size that differs from the one it was given: opening, or the tabs, don't count
+    onWidthChanged: sizeSaver.restart()
+    onHeightChanged: sizeSaver.restart()
+    Timer {
+        id: sizeSaver
+        interval: 600
+        onTriggered: {
+            const gu = Kirigami.Units.gridUnit;
+            if (!flyout.visible || flyout.width < gu * 10 || flyout.height < gu * 8) {
+                return;
+            }
+            const w = Math.max(16, Math.min(100, Math.round(flyout.width / gu)));
+            const h = Math.max(12, Math.min(80, Math.round(flyout.height / gu)));
+            if (w !== flyout.savedWidth) {
+                flyout.island.cfg.flyoutWidth = w;
+            }
+            if (h !== flyout.savedHeight) {
+                flyout.island.cfg.flyoutHeight = h;
+            }
+        }
     }
     Component.onDestruction: island.flyoutHovered = false
 

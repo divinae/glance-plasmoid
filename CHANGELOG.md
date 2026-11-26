@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+**Plasma's popup keeps its size.** Drag its edges and it opens at that size next time.
+
+**Fixes.** Shift no longer moves the desk when an old "Move now" or "Raise now" is clicked after the
+moment has passed. The sound pill and its card show the battery of the headphones sound is on, not
+of another connected headset. The music card's seek no longer springs back before it jumps. A
+screen with a coarse backlight reads in percent again (only the keyboard's levels read "2 / 3").
+The sound pill's click opens the Controls tab only when that tab is shown.
+
 ## 1.9.0 — 2026-11-26
 
 **Shift asks before it moves the desk.** When the desk would move by itself (time to switch, a
