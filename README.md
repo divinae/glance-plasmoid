@@ -186,8 +186,9 @@ The keys work while the drawer has the keyboard (opened with a click).
 Plasma 6 (tested on 6.8) with plasma-pa, `layer-shell-qt` for the drawer, PipeWire, and
 optionally `cava` for the audio bars.
 
-Build: CMake, extra-cmake-modules, Qt 6 (Quick, DBus, Widgets, Concurrent), KF6 WindowSystem and
-Service, libplasma (with PlasmaQuick), libpipewire, gettext.
+Build: CMake, extra-cmake-modules, Qt 6 (Quick, DBus, Widgets, Concurrent), KF6 WindowSystem,
+Service, Config and CoreAddons, libplasma (with PlasmaQuick), libpipewire, gettext. Its settings
+pages need kirigami-addons.
 
 At run time, for what uses them: [Event Calendar NG](https://github.com/divinae/event-calendar-ng-plasmoid)
 1.21 or later for events and meetings, `kde-inhibit` (Plasma's) to keep the screen on, and
@@ -199,31 +200,84 @@ without one, only its control is missing.
 
 Glance comes with a small QML plugin (`com.dv.glance.private`, C++), so it's built from source.
 A `.plasmoid` alone (from a release or "Get New Widgets") has the QML only and won't load
-without it.
+without it. Everything below installs into your home folder (`~/.local`): no root except for the
+packages in step 1. It takes a few minutes.
 
-**1. The build tools and libraries.** On Arch:
+You need **Plasma 6** (check: `plasmashell --version`) and a **vertical panel** for Glance to sit
+in (step 5 shows how to make one).
+
+### 1. Install the build tools and libraries
+
+**Arch Linux, Manjaro, EndeavourOS:**
 
 ```sh
-sudo pacman -S --needed base-devel cmake extra-cmake-modules qt6-base qt6-declarative \
-    kwindowsystem kservice libplasma libpipewire gettext layer-shell-qt
+sudo pacman -S --needed git base-devel cmake extra-cmake-modules qt6-base qt6-declarative \
+    kwindowsystem kservice kconfig kcoreaddons libplasma libpipewire gettext \
+    layer-shell-qt kirigami-addons
 sudo pacman -S --needed cava   # optional: the audio bars
 ```
 
-Elsewhere, the same under your distribution's names (the list is under
-[Requirements](#requirements)).
+<details>
+<summary><b>Fedora, openSUSE, Debian / Ubuntu</b> (package names may differ slightly: tell us in an issue)</summary>
 
-**2. Build and install** (to `~/.local`, no root):
+**Fedora (KDE Plasma):**
+
+```sh
+sudo dnf install git gcc-c++ make cmake extra-cmake-modules qt6-qtbase-devel qt6-qtdeclarative-devel \
+    kf6-kwindowsystem-devel kf6-kservice-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
+    libplasma-devel pipewire-devel gettext layer-shell-qt kf6-kirigami-addons
+```
+
+**openSUSE Tumbleweed:**
+
+```sh
+sudo zypper install git gcc-c++ make cmake kf6-extra-cmake-modules qt6-base-devel qt6-declarative-devel \
+    kf6-kwindowsystem-devel kf6-kservice-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
+    libplasma6-devel pipewire-devel gettext-runtime layer-shell-qt6 kirigami-addons6
+```
+
+**Debian 13, Kubuntu 25.04 or later, KDE neon** (Plasma 6 only):
+
+```sh
+sudo apt install git build-essential cmake extra-cmake-modules qt6-base-dev qt6-declarative-dev \
+    libkf6windowsystem-dev libkf6service-dev libkf6config-dev libkf6coreaddons-dev \
+    libplasma-dev libpipewire-0.3-dev gettext layer-shell-qt
+```
+
+</details>
+
+Elsewhere: the same libraries under your distribution's names (see [Requirements](#requirements)).
+The rest of what Glance uses at run time (plasma-pa, bluez-qt, plasma-nm, Plasma's battery and
+brightness modules) comes with a normal Plasma desktop.
+
+### 2. Get the source
 
 ```sh
 git clone https://github.com/divinae/glance-plasmoid.git
 cd glance-plasmoid
+```
+
+Or a release instead of the latest code (replace `1.9.1` with the
+[latest release](https://github.com/divinae/glance-plasmoid/releases/latest)):
+
+```sh
+curl -L https://github.com/divinae/glance-plasmoid/archive/refs/tags/v1.9.1.tar.gz | tar xz
+cd glance-plasmoid-1.9.1
+```
+
+### 3. Build and install
+
+```sh
 make install
 ```
 
-Or download the source of the [latest release](https://github.com/divinae/glance-plasmoid/releases/latest)
-and run `make install` in it.
+This puts the widget in `~/.local/share/plasma/plasmoids/com.dv.glance`, its plugin in
+`~/.local/lib/qml/com/dv/glance`, and its KRunner search in `~/.local/share/krunner/dbusplugins`.
+A build error names what's missing: install it (step 1) and run `make install` again.
 
-**3. Once: let Plasma find the plugin** in `~/.local/lib/qml`, then log out and back in:
+### 4. Let Plasma find the plugin (once)
+
+Plasma looks for plugins in system folders only; this adds `~/.local/lib/qml` for your session:
 
 ```sh
 mkdir -p ~/.config/plasma-workspace/env
@@ -231,10 +285,37 @@ echo 'export QML_IMPORT_PATH="$HOME/.local/lib/qml${QML_IMPORT_PATH:+:$QML_IMPOR
     > ~/.config/plasma-workspace/env/glance.sh
 ```
 
-**4. Add Glance** to a vertical panel: right click the panel > Add or Manage Widgets.
+Then **log out and back in**. Or, to use it right away without logging out:
 
-**Update:** `git pull && make install && make restart` (`make restart` restarts plasmashell).
-**Uninstall:** `make uninstall`, and remove `~/.config/plasma-workspace/env/glance.sh`.
+```sh
+systemctl --user set-environment QML_IMPORT_PATH="$HOME/.local/lib/qml"
+systemctl --user restart plasma-plasmashell
+```
+
+### 5. Add Glance to a vertical panel
+
+- No vertical panel yet: right click the desktop > **Add Panel** > **Empty Panel**, then right
+  click the new panel > **Show Panel Configuration** > **Position**: Left or Right.
+- Right click the panel > **Add or Manage Widgets**, search for **Glance**, and drag it onto the
+  panel. Click it to open the drawer; its settings are in its right-click menu.
+
+**Optional:** for events and meetings, install [Event Calendar NG](https://github.com/divinae/event-calendar-ng-plasmoid)
+and turn on "Share events with Glance" in its settings. For the KRunner menu search, restart
+KRunner once: `kquitapp6 krunner`.
+
+### Check that it works
+
+- `ls ~/.local/lib/qml/com/dv/glance/private/` lists `libglanceplugin.so` (step 3 went through).
+- `systemctl --user show-environment | grep QML_IMPORT_PATH` shows `~/.local/lib/qml` (step 4).
+- The widget says "Module com.dv.glance.private is not installed": step 4 isn't in effect yet; log
+  out and back in. Still there: `journalctl --user -b | grep -iE "glance|plasmashell"` says why.
+
+### Update and uninstall
+
+- **Update:** in the source folder, `git pull && make install && make restart` (`make restart`
+  restarts plasmashell). From a release: download the new one and run `make install` in it.
+- **Uninstall:** `make uninstall` in the source folder, then
+  `rm ~/.config/plasma-workspace/env/glance.sh`.
 
 ## Global menu
 
@@ -257,7 +338,7 @@ Nothing happens on Enter? `journalctl --user -b | grep "Run:"` shows what was se
   Calendar's cache (Google calendars only).
 - **Apps' own menu bars are gone:** that's the global menu (see above). Turn "Application menu"
   off in Glance's settings, then restart the app.
-- **"Module com.dv.glance.private is not installed":** Plasma doesn't find the plugin; see step 3
+- **"Module com.dv.glance.private is not installed":** Plasma doesn't find the plugin; see step 4
   of [Install](#install), then log out and back in.
 - **No drawer, only Plasma's popup:** install `layer-shell-qt`.
 - **A widget shortcut:** Glance's (Settings > Keyboard Shortcuts) opens and closes the drawer.
