@@ -30,7 +30,7 @@ version, the changelog and the file for each release.
 
 **Version**
 
-    1.9.0
+    1.9.1
 
 **License**
 
@@ -103,6 +103,12 @@ Support: https://ko-fi.com/divinae4535
 **Changelog** (the store's field, for this version)
 
 ```
+1.9.1
+
+- Plasma's popup opens at the size you last dragged it to.
+- KRunner's menu results come at once when the menus are already loaded.
+- Fixes: an old "Move now" or "Raise now" no longer moves the desk after the moment has passed; the sound pill and card show the battery of the headphones sound is on; the music card's seek doesn't spring back; a screen with a coarse backlight reads in percent again.
+
 1.9.0
 
 - The app's menus from KRunner, as the old HUD: type a few letters of a menu item ("exp png" finds File › Export › PNG…), Enter runs it. Needs Glance's "Application menu".

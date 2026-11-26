@@ -1,8 +1,11 @@
 # Changelog
 
-## Unreleased
+## 1.9.1 — 2026-11-26
 
 **Plasma's popup keeps its size.** Drag its edges and it opens at that size next time.
+
+**KRunner's menu results come at once** when the app's menus are already loaded (they waited
+400 ms).
 
 **Fixes.** Shift no longer moves the desk when an old "Move now" or "Raise now" is clicked after the
 moment has passed. The sound pill and its card show the battery of the headphones sound is on, not
