@@ -16,7 +16,7 @@ Item {
     // "speakers", its symbolic icon, its name, whether it's Bluetooth
     readonly property var output: Vol.PreferredDevice.sink
     readonly property string outputKind: kindOf(output)
-    readonly property string outputIcon: iconFor(output)
+    readonly property string outputIcon: iconForKind(outputKind)
     readonly property string outputName: output ? (output.description || output.name || "") : ""
     readonly property bool outputBluetooth: !!output && ((output.properties || {})["device.bus"] === "bluetooth"
         || (output.name || "").indexOf("bluez") === 0)
@@ -43,7 +43,9 @@ Item {
     }
     // A symbolic icon for an output (the system's own are full-colour)
     function iconFor(sink) {
-        const kind = kindOf(sink);
+        return iconForKind(kindOf(sink));
+    }
+    function iconForKind(kind) {
         return kind === "headphones" ? "audio-headphones-symbolic"
             : kind === "display" ? "tv-symbolic" : "audio-speakers-symbolic";
     }

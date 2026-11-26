@@ -154,19 +154,20 @@ MouseArea {
         // Where sound goes (Settings > General): while it's on headphones, or always
         const audio = island.controls.audio;
         const soundMode = island.cfg.pillSoundOutput;
-        const soundShown = !!audio && !!audio.output
-            && (soundMode === 2 || (soundMode === 1 && audio.outputKind === "headphones"));
-        // Headphones running low while sound is on them: one pill, the sound one turned red with
-        // the battery, not two headphones side by side
+        const soundShown = soundMode !== 0 && !!audio && !!audio.output
+            && (soundMode === 2 || audio.outputKind === "headphones");
+        // The Bluetooth headphones sound is on, running low: one pill, the sound one turned red
+        // with their battery, not two headphones side by side. That device's battery only (by
+        // its name), not any headset's
+        const soundDevice = soundShown && audio.outputBluetooth ? island.headphones.name : "";
         let lowHeadphones = null;
         if (island.cfg.pillLowBattery) {
             for (const b of island.peripherals.low.slice(0, 3)) {
-                const icon = island.peripherals.iconFor(b);
-                if (soundShown && audio.outputKind === "headphones" && icon === "audio-headphones-symbolic") {
-                    lowHeadphones = lowHeadphones || b;
+                if (soundDevice !== "" && b.name === soundDevice) {
+                    lowHeadphones = b;
                     continue;
                 }
-                out.push({color: "#e5484d", icon: icon, action: "info", hasText: "battery",
+                out.push({color: "#e5484d", icon: island.peripherals.iconFor(b), action: "info", hasText: "battery",
                     percent: b.percent, tip: i18n("%1: battery low, %2%", b.name, b.percent)});
             }
         }
@@ -174,12 +175,15 @@ MouseArea {
         // low, then red with the battery as the low-battery pill would be; the card lists the
         // outputs, a click opens the Controls tab
         if (soundShown) {
-            out.push(lowHeadphones
-                ? {color: "#e5484d", icon: audio.outputIcon, action: "sound", card: soundCard, hasText: "battery",
-                    percent: lowHeadphones.percent,
-                    tip: i18n("Sound: %1", audio.outputName) + "\n" + i18n("%1: battery low, %2%", lowHeadphones.name, lowHeadphones.percent)}
-                : {color: "#30b0c7", icon: audio.outputIcon, action: "sound", card: soundCard,
-                    tip: i18n("Sound: %1", audio.outputName)});
+            const sound = {color: "#30b0c7", icon: audio.outputIcon, action: "sound", card: soundCard,
+                tip: i18n("Sound: %1", audio.outputName)};
+            if (lowHeadphones) {
+                sound.color = "#e5484d";
+                sound.hasText = "battery";
+                sound.percent = lowHeadphones.percent;
+                sound.tip += "\n" + i18n("%1: battery low, %2%", lowHeadphones.name, lowHeadphones.percent);
+            }
+            out.push(sound);
         }
         if (dndShown && island.cfg.pillDnd) {
             out.push({color: "#8e8e93", icon: "notifications-disabled-symbolic", action: "dnd",

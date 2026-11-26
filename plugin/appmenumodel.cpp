@@ -378,11 +378,12 @@ static QString plainText(const QAction *action)
     return text.replace(QStringLiteral("&&"), QStringLiteral("&")).trimmed();
 }
 
-void AppMenuModel::prefetchChildren(QMenu *menu, bool deep, int depth)
+int AppMenuModel::prefetchChildren(QMenu *menu, bool deep, int depth)
 {
     if (!menu || !m_importer || depth > MaxMenuDepth) {
-        return;
+        return 0;
     }
+    int asked = 0;
     const auto actions = menu->actions();
     for (QAction *a : actions) {
         QMenu *sub = a->menu();
@@ -396,16 +397,18 @@ void AppMenuModel::prefetchChildren(QMenu *menu, bool deep, int depth)
                 m_prefetched.remove(sub);
             });
             m_importer->updateMenu(sub);
+            ++asked;
         } else if (sub && deep) {
-            prefetchChildren(sub, true, depth + 1);
+            asked += prefetchChildren(sub, true, depth + 1);
         }
     }
+    return asked;
 }
 
-void AppMenuModel::prefetchAll()
+bool AppMenuModel::prefetchAll()
 {
     if (!m_importer || !m_menu || m_prefetching) {
-        return;
+        return false;
     }
     m_prefetching = true;
     // Each submenu as it arrives: its own submenus next, and searches see the new items
@@ -416,7 +419,7 @@ void AppMenuModel::prefetchAll()
         m_flat.clear();
         m_treeChangedTimer.start();
     });
-    prefetchChildren(m_menu, true);
+    return prefetchChildren(m_menu, true) > 0;
 }
 
 void AppMenuModel::collect(QMenu *menu, const QString &path, QList<Found> &out, int depth) const

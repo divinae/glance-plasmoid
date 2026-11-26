@@ -15,7 +15,6 @@
 #include <QDBusConnectionInterface>
 #include <QDBusMetaType>
 #include <QIcon>
-#include <QKeySequence>
 #include <QTimer>
 
 Q_LOGGING_CATEGORY(GLANCE_RUNNER, "com.dv.glance.runner", QtInfoMsg)
@@ -87,8 +86,10 @@ MenuRunner::MenuRunner(QObject *parent)
     if (!bus.isConnected() || !bus.registerObject(QStringLiteral("/Runner"), this, QDBusConnection::ExportAllSlots)) {
         return;
     }
-    // The name is also CalendarBus's; whichever comes first takes it (asking again is a no-op)
-    bus.interface()->registerService(QStringLiteral("com.dv.glance"), QDBusConnectionInterface::DontQueueService);
+    // The name is also CalendarBus's; whichever comes first takes it (asking again is a no-op).
+    // Asked without waiting: plasmashell's GUI thread is loading the widget
+    constexpr uint DoNotQueue = 4; // DBUS_NAME_FLAG_DO_NOT_QUEUE
+    bus.interface()->asyncCall(QStringLiteral("RequestName"), QStringLiteral("com.dv.glance"), DoNotQueue);
 }
 
 void MenuRunner::addModel(AppMenuModel *model)
@@ -129,7 +130,9 @@ RunnerMatches MenuRunner::matches(AppMenuModel *model, const QString &query)
     for (const QVariant &v : found) {
         const QVariantMap item = v.toMap();
         auto *action = item.value(QStringLiteral("action")).value<QAction *>();
-        if (!action || !item.value(QStringLiteral("enabled")).toBool()) {
+        // Its id in the app's exported menu: what Run clicks
+        const QVariant itemId = action ? action->property("_dbusmenu_id") : QVariant();
+        if (!itemId.isValid() || !item.value(QStringLiteral("enabled")).toBool()) {
             continue;
         }
         const QString text = item.value(QStringLiteral("text")).toString();
@@ -158,10 +161,6 @@ RunnerMatches MenuRunner::matches(AppMenuModel *model, const QString &query)
             {QStringLiteral("category"), QStringLiteral("Application Menu")},
             {QStringLiteral("actions"), QStringList()},
         };
-        const QVariant itemId = action->property("_dbusmenu_id");
-        if (!itemId.isValid()) {
-            continue;
-        }
         m_targets.insert(match.id, {model->loadedServiceName(), model->loadedObjectPath(), itemId.toInt(), text});
         if (m_nextId > KeptTargets) {
             m_targets.remove(QString::number(m_nextId - KeptTargets));
@@ -185,37 +184,25 @@ RunnerMatches MenuRunner::Match(const QString &query)
         return matches(m, q);
     }
     // First query of the session: many apps fill a submenu only as it's asked for, so fetch
-    // the tree and answer once the first of it has arrived (or soon anyway); the next keys see
-    // more. The reply waits without blocking: KRunner may ask again meanwhile
-    m->prefetchAll();
+    // the tree, and when some of it had to be asked for, answer once the first of it has arrived
+    // (or soon anyway); the next keys see more. The reply waits without blocking: KRunner may ask
+    // again meanwhile
     m_prefetched = m;
-    if (!calledFromDBus()) {
+    if (!m->prefetchAll() || !calledFromDBus()) {
         return matches(m, q);
     }
     setDelayedReply(true);
-    const QDBusMessage request = message();
-    auto *done = new bool(false);
-    auto answer = [this, request, q, done, model = QPointer<AppMenuModel>(m)]() {
-        if (*done) {
-            return;
-        }
-        *done = true;
-        QDBusConnection::sessionBus().send(request.createReply(QVariant::fromValue(matches(model, q))));
-    };
     auto *timer = new QTimer(this);
     timer->setSingleShot(true);
-    timer->setInterval(FirstAnswerWaitMs);
-    const auto connection = connect(m, &AppMenuModel::treeChanged, timer, [timer]() {
-        timer->setInterval(0);
-        timer->start();
+    // The timer is the connection's context: deleting it ends the wait for treeChanged too
+    connect(m, &AppMenuModel::treeChanged, timer, [timer]() {
+        timer->start(0);
     });
-    connect(timer, &QTimer::timeout, this, [answer, timer, connection, done]() {
-        answer();
-        disconnect(connection);
+    connect(timer, &QTimer::timeout, this, [this, timer, request = message(), q, model = QPointer<AppMenuModel>(m)]() {
+        QDBusConnection::sessionBus().send(request.createReply(QVariant::fromValue(matches(model, q))));
         timer->deleteLater();
-        delete done;
     });
-    timer->start();
+    timer->start(FirstAnswerWaitMs);
     return {};
 }
 

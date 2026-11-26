@@ -78,7 +78,8 @@ public:
 
     // Fetches the whole tree, not only the menus on the bar: many apps fill a submenu only as it
     // opens, so searching needs it asked for first (it arrives over a moment)
-    Q_INVOKABLE void prefetchAll();
+    // true when submenus were asked for (treeChanged follows); false: all there already
+    Q_INVOKABLE bool prefetchAll();
     // The search closed: no more fetching as submenus arrive
     Q_INVOKABLE void stopPrefetch();
     // Fetching the whole tree now (a search is on: the drawer's, or KRunner's)
@@ -161,7 +162,8 @@ private:
     bool m_prefetching = false;
     QMetaObject::Connection m_prefetchConnection;
     // `deep`: into the submenus already fetched as well (a new search, once); not as each arrives
-    void prefetchChildren(QMenu *menu, bool deep = false, int depth = 0);
+    // The submenus newly asked for
+    int prefetchChildren(QMenu *menu, bool deep = false, int depth = 0);
     // An item of the tree, its name and path ("File › Export") as shown and lowercased
     struct Found {
         QPointer<QAction> action;

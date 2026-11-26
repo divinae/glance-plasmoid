@@ -16,7 +16,6 @@
 #include <QVariantMap>
 
 class AppMenuModel;
-class QAction;
 
 // org.kde.krunner1's types, as KRunner's D-Bus runners send them
 struct RunnerMatch {
